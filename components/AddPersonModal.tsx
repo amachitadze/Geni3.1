@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Gender, ModalContext, Person, Relationship } from '../types';
 import { convertDisplayToStorage, convertStorageToDisplay } from '../utils/dateUtils';
 import { 
-    ImageIcon, DeleteIcon, CloseIcon, CheckIcon, CloudUploadIcon, KeyIcon 
+    ImageIcon, DeleteIcon, CloseIcon, CheckIcon, CloudUploadIcon
 } from './Icons';
 
 interface AddPersonModalProps {
@@ -52,7 +52,6 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
   
   // Upload state
   const [isUploading, setIsUploading] = useState(false);
-  const [manualApiKey, setManualApiKey] = useState('');
   const [hasValidApiKey, setHasValidApiKey] = useState(false);
   const [useCloudStorage, setUseCloudStorage] = useState(true); // Default to true if key exists
 
@@ -60,7 +59,15 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
 
   // Check for API key on mount
   useEffect(() => {
-      const envKey = typeof process !== 'undefined' && process.env ? process.env.REACT_APP_IMGBB_API_KEY : '';
+      let envKey = '';
+      // @ts-ignore
+      if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.REACT_APP_IMGBB_API_KEY) {
+           // @ts-ignore
+          envKey = import.meta.env.REACT_APP_IMGBB_API_KEY;
+      } else if (typeof process !== 'undefined' && process.env && process.env.REACT_APP_IMGBB_API_KEY) {
+          envKey = process.env.REACT_APP_IMGBB_API_KEY;
+      }
+
       const localKey = localStorage.getItem('imgbb_api_key');
       
       if (envKey || localKey) {
@@ -70,19 +77,7 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
           setHasValidApiKey(false);
           setUseCloudStorage(false);
       }
-      
-      if(localKey) setManualApiKey(localKey);
-
   }, []);
-
-  const handleManualKeySave = () => {
-      if (manualApiKey.trim()) {
-          localStorage.setItem('imgbb_api_key', manualApiKey.trim());
-          setHasValidApiKey(true);
-          setUseCloudStorage(true);
-          alert("API გასაღები შენახულია.");
-      }
-  };
 
   // Effect to initialize or reset the form when the modal opens or its context changes.
   useEffect(() => {
@@ -174,8 +169,18 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
       }
 
       // Priority: 1. Env Var, 2. Local Storage
-      const envKey = typeof process !== 'undefined' && process.env ? process.env.REACT_APP_IMGBB_API_KEY : undefined;
-      const apiKey = envKey || localStorage.getItem('imgbb_api_key');
+      let apiKey = '';
+       // @ts-ignore
+      if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.REACT_APP_IMGBB_API_KEY) {
+           // @ts-ignore
+          apiKey = import.meta.env.REACT_APP_IMGBB_API_KEY;
+      } else if (typeof process !== 'undefined' && process.env && process.env.REACT_APP_IMGBB_API_KEY) {
+          apiKey = process.env.REACT_APP_IMGBB_API_KEY;
+      }
+      
+      if (!apiKey) {
+          apiKey = localStorage.getItem('imgbb_api_key') || '';
+      }
 
       // Check if user has opted for cloud storage AND has a key
       if (apiKey && useCloudStorage) {
@@ -413,7 +418,7 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
                         )}
                     </div>
                     
-                    {/* ImgBB Status & Manual Key Input & Toggle */}
+                    {/* ImgBB Status */}
                     <div className="mt-2 p-2 bg-gray-50 dark:bg-gray-700/30 rounded border border-gray-200 dark:border-gray-700">
                         {hasValidApiKey ? (
                             <div className="flex items-center gap-2 mb-1">
@@ -435,26 +440,6 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
                                 ? (useCloudStorage ? "✅ ImgBB API აქტიურია. სურათი აიტვირთება სერვერზე." : "ℹ️ ატვირთვა გამორთულია. სურათი შეინახება ფაილში (ლოკალურად).")
                                 : "⚠️ ImgBB API არ არის ნაპოვნი. სურათი შეინახება ფაილში (გაზრდის ზომას)."}
                         </p>
-                        
-                        {!hasValidApiKey && (
-                            <div className="mt-2 flex items-center gap-2">
-                                <KeyIcon className="w-4 h-4 text-gray-400"/>
-                                <input 
-                                    type="text" 
-                                    value={manualApiKey} 
-                                    onChange={(e) => setManualApiKey(e.target.value)} 
-                                    placeholder="ჩასვით ImgBB API Key აქ..." 
-                                    className="text-xs p-1 flex-grow bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-purple-500 outline-none dark:text-white"
-                                />
-                                <button 
-                                    type="button" 
-                                    onClick={handleManualKeySave}
-                                    className="text-xs px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700"
-                                >
-                                    შენახვა
-                                </button>
-                            </div>
-                        )}
                     </div>
                 </div>
 
