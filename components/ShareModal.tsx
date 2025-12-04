@@ -338,26 +338,10 @@ export const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, data })
                             </div>
                             <div className="text-xs text-gray-500 dark:text-gray-400 pt-1 border-t border-gray-200 dark:border-gray-600">
                                 <p className="mb-2">აუცილებელია: <b>shares</b> bucket და <b>Public Upload/Delete</b> პოლიტიკა.</p>
-                                <details className="cursor-pointer">
-                                    <summary className="text-purple-600 hover:underline list-none font-medium flex items-center gap-1">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                        იხილეთ ინსტრუქცია და პოლიტიკა
-                                    </summary>
-                                    <div className="mt-2 p-2 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-600">
-                                        <p className="mb-2">1. Supabase-ში შექმენით ახალი Public Bucket სახელად <b>shares</b>.</p>
-                                        <p className="mb-2">2. Storage &gt; Policies განყოფილებაში shares bucket-ისთვის დაამატეთ შემდეგი პოლიტიკა:</p>
-                                        <div className="p-2 bg-gray-100 dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700 font-mono text-[10px] text-gray-700 dark:text-gray-300 whitespace-pre-wrap select-all">
-{`-- პოლიტიკის სახელი: Public Access
--- დაუშვით: INSERT, SELECT, DELETE
--- Target roles: anon (public)
-
-(bucket_id = 'shares')`}
-                                        </div>
-                                        <a href="https://supabase.com/docs/guides/storage/security/access-control" target="_blank" rel="noopener noreferrer" className="block mt-2 text-blue-500 hover:underline">
-                                            Supabase დოკუმენტაცია &rarr;
-                                        </a>
-                                    </div>
-                                </details>
+                                <a href="#" className="text-purple-600 hover:underline font-medium flex items-center gap-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                    იხილეთ ინსტრუქცია და პოლიტიკა
+                                </a>
                             </div>
                         </div>
                     )}
