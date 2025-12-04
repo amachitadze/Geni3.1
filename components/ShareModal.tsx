@@ -305,7 +305,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, data })
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">2. კონფიგურაცია</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">2. გაზიარების პარამეტრები</label>
                     <div className="flex items-center gap-2 mb-4 p-2 bg-gray-50 dark:bg-gray-700/30 rounded border border-gray-200 dark:border-gray-700">
                         <input 
                             type="checkbox" 
