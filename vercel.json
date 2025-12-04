@@ -1,0 +1,20 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/share",
+      "destination": "https://file.io"
+    },
+    {
+      "source": "/api/share/:path*",
+      "destination": "https://file.io/:path*"
+    },
+    {
+      "source": "/api/jsonblob",
+      "destination": "https://jsonblob.com/api/jsonBlob"
+    },
+    {
+      "source": "/api/jsonblob/:path*",
+      "destination": "https://jsonblob.com/api/jsonBlob/:path*"
+    }
+  ]
+}

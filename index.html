@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ka">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="https://i.postimg.cc/XNfDXTjn/Geni-Icon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>გენეალოგიური ხე</title>
+    
+    <!-- Google Fonts: Noto Sans Georgian -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Georgian:wght@100..900&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              gray: {
+                900: '#111827',
+                800: '#1f2937',
+                700: '#374151',
+              }
+            },
+            fontFamily: {
+              sans: ['"Noto Sans Georgian"', 'sans-serif'],
+            }
+          }
+        }
+      }
+    </script>
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#ffffff" />
+    <script>
+        // Set theme on initial load to prevent FOUC (Flash of Unstyled Content)
+        if (localStorage.familyTreeTheme === 'dark' || (!('familyTreeTheme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+    <style>
+      /* Smooth background transition and Global Font */
+      body {
+        transition: background-color 0.3s ease;
+        font-family: "Noto Sans Georgian", sans-serif;
+      }
+      
+      /* Base rule to hide buttons during export */
+      body.pdf-exporting .person-card-buttons {
+        visibility: hidden;
+      }
+
+      /* Fix for text cut-off issue in html2canvas */
+      body.pdf-exporting .person-card-text-container {
+        line-height: 1.4 !important;
+        padding-bottom: 2px !important;
+        overflow: visible !important;
+      }
+      body.pdf-exporting .person-card-default-view {
+          min-height: auto !important;
+      }
+
+
+      /* Rules for a printer-friendly light theme during export */
+      body.pdf-exporting {
+        background-color: #ffffff !important;
+      }
+      body.pdf-exporting .dark {
+        background-color: #ffffff !important;
+      }
+      
+      .dark body.pdf-exporting .text-white,
+      .dark body.pdf-exporting .text-gray-200,
+      .dark body.pdf-exporting .text-gray-300,
+      .dark body.pdf-exporting .text-gray-400,
+      .dark body.pdf-exporting [class*="text-blue-"],
+      .dark body.pdf-exporting [class*="text-pink-"] {
+        color: #111827 !important; /* Dark text */
+      }
+      .dark body.pdf-exporting [class*="dark:bg-gray-"],
+      .dark body.pdf-exporting [class*="dark:bg-blue-"],
+      .dark body.pdf-exporting [class*="dark:bg-pink-"] {
+        background-color: #f9fafb !important; /* Very light gray for cards */
+        background-image: none !important; /* Remove gradients */
+      }
+      .dark body.pdf-exporting [class*="dark:border-gray-"] {
+        border-color: #d1d5db !important; /* Gray border */
+      }
+      .dark body.pdf-exporting [class*="dark:border-blue-"] {
+        border-color: #93c5fd !important; /* Light blue border */
+      }
+      .dark body.pdf-exporting [class*="dark:border-pink-"] {
+        border-color: #f9a8d4 !important; /* Light pink border */
+      }
+      .dark body.pdf-exporting img.border-gray-500,
+      .dark body.pdf-exporting img.border-purple-500,
+      .dark body.pdf-exporting .border-gray-600 {
+        border-color: #d1d5db !important;
+      }
+      .dark body.pdf-exporting .text-transparent {
+          color: #111827 !important;
+          background-image: none !important;
+      }
+      .dark body.pdf-exporting .dark\:text-gray-200 {
+        color: #111827 !important;
+      }
+
+      /* Style for connection line labels */
+      .line-label {
+        font-size: 12px;
+        font-weight: 500;
+        fill: #6b7280; /* text-gray-500 */
+        font-family: "Noto Sans Georgian", sans-serif;
+      }
+      .dark .line-label {
+        fill: #9ca3af; /* dark:text-gray-400 */
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://aistudiocdn.com/react@^19.1.1/",
+    "react": "https://aistudiocdn.com/react@^19.1.1",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
+    "@google/genai": "https://esm.run/@google/genai",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
+  }
+}
+</script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
