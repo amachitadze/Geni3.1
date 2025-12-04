@@ -21,7 +21,7 @@ import {
     SearchIcon, BackIcon, HomeIcon, MenuIcon, ExportIcon, 
     CenterIcon, StatsIcon, CloseIcon, ShareIcon, JsonExportIcon, 
     JsonImportIcon, SunIcon, MoonIcon, ViewCompactIcon, ViewNormalIcon, 
-    ListBulletIcon, GlobeIcon, DocumentTextIcon 
+    ListBulletIcon, GlobeIcon, DocumentTextIcon, LockClosedIcon 
 } from './components/Icons';
 import { getSupabaseClient } from './utils/supabaseClient';
 
@@ -35,6 +35,7 @@ function App() {
   const [rootIdStack, setRootIdStack] = useState<string[]>([]);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+  const [isReadOnly, setIsReadOnly] = useState(false);
   
   const [isViewingTree, setIsViewingTree] = useState(false);
 
@@ -217,8 +218,9 @@ function App() {
   }, []);
 
   // Save core data to localStorage whenever it changes
+  // IMPORTANT: Do NOT save to localStorage if we are in ReadOnly mode (viewing a shared link)
   useEffect(() => {
-    if (isInitialLoad) return;
+    if (isInitialLoad || isReadOnly) return;
     try {
       const dataToSave = JSON.stringify({ people, rootIdStack });
       const timestamp = new Date().toISOString();
@@ -229,7 +231,7 @@ function App() {
     } catch (error: any) {
       console.error("Failed to save data to localStorage:", error);
     }
-  }, [people, rootIdStack, viewMode, isInitialLoad]);
+  }, [people, rootIdStack, viewMode, isInitialLoad, isReadOnly]);
 
   // Handle header collapse on scroll
   useEffect(() => {
@@ -344,9 +346,9 @@ function App() {
   const getDistance = (touches: React.TouchList): number => {
     const [touch1, touch2] = [touches[0], touches[1]];
     return Math.sqrt(
-        Math.pow(touch1.clientX - touch2.clientX, 2) + 
+        Math.pow(touch1.clientX - touch2.clientX, 
         Math.pow(touch1.clientY - touch2.clientY, 2)
-    );
+    ));
   };
     
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -409,16 +411,23 @@ function App() {
       setTransform(prev => ({...prev, scale: Math.min(Math.max(0.2, newScale), 3)}));
   };
   
-  const handleOpenAddModal = useCallback((personId: string) => setModalState({ isOpen: true, context: { action: 'add', personId }}), []);
+  const handleOpenAddModal = useCallback((personId: string) => {
+      if (isReadOnly) return;
+      setModalState({ isOpen: true, context: { action: 'add', personId }});
+  }, [isReadOnly]);
+
   const handleOpenEditModal = useCallback((personId: string) => {
+    if (isReadOnly) return;
     setDetailsModalPersonId(null);
     setModalState({ isOpen: true, context: { action: 'edit', personId } });
-  }, []);
+  }, [isReadOnly]);
+
   const handleCloseModal = useCallback(() => setModalState({ isOpen: false, context: null }), []);
   const handleOpenDetailsModal = useCallback((personId: string) => setDetailsModalPersonId(personId), []);
   const handleCloseDetailsModal = useCallback(() => setDetailsModalPersonId(null), []);
   
   const handleDeletePerson = useCallback((personIdToDelete: string) => {
+    if (isReadOnly) return;
     if (personIdToDelete === 'root') {
         alert("ხის დამფუძნებლის წაშლა შეუძლებელია.");
         return;
@@ -467,7 +476,7 @@ function App() {
 
     handleCloseModal();
     handleCloseDetailsModal();
-  }, [people, rootIdStack, handleCloseModal, handleCloseDetailsModal]);
+  }, [people, rootIdStack, handleCloseModal, handleCloseDetailsModal, isReadOnly]);
 
     const handleFormSubmit = useCallback((
         formData: Partial<{ firstName: string; lastName: string; gender: Gender; }>,
@@ -665,9 +674,13 @@ function App() {
       const decryptedCompressedBase64 = await decryptData(encryptedData, password);
       const compressedBuffer = base64ToBuffer(decryptedCompressedBase64);
       const decompressedString = pako.inflate(compressedBuffer, { to: 'string' });
-      const { people: sharedPeople, rootIdStack: sharedRootIdStack } = JSON.parse(decompressedString);
+      const parsedData = JSON.parse(decompressedString);
+      
+      const { people: sharedPeople, rootIdStack: sharedRootIdStack, readOnly } = parsedData;
       setPeople(sharedPeople);
       setRootIdStack(sharedRootIdStack);
+      setIsReadOnly(!!readOnly); // Set Read-Only state based on the flag in file
+      
       setIsPasswordPromptOpen(false);
       // Clean up URL
       window.history.replaceState({}, document.title, window.location.pathname);
@@ -760,6 +773,7 @@ function App() {
         if (window.confirm("ყურადღება: ეს მოქმედება წაშლის მიმდინარე გენეალოგიურ ხეს და ჩაანაცვლებს არჩეული ვერსიით. დარწმუნებული ხართ?")) {
             setPeople(importedData.people);
             setRootIdStack(importedData.rootIdStack);
+            setIsReadOnly(false); // Reset Read Only mode when restoring a backup
             alert("მონაცემები წარმატებით აღდგა.");
         }
     } catch (error: any) {
@@ -797,8 +811,13 @@ function App() {
               if (fileAction === 'import') {
                 setPeople(importedData.people);
                 setRootIdStack(importedData.rootIdStack);
+                setIsReadOnly(false); // Reset Read Only mode on import
                 alert("მონაცემები წარმატებით იმპორტირდა.");
               } else if (fileAction === 'merge') {
+                if (isReadOnly) {
+                    alert("შერწყმა შეუძლებელია მხოლოდ დათვალიერების რეჟიმში.");
+                    return;
+                }
                 const mergedPeople = mergePeopleData(people, importedData.people);
                 setPeople(mergedPeople);
                 alert("მონაცემები წარმატებით შეერწყა.");
@@ -901,6 +920,7 @@ function App() {
     };
     setPeople(initialPeople);
     setRootIdStack(['root']);
+    setIsReadOnly(false);
   };
   
   const handleOpenImport = () => setIsImportModalOpen(true);
@@ -1160,10 +1180,15 @@ const peopleWithBirthdays = useMemo(() => {
                     )}
                 </div>
 
-                <div className="flex-1 text-left xl:text-center min-w-0">
+                <div className="flex-1 text-left xl:text-center min-w-0 flex flex-col items-start xl:items-center">
                     <h1 className={`font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-600 transition-all duration-300 truncate pb-1 ${isHeaderCollapsed ? 'text-2xl sm:text-4xl' : 'text-3xl sm:text-5xl'}`}>
                         {headerTitle}
                     </h1>
+                    {isReadOnly && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 mb-1">
+                            👁️ დამთვალიერებლის რეჟიმი
+                        </span>
+                    )}
                     <p className={`text-xs sm:text-sm text-gray-500 dark:text-gray-400 transition-opacity duration-300 truncate ${isHeaderCollapsed ? 'opacity-0 h-0' : 'opacity-100'}`}>
                         {headerSubtitle}
                     </p>
@@ -1188,11 +1213,17 @@ const peopleWithBirthdays = useMemo(() => {
                                     <li><button onClick={() => { setIsStatisticsModalOpen(true); setIsMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors"><StatsIcon className="w-5 h-5"/><span>სტატისტიკა</span></button></li>
                                     <li><button onClick={() => { handleExportPdf(); setIsMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors"><ExportIcon className="w-5 h-5"/><span>PDF ექსპორტი</span></button></li>
                                     <li><hr className="my-1 border-gray-200 dark:border-gray-700" /></li>
-                                    <li className="px-4 py-2 text-xs text-gray-400 dark:text-gray-500">მონაცემები და რესურსები</li>
-                                    <li><a href="https://forms.gle/rCJN5PG7mMzVGHsv7" target="_blank" rel="noopener noreferrer" className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors"><DocumentTextIcon className="w-5 h-5"/><span>მონაცემების დამატება ფორმით</span></a></li>
-                                    <li><button onClick={() => { setIsImportModalOpen(true); setIsMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors"><JsonImportIcon className="w-5 h-5"/><span>მონაცემების იმპორტი</span></button></li>
-                                    <li><button onClick={() => { setIsExportModalOpen(true); setIsMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors"><JsonExportIcon className="w-5 h-5"/><span>მონაცემების ექსპორტი</span></button></li>
-                                    <li><hr className="my-1 border-gray-200 dark:border-gray-700" /></li>
+                                    
+                                    {!isReadOnly && (
+                                        <>
+                                            <li className="px-4 py-2 text-xs text-gray-400 dark:text-gray-500">მონაცემები და რესურსები</li>
+                                            <li><a href="https://forms.gle/rCJN5PG7mMzVGHsv7" target="_blank" rel="noopener noreferrer" className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors"><DocumentTextIcon className="w-5 h-5"/><span>მონაცემების დამატება ფორმით</span></a></li>
+                                            <li><button onClick={() => { setIsImportModalOpen(true); setIsMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors"><JsonImportIcon className="w-5 h-5"/><span>მონაცემების იმპორტი</span></button></li>
+                                            <li><button onClick={() => { setIsExportModalOpen(true); setIsMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors"><JsonExportIcon className="w-5 h-5"/><span>მონაცემების ექსპორტი</span></button></li>
+                                            <li><hr className="my-1 border-gray-200 dark:border-gray-700" /></li>
+                                        </>
+                                    )}
+
                                     <li className="px-4 py-2 text-xs text-gray-400 dark:text-gray-500">ინტერფეისი</li>
                                     <li><button onClick={() => setTheme(prevTheme => (prevTheme === 'dark' ? 'light' : 'dark'))} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-between transition-colors"><span>თემის შეცვლა</span> {theme === 'dark' ? <SunIcon className="w-5 h-5 text-yellow-400"/> : <MoonIcon className="w-5 h-5 text-indigo-500"/>}</button></li>
                                     
@@ -1299,6 +1330,7 @@ const peopleWithBirthdays = useMemo(() => {
                                 hoveredConnections={hoveredConnections}
                                 onSetHover={setHoveredPersonId}
                                 viewMode={viewMode as 'default' | 'compact'}
+                                isReadOnly={isReadOnly}
                             />
                         </div>
                     </div>
@@ -1362,6 +1394,7 @@ const peopleWithBirthdays = useMemo(() => {
             handleCloseDetailsModal();
             navigateTo(personId);
           }}
+          isReadOnly={isReadOnly}
         />
       )}
       {isStatisticsModalOpen && (

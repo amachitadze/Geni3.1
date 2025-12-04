@@ -15,9 +15,10 @@ interface DetailsModalProps {
   onNavigate: (personId: string) => void;
   onGoogleSearch: (person: Person) => void;
   onShowOnMap: (address: string) => void;
+  isReadOnly?: boolean;
 }
 
-const DetailsModal: React.FC<DetailsModalProps> = ({ person, people, onClose, onEdit, onDelete, onNavigate, onGoogleSearch, onShowOnMap }) => {
+const DetailsModal: React.FC<DetailsModalProps> = ({ person, people, onClose, onEdit, onDelete, onNavigate, onGoogleSearch, onShowOnMap, isReadOnly }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -50,23 +51,28 @@ const DetailsModal: React.FC<DetailsModalProps> = ({ person, people, onClose, on
         <GlobeIcon className="h-5 w-5" />
         {isMenu && <span>ძიება Google-ში</span>}
       </button>
-      <button
-        onClick={() => onEdit(person.id)}
-        className={isMenu ? "w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3" : "p-2 rounded-full text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 hover:text-black dark:hover:text-white transition-colors"}
-        aria-label={`${fullName}-ს რედაქტირება`}
-      >
-        <EditIcon className="h-5 w-5" />
-         {isMenu && <span>რედაქტირება</span>}
-      </button>
-      {person.id !== 'root' && (
-         <button
-            onClick={() => onDelete(person.id)}
-            className={isMenu ? "w-full text-left px-4 py-2 text-sm hover:bg-red-100 dark:hover:bg-red-900/50 flex items-center gap-3 text-red-600 dark:text-red-400" : "p-2 rounded-full text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 hover:bg-red-500 dark:hover:bg-red-600 hover:text-white transition-colors"}
-            aria-label={`${fullName}-ს წაშლა`}
+
+      {!isReadOnly && (
+        <>
+          <button
+            onClick={() => onEdit(person.id)}
+            className={isMenu ? "w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3" : "p-2 rounded-full text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 hover:text-black dark:hover:text-white transition-colors"}
+            aria-label={`${fullName}-ს რედაქტირება`}
           >
-            <DeleteIcon className="h-5 w-5" />
-            {isMenu && <span>წაშლა</span>}
+            <EditIcon className="h-5 w-5" />
+            {isMenu && <span>რედაქტირება</span>}
           </button>
+          {person.id !== 'root' && (
+             <button
+                onClick={() => onDelete(person.id)}
+                className={isMenu ? "w-full text-left px-4 py-2 text-sm hover:bg-red-100 dark:hover:bg-red-900/50 flex items-center gap-3 text-red-600 dark:text-red-400" : "p-2 rounded-full text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 hover:bg-red-500 dark:hover:bg-red-600 hover:text-white transition-colors"}
+                aria-label={`${fullName}-ს წაშლა`}
+              >
+                <DeleteIcon className="h-5 w-5" />
+                {isMenu && <span>წაშლა</span>}
+              </button>
+          )}
+        </>
       )}
     </>
   );

@@ -17,6 +17,7 @@ interface TreeNodeProps {
   onSetHover: (personId: string | null) => void;
   viewMode: 'default' | 'compact';
   parentId?: string; // ID of the parent for this node, used for highlighting connection
+  isReadOnly?: boolean;
 }
 
 const LinePaths: React.FC<{
@@ -58,7 +59,8 @@ const TreeNode: React.FC<TreeNodeProps> = ({
   hoveredConnections,
   onSetHover,
   viewMode,
-  parentId
+  parentId,
+  isReadOnly
 }) => {
   const person = people[personId];
   if (!person) return null;
@@ -123,6 +125,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({
                     isHoverConnected={isHoverConnected(parent.id)}
                     onSetHover={onSetHover}
                     viewMode={viewMode}
+                    isReadOnly={isReadOnly}
                   />
                 </div>
               </React.Fragment>
@@ -180,6 +183,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({
                     isHoverConnected={isHoverConnected(person.id)}
                     onSetHover={onSetHover}
                     viewMode={viewMode}
+                    isReadOnly={isReadOnly}
                 />
             </div>
             {spouse && (
@@ -209,6 +213,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({
                         isHoverConnected={isHoverConnected(spouse.id)}
                         onSetHover={onSetHover}
                         viewMode={viewMode}
+                        isReadOnly={isReadOnly}
                     />
                 </div>
                 </>
@@ -260,6 +265,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({
                   onSetHover={onSetHover}
                   viewMode={viewMode}
                   parentId={person.id}
+                  isReadOnly={isReadOnly}
                 />
               </div>
             ))}

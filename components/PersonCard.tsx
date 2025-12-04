@@ -13,6 +13,7 @@ interface PersonCardProps {
   isHoverConnected?: boolean;
   onSetHover: (personId: string | null) => void;
   viewMode: 'default' | 'compact';
+  isReadOnly?: boolean;
 }
 
 const genderStyles = {
@@ -30,7 +31,7 @@ const genderStyles = {
   },
 };
 
-const PersonCard: React.FC<PersonCardProps> = ({ person, onAdd, onShowDetails, onNavigate, isHighlighted, isConnectionHighlighted, isHoverConnected, onSetHover, viewMode }) => {
+const PersonCard: React.FC<PersonCardProps> = ({ person, onAdd, onShowDetails, onNavigate, isHighlighted, isConnectionHighlighted, isHoverConnected, onSetHover, viewMode, isReadOnly }) => {
   const styles = genderStyles[person.gender];
   const fullName = `${person.firstName} ${person.lastName}`;
 
@@ -58,7 +59,9 @@ const PersonCard: React.FC<PersonCardProps> = ({ person, onAdd, onShowDetails, o
 
   const handleAddButtonClick = (e: React.MouseEvent) => {
     e.stopPropagation(); 
-    onAdd(person.id);
+    if (!isReadOnly) {
+        onAdd(person.id);
+    }
   };
 
   const handleNavigateClick = (e: React.MouseEvent) => {
@@ -138,22 +141,25 @@ const PersonCard: React.FC<PersonCardProps> = ({ person, onAdd, onShowDetails, o
         </div>
       </div>
       <div className="mt-auto w-full pt-2 flex items-stretch gap-2 person-card-buttons">
-        <button 
-          onClick={handleAddButtonClick}
-          className={`w-full flex-grow text-xs py-1.5 px-2 rounded-md flex items-center justify-center gap-1 transition-colors ${styles.button}`}
-          aria-label={`${fullName}-თვის ნათესავის დამატება`}
-          title="დაამატე ნათესავი"
-        >
-          <PlusIcon className="w-3 h-3"/> დამატება
-        </button>
+        {!isReadOnly && (
+            <button 
+            onClick={handleAddButtonClick}
+            className={`w-full flex-grow text-xs py-1.5 px-2 rounded-md flex items-center justify-center gap-1 transition-colors ${styles.button}`}
+            aria-label={`${fullName}-თვის ნათესავის დამატება`}
+            title="დაამატე ნათესავი"
+            >
+            <PlusIcon className="w-3 h-3"/> დამატება
+            </button>
+        )}
         {canNavigateToAncestors && (
             <button
                 onClick={handleNavigateClick}
-                className={`flex-shrink-0 p-2 rounded-md transition-colors ${styles.button}`}
+                className={`flex-shrink-0 p-2 rounded-md transition-colors ${styles.button} ${isReadOnly ? 'w-full flex justify-center' : ''}`}
                 title="წინაპრების ნახვა"
                 aria-label={`${fullName}-ს წინაპრების ნახვა`}
             >
                 <AncestorsIcon className="w-4 h-4" />
+                {isReadOnly && <span className="ml-2 text-xs">წინაპრები</span>}
             </button>
         )}
       </div>
