@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { CloseIcon, JsonImportIcon, DocumentPlusIcon, CloudDownloadIcon, LockClosedIcon, DocumentIcon } from './Icons';
-import { getStoredSupabaseConfig, getSupabaseClient } from '../utils/supabaseClient';
+import { getStoredSupabaseConfig, getSupabaseClient, getAdminPassword } from '../utils/supabaseClient';
 
 interface ImportModalProps {
   isOpen: boolean;
@@ -44,8 +44,7 @@ const ImportModal: React.FC<ImportModalProps> = ({ isOpen, onClose, onImportFrom
     const handleAdminLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         
-        const env = typeof process !== 'undefined' ? process.env : {};
-        const correctPassword = env.REACT_APP_ADMIN_PASSWORD;
+        const correctPassword = getAdminPassword();
 
         if (!correctPassword) {
             setError("ადმინისტრატორის პაროლი არ არის კონფიგურირებული.");

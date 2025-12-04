@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { CloseIcon, JsonExportIcon, CloudUploadIcon, LockClosedIcon, CheckIcon } from './Icons';
 import { People } from '../types';
-import { getStoredSupabaseConfig, getSupabaseClient } from '../utils/supabaseClient';
+import { getStoredSupabaseConfig, getSupabaseClient, getAdminPassword } from '../utils/supabaseClient';
 
 interface ExportModalProps {
   isOpen: boolean;
@@ -34,11 +34,10 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, onExportJson
     const handleAdminLoginAndUpload = async (e: React.FormEvent) => {
         e.preventDefault();
         
-        const env = typeof process !== 'undefined' ? process.env : {};
-        const correctPassword = env.REACT_APP_ADMIN_PASSWORD;
+        const correctPassword = getAdminPassword();
 
         if (!correctPassword) {
-            setError("ადმინისტრატორის პაროლი არ არის კონფიგურირებული (REACT_APP_ADMIN_PASSWORD).");
+            setError("ადმინისტრატორის პაროლი არ არის კონფიგურირებული სისტემაში.");
             return;
         }
 
@@ -54,7 +53,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, onExportJson
         try {
             const config = getStoredSupabaseConfig();
             if (!config.url || !config.key) {
-                throw new Error("Supabase კონფიგურაცია არ მოიძებნა. გთხოვთ, ჯერ გაიაროთ კონფიგურაცია გაზიარების ფანჯარაში.");
+                throw new Error("Supabase კონფიგურაცია არ მოიძებნა. გთხოვთ, ჯერ შეამოწმოთ გარემოს ცვლადები.");
             }
 
             const supabase = getSupabaseClient(config.url, config.key);

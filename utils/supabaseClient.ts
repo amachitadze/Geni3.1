@@ -6,15 +6,31 @@ export const getSupabaseClient = (supabaseUrl: string, supabaseKey: string) => {
     return createClient(supabaseUrl, supabaseKey);
 };
 
+// Helper to safely access env vars in Vite or standard process.env environments
+const getEnvVar = (key: string, legacyKey?: string): string => {
+    // Check import.meta.env (Vite standard)
+    // @ts-ignore
+    if (typeof import.meta !== 'undefined' && import.meta.env) {
+        // @ts-ignore
+        if (import.meta.env[key]) return import.meta.env[key];
+        // @ts-ignore
+        if (legacyKey && import.meta.env[legacyKey]) return import.meta.env[legacyKey];
+    }
+
+    // Check process.env (Node/Compat)
+    if (typeof process !== 'undefined' && process.env) {
+        if (process.env[key]) return process.env[key] as string;
+        if (legacyKey && process.env[legacyKey]) return process.env[legacyKey] as string;
+    }
+
+    return '';
+};
+
 // Helper to check if we have env vars configured
 export const getStoredSupabaseConfig = () => {
-    // Check both REACT_APP_ (CRA) and VITE_ (Vite) prefixes just in case, plus standard process.env
-    const envUrl = (typeof process !== 'undefined' && process.env) 
-        ? (process.env.REACT_APP_SUPABASE_URL || process.env.VITE_SUPABASE_URL) 
-        : '';
-    const envKey = (typeof process !== 'undefined' && process.env) 
-        ? (process.env.REACT_APP_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY) 
-        : '';
+    // Try VITE_ prefix first, then REACT_APP_ fallback
+    const envUrl = getEnvVar('VITE_SUPABASE_URL', 'REACT_APP_SUPABASE_URL');
+    const envKey = getEnvVar('VITE_SUPABASE_ANON_KEY', 'REACT_APP_SUPABASE_ANON_KEY');
     
     const localUrl = localStorage.getItem('supabase_url');
     const localKey = localStorage.getItem('supabase_key');
@@ -23,4 +39,8 @@ export const getStoredSupabaseConfig = () => {
         url: envUrl || localUrl || '',
         key: envKey || localKey || ''
     };
+};
+
+export const getAdminPassword = (): string => {
+    return getEnvVar('VITE_ADMIN_PASSWORD', 'REACT_APP_ADMIN_PASSWORD');
 };

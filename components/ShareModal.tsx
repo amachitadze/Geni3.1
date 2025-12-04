@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { encryptData, bufferToBase64 } from '../utils/crypto';
 import { People } from '../types';
-import { ShareIcon, CopyIcon, CloseIcon, KeyIcon, DeleteIcon, DocumentIcon, LockClosedIcon, BackIcon } from './Icons';
-import { getSupabaseClient, getStoredSupabaseConfig } from '../utils/supabaseClient';
+import { ShareIcon, CopyIcon, CloseIcon, DeleteIcon, DocumentIcon, LockClosedIcon, BackIcon } from './Icons';
+import { getSupabaseClient, getStoredSupabaseConfig, getAdminPassword } from '../utils/supabaseClient';
 
 declare const pako: any;
 
@@ -25,7 +25,6 @@ export const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, data })
   // Supabase Config State
   const [supabaseUrl, setSupabaseUrl] = useState('');
   const [supabaseKey, setSupabaseKey] = useState('');
-  const [isConfigExpanded, setIsConfigExpanded] = useState(false);
 
   // File Manager State
   const [isFileManagerOpen, setIsFileManagerOpen] = useState(false);
@@ -41,20 +40,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, data })
       const config = getStoredSupabaseConfig();
       setSupabaseUrl(config.url);
       setSupabaseKey(config.key);
-      
-      // Auto-expand config if keys are missing from env vars
-      if (!config.url || !config.key) {
-          setIsConfigExpanded(true);
-      }
   }, []);
-
-  const saveConfig = () => {
-      if (supabaseUrl && supabaseKey) {
-          localStorage.setItem('supabase_url', supabaseUrl.trim());
-          localStorage.setItem('supabase_key', supabaseKey.trim());
-          setIsConfigExpanded(false);
-      }
-  };
 
   const generatePassword = () => {
     const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -116,11 +102,10 @@ export const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, data })
   const handleAdminLogin = (e: React.FormEvent) => {
       e.preventDefault();
       
-      const env = typeof process !== 'undefined' ? process.env : {};
-      const correctPassword = env.REACT_APP_ADMIN_PASSWORD;
+      const correctPassword = getAdminPassword();
       
       if (!correctPassword) {
-          setAdminError("ადმინისტრატორის პაროლი არ არის კონფიგურირებული Vercel-ში (REACT_APP_ADMIN_PASSWORD).");
+          setAdminError("ადმინისტრატორის პაროლი არ არის კონფიგურირებული სისტემაში.");
           return;
       }
 
@@ -149,8 +134,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, data })
       return;
     }
     if (!supabaseUrl || !supabaseKey) {
-        setError('გთხოვთ, შეიყვანოთ Supabase-ის მონაცემები კონფიგურაციაში.');
-        setIsConfigExpanded(true);
+        setError('სერვერის კონფიგურაცია ვერ მოიძებნა. გთხოვთ შეამოწმოთ გარემოს ცვლადები (Env Vars).');
         return;
     }
 
@@ -196,7 +180,6 @@ export const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, data })
       const url = `${window.location.origin}${window.location.pathname}?sbId=${fileName}&cfg=${configParam}`;
       
       setShareUrl(url);
-      saveConfig(); 
 
     } catch (e: any) {
       console.error("Link generation failed", e);
@@ -299,54 +282,11 @@ export const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, data })
         ) : (
             <>
                 <p className="text-gray-600 dark:text-gray-400 mb-4 text-sm">
-                    მონაცემები აიტვირთება თქვენს პირად Supabase საცავში. ეს უზრუნველყოფს მუდმივ და საიმედო ბმულს.
+                    მონაცემები აიტვირთება თქვენს პირად Supabase საცავში (ავტომატური კონფიგურაციით). ეს უზრუნველყოფს მუდმივ და საიმედო ბმულს.
                 </p>
 
                 <div className="space-y-4">
                     
-                {/* Supabase Configuration Section */}
-                <div className="border border-gray-200 dark:border-gray-700 rounded-md p-3 bg-gray-50 dark:bg-gray-900/50">
-                    <button 
-                        onClick={() => setIsConfigExpanded(!isConfigExpanded)}
-                        className="flex items-center justify-between w-full text-sm font-semibold text-gray-700 dark:text-gray-300"
-                    >
-                        <span className="flex items-center gap-2"><KeyIcon className="w-4 h-4"/> სერვერის კონფიგურაცია</span>
-                        <span className="text-purple-600 hover:text-purple-700">{isConfigExpanded ? 'დამალვა' : 'ჩვენება'}</span>
-                    </button>
-                    
-                    {isConfigExpanded && (
-                        <div className="mt-3 space-y-3">
-                            <div>
-                                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Project URL</label>
-                                <input 
-                                    type="text" 
-                                    value={supabaseUrl}
-                                    onChange={(e) => setSupabaseUrl(e.target.value)}
-                                    placeholder="https://your-project.supabase.co"
-                                    className="w-full px-2 py-1.5 text-xs bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-purple-500 outline-none dark:text-white"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Anon / Public Key</label>
-                                <input 
-                                    type="text" 
-                                    value={supabaseKey}
-                                    onChange={(e) => setSupabaseKey(e.target.value)}
-                                    placeholder="eyJh..."
-                                    className="w-full px-2 py-1.5 text-xs bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-purple-500 outline-none dark:text-white"
-                                />
-                            </div>
-                            <div className="text-xs text-gray-500 dark:text-gray-400 pt-1 border-t border-gray-200 dark:border-gray-600">
-                                <p className="mb-2">აუცილებელია: <b>shares</b> bucket და <b>Public Upload/Delete</b> პოლიტიკა.</p>
-                                <a href="#" className="text-purple-600 hover:underline font-medium flex items-center gap-1">
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                    იხილეთ ინსტრუქცია და პოლიტიკა
-                                </a>
-                            </div>
-                        </div>
-                    )}
-                </div>
-
                 {supabaseUrl && supabaseKey && (
                     <button 
                         onClick={toggleFileManager}
