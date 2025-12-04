@@ -345,7 +345,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, data })
                                     </summary>
                                     <div className="mt-2 p-2 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-600">
                                         <p className="mb-2">1. Supabase-ში შექმენით ახალი Public Bucket სახელად <b>shares</b>.</p>
-                                        <p className="mb-2">2. Storage > Policies განყოფილებაში shares bucket-ისთვის დაამატეთ შემდეგი პოლიტიკა:</p>
+                                        <p className="mb-2">2. Storage &gt; Policies განყოფილებაში shares bucket-ისთვის დაამატეთ შემდეგი პოლიტიკა:</p>
                                         <div className="p-2 bg-gray-100 dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700 font-mono text-[10px] text-gray-700 dark:text-gray-300 whitespace-pre-wrap select-all">
 {`-- პოლიტიკის სახელი: Public Access
 -- დაუშვით: INSERT, SELECT, DELETE
