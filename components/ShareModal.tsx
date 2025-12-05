@@ -224,6 +224,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, data })
                     </div>
                 </div>
             )}
+        </div>
       </div>
     </div>
   );
