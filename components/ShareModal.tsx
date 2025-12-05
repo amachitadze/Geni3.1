@@ -57,6 +57,16 @@ export const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, data })
       return newData;
   };
 
+  const transliterate = (text: string) => {
+    const map: Record<string, string> = {
+      'ა': 'a', 'ბ': 'b', 'გ': 'g', 'დ': 'd', 'ე': 'e', 'ვ': 'v', 'ზ': 'z', 'თ': 't',
+      'ი': 'i', 'კ': 'k', 'ლ': 'l', 'მ': 'm', 'ნ': 'n', 'ო': 'o', 'პ': 'p', 'ჟ': 'zh',
+      'რ': 'r', 'ს': 's', 'ტ': 't', 'უ': 'u', 'ფ': 'p', 'ქ': 'k', 'ღ': 'gh', 'ყ': 'q',
+      'შ': 'sh', 'ჩ': 'ch', 'ც': 'ts', 'ძ': 'dz', 'წ': 'ts', 'ჭ': 'ch', 'ხ': 'kh', 'ჯ': 'j', 'ჰ': 'h'
+    };
+    return text.split('').map(char => map[char] || char).join('');
+  };
+
   const handleGenerateLink = async () => {
     if (!password) {
       setError('გთხოვთ, ჯერ შექმენით პაროლი.');
@@ -98,12 +108,15 @@ export const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, data })
       // 3. Upload to Supabase Storage
       const dateStr = new Date().toISOString().slice(0, 10);
       
-      // Get Root Person Last Name for Filename
+      // Get Root Person Last Name for Filename and Transliterate
       const rootPerson = data.people[data.rootIdStack[0]]; // Assuming first in stack is root
-      const lastName = rootPerson?.lastName ? rootPerson.lastName.replace(/[^a-zA-Z0-9\u10A0-\u10FF]/g, '') : 'Family';
+      const rawLastName = rootPerson?.lastName || 'Family';
+      // Transliterate Georgian to Latin and remove any remaining non-alphanumeric chars
+      const latinLastName = transliterate(rawLastName).replace(/[^a-zA-Z0-9]/g, '');
+      
       const randomId = Math.random().toString(36).substring(7);
       
-      const fileName = `share_${lastName}_${dateStr}_${randomId}.txt`;
+      const fileName = `share_${latinLastName || 'Tree'}_${dateStr}_${randomId}.txt`;
       const blob = new Blob([encryptedData], { type: 'text/plain' });
       
       const { data: uploadData, error: uploadError } = await supabase
