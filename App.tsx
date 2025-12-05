@@ -408,7 +408,7 @@ function App() {
                                 <ul className="py-2 max-h-[80vh] overflow-y-auto">
                                     <li><div className={MENU_HEADER_CLASS}>ნავიგაცია</div></li>
                                     <li><button onClick={() => { setIsViewingTree(false); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}><HomeIcon className="w-5 h-5"/><span>საწყისი გვერდი</span></button></li>
-                                    <li><button onClick={() => { setIsShareModalOpen(true); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}><ShareIcon className="w-5 h-5"/><span>გაზიარება</span></button></li>
+                                    {!isReadOnly && <li><button onClick={() => { setIsShareModalOpen(true); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}><ShareIcon className="w-5 h-5"/><span>გაზიარება</span></button></li>}
                                     
                                     <li><hr className="my-1 border-gray-200 dark:border-gray-700" /></li>
 
@@ -430,13 +430,18 @@ function App() {
                                     
                                     <li><div className={MENU_HEADER_CLASS}>ანალიზი</div></li>
                                     <li><button onClick={() => { setIsStatisticsModalOpen(true); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}><StatsIcon className="w-5 h-5"/><span>სტატისტიკა</span></button></li>
-                                    <li><button onClick={handleExportPdf} className={MENU_ITEM_CLASS}><ExportIcon className="w-5 h-5"/><span>PDF ექსპორტი</span></button></li>
+                                    {!isReadOnly && <li><button onClick={handleExportPdf} className={MENU_ITEM_CLASS}><ExportIcon className="w-5 h-5"/><span>PDF ექსპორტი</span></button></li>}
                                     
-                                    <li><hr className="my-1 border-gray-200 dark:border-gray-700" /></li>
-                                    <li><div className={MENU_HEADER_CLASS}>მონაცემები</div></li>
-                                    <li><button onClick={() => { setIsFileManagerOpen(true); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}><DocumentIcon className="w-5 h-5"/><span>მონაცემების მართვა</span></button></li>
-                                    <li><button onClick={() => { setIsImportModalOpen(true); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}><JsonImportIcon className="w-5 h-5"/><span>იმპორტი</span></button></li>
-                                    <li><button onClick={() => { setIsExportModalOpen(true); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}><JsonExportIcon className="w-5 h-5"/><span>ექსპორტი</span></button></li>
+                                    
+                                    {!isReadOnly && (
+                                        <>
+                                            <li><hr className="my-1 border-gray-200 dark:border-gray-700" /></li>
+                                            <li><div className={MENU_HEADER_CLASS}>მონაცემები</div></li>
+                                            <li><button onClick={() => { setIsFileManagerOpen(true); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}><DocumentIcon className="w-5 h-5"/><span>მონაცემების მართვა</span></button></li>
+                                            <li><button onClick={() => { setIsImportModalOpen(true); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}><JsonImportIcon className="w-5 h-5"/><span>იმპორტი</span></button></li>
+                                            <li><button onClick={() => { setIsExportModalOpen(true); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}><JsonExportIcon className="w-5 h-5"/><span>ექსპორტი</span></button></li>
+                                        </>
+                                    )}
                                     
                                     <li><hr className="my-1 border-gray-200 dark:border-gray-700" /></li>
                                     <li><div className={MENU_HEADER_CLASS}>პარამეტრები</div></li>
