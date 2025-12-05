@@ -37,6 +37,7 @@ declare const pako: any;
 
 // Style Constants
 const MENU_ITEM_CLASS = "w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors text-gray-700 dark:text-gray-200";
+const MENU_HEADER_CLASS = "px-4 py-1.5 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mt-1";
 const ZOOM_BTN_CLASS = "w-10 h-10 rounded-full bg-gray-700/50 text-white backdrop-blur-sm flex items-center justify-center text-xl hover:bg-gray-600/70 shadow-md transition-colors";
 
 function App() {
@@ -391,27 +392,58 @@ function App() {
                     )}
                 </div>
                 <div className="flex-1 text-left xl:text-center min-w-0 flex flex-col items-start xl:items-center">
-                    <h1 className={`font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-600 truncate pb-1 ${isHeaderCollapsed ? 'text-2xl sm:text-4xl' : 'text-3xl sm:text-5xl'}`}>{headerTitle}</h1>
+                    <h1 className={`font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-600 truncate pb-1 ${isHeaderCollapsed ? 'text-2xl sm:text-4xl' : 'text-3xl sm:text-5xl'} w-full`}>{headerTitle}</h1>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
-                    <button onClick={() => setIsSearchOpen(true)} className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"><SearchIcon className="w-6 h-6"/></button>
-                    <button onClick={() => googleAI.setIsOpen(true)} className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"><GlobeIcon className="w-6 h-6"/></button>
+                    {/* Desktop Search Buttons */}
+                    <div className="hidden sm:flex items-center gap-2">
+                        <button onClick={() => setIsSearchOpen(true)} className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200" title="ძიება"><SearchIcon className="w-6 h-6"/></button>
+                        <button onClick={() => googleAI.setIsOpen(true)} className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200" title="Google AI"><GlobeIcon className="w-6 h-6"/></button>
+                    </div>
+                    
                     <div className="relative" ref={menuRef}>
                         <button onClick={() => setIsMenuOpen(p => !p)} className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"><MenuIcon className="w-6 h-6"/></button>
                         {isMenuOpen && (
                             <div className="absolute right-0 mt-2 w-72 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md shadow-lg z-20">
-                                <ul className="py-1">
+                                <ul className="py-2 max-h-[80vh] overflow-y-auto">
+                                    <li><div className={MENU_HEADER_CLASS}>ნავიგაცია</div></li>
                                     <li><button onClick={() => { setIsViewingTree(false); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}><HomeIcon className="w-5 h-5"/><span>საწყისი გვერდი</span></button></li>
-                                    <li><hr className="my-1 border-gray-200 dark:border-gray-700" /></li>
                                     <li><button onClick={() => { setIsShareModalOpen(true); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}><ShareIcon className="w-5 h-5"/><span>გაზიარება</span></button></li>
+                                    
+                                    <li><hr className="my-1 border-gray-200 dark:border-gray-700" /></li>
+
+                                    {/* Mobile Search Actions */}
+                                    <li className="sm:hidden">
+                                        <div className={MENU_HEADER_CLASS}>ძიება</div>
+                                    </li>
+                                    <li className="sm:hidden">
+                                        <button onClick={() => { setIsSearchOpen(true); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}>
+                                            <SearchIcon className="w-5 h-5"/><span>პიროვნების ძიება</span>
+                                        </button>
+                                    </li>
+                                    <li className="sm:hidden">
+                                        <button onClick={() => { googleAI.setIsOpen(true); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}>
+                                            <GlobeIcon className="w-5 h-5"/><span>ისტორიული ძიება (Google)</span>
+                                        </button>
+                                    </li>
+                                    <li className="sm:hidden"><hr className="my-1 border-gray-200 dark:border-gray-700" /></li>
+                                    
+                                    <li><div className={MENU_HEADER_CLASS}>ანალიზი</div></li>
                                     <li><button onClick={() => { setIsStatisticsModalOpen(true); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}><StatsIcon className="w-5 h-5"/><span>სტატისტიკა</span></button></li>
                                     <li><button onClick={handleExportPdf} className={MENU_ITEM_CLASS}><ExportIcon className="w-5 h-5"/><span>PDF ექსპორტი</span></button></li>
+                                    
                                     <li><hr className="my-1 border-gray-200 dark:border-gray-700" /></li>
+                                    <li><div className={MENU_HEADER_CLASS}>მონაცემები</div></li>
                                     <li><button onClick={() => { setIsFileManagerOpen(true); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}><DocumentIcon className="w-5 h-5"/><span>მონაცემების მართვა</span></button></li>
                                     <li><button onClick={() => { setIsImportModalOpen(true); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}><JsonImportIcon className="w-5 h-5"/><span>იმპორტი</span></button></li>
                                     <li><button onClick={() => { setIsExportModalOpen(true); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}><JsonExportIcon className="w-5 h-5"/><span>ექსპორტი</span></button></li>
+                                    
                                     <li><hr className="my-1 border-gray-200 dark:border-gray-700" /></li>
+                                    <li><div className={MENU_HEADER_CLASS}>პარამეტრები</div></li>
                                     <li><button onClick={toggleTheme} className={`${MENU_ITEM_CLASS} justify-between`}><span>თემის შეცვლა</span> {theme === 'dark' ? <SunIcon className="w-5 h-5 text-yellow-400"/> : <MoonIcon className="w-5 h-5 text-indigo-500"/>}</button></li>
+                                    
+                                    <li><hr className="my-1 border-gray-200 dark:border-gray-700" /></li>
+                                    <li><div className={MENU_HEADER_CLASS}>ხედი</div></li>
                                     <li><button onClick={() => setViewMode('default')} className={`${MENU_ITEM_CLASS} ${viewMode === 'default' ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400' : ''}`}><ViewNormalIcon className="w-5 h-5"/><span>სტანდარტული</span></button></li>
                                     <li><button onClick={() => setViewMode('compact')} className={`${MENU_ITEM_CLASS} ${viewMode === 'compact' ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400' : ''}`}><ViewCompactIcon className="w-5 h-5"/><span>კომპაქტური</span></button></li>
                                     <li><button onClick={() => setViewMode('list')} className={`${MENU_ITEM_CLASS} ${viewMode === 'list' ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400' : ''}`}><ListBulletIcon className="w-5 h-5"/><span>სია</span></button></li>
