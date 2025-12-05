@@ -14,14 +14,17 @@ import ExportModal from './components/ExportModal';
 import LandingPage from './components/LandingPage';
 import InitialView from './components/InitialView';
 import FileManagerModal from './components/FileManagerModal';
+import NotificationSenderModal from './components/NotificationSenderModal';
+import NotificationBanner from './components/NotificationBanner';
 import { decryptData, base64ToBuffer } from './utils/crypto';
 import { formatTimestamp, calculateAge } from './utils/dateUtils';
 import { validatePeopleData, getFamilyUnitFromConnection } from './utils/treeUtils';
+import { translations, Language } from './utils/translations';
 import { 
     SearchIcon, BackIcon, HomeIcon, MenuIcon, ExportIcon, 
     CenterIcon, StatsIcon, CloseIcon, ShareIcon, JsonExportIcon, 
     JsonImportIcon, SunIcon, MoonIcon, ViewCompactIcon, ViewNormalIcon, 
-    ListBulletIcon, GlobeIcon, DocumentIcon 
+    ListBulletIcon, GlobeIcon, DocumentIcon, MessageIcon 
 } from './components/Icons';
 
 // Hooks
@@ -78,9 +81,14 @@ function App() {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isFileManagerOpen, setIsFileManagerOpen] = useState(false);
+  const [isNotificationSenderOpen, setIsNotificationSenderOpen] = useState(false);
   const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   
+  // Language State
+  const [language, setLanguage] = useState<Language>('ka');
+  const t = translations[language]; // Translation Helper
+
   // File Import Logic
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [fileAction, setFileAction] = useState<'import' | 'merge' | null>(null);
@@ -114,9 +122,20 @@ function App() {
     const ageGroups = { '0-18': 0, '19-35': 0, '36-60': 0, '60+': 0 };
     let totalAge = 0;
     let ageCount = 0;
+    
     let oldest: { name: string; age: number } | null = null;
+    let youngest: { name: string; age: number } | null = null;
+    const addressCounts: Record<string, number> = {};
 
     list.forEach(p => {
+        // Address Count
+        if (p.contactInfo?.address) {
+            const addr = p.contactInfo.address.trim();
+            if (addr) {
+                addressCounts[addr] = (addressCounts[addr] || 0) + 1;
+            }
+        }
+
         if (!p.birthDate) return;
         const age = calculateAge(p.birthDate, p.deathDate);
         if (age === null) return;
@@ -127,8 +146,13 @@ function App() {
              else if (age <= 60) ageGroups['36-60']++;
              else ageGroups['60+']++;
              
+             // Oldest
              if (!oldest || age > oldest.age) {
                  oldest = { name: `${p.firstName} ${p.lastName}`, age };
+             }
+             // Youngest (Living)
+             if (!youngest || age < youngest.age) {
+                 youngest = { name: `${p.firstName} ${p.lastName}`, age };
              }
         } else {
              totalAge += age;
@@ -138,6 +162,16 @@ function App() {
 
     const averageLifespan = ageCount > 0 ? Math.round(totalAge / ageCount) : 0;
     
+    // Most Common Address
+    let mostCommonAddress = null;
+    let maxAddrCount = 0;
+    Object.entries(addressCounts).forEach(([addr, count]) => {
+        if (count > maxAddrCount) {
+            maxAddrCount = count;
+            mostCommonAddress = { address: addr, count };
+        }
+    });
+
     // Top Names
     const getTopNames = (gender: Gender) => {
         const counts: Record<string, number> = {};
@@ -161,8 +195,9 @@ function App() {
       topMaleNames: getTopNames(Gender.Male),
       topFemaleNames: getTopNames(Gender.Female),
       oldestLivingPerson: oldest,
+      youngestLivingPerson: youngest,
       averageLifespan,
-      mostCommonAddress: null
+      mostCommonAddress
     };
   }, [people]);
 
@@ -375,7 +410,7 @@ function App() {
   const headerTitle = rootPerson?.lastName ? `${rootPerson.lastName}ების გენეალოგიური ხე` : 'გენეალოგიური ხე';
 
   if (isInitialLoad) return <div className="h-screen bg-white dark:bg-gray-900 flex items-center justify-center text-xl text-gray-800 dark:text-gray-200">იტვირთება...</div>;
-  if (!isViewingTree) return <LandingPage onEnter={() => setIsViewingTree(true)} />;
+  if (!isViewingTree) return <LandingPage onEnter={() => setIsViewingTree(true)} language={language} onLanguageChange={setLanguage} />;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 flex flex-col">
@@ -386,7 +421,7 @@ function App() {
                 <div className="flex items-center gap-2 flex-shrink-0">
                     {rootIdStack.length > 1 && (
                         <>
-                            <button onClick={navigateBack} className="flex items-center gap-1 text-gray-500 hover:text-black dark:text-gray-400 dark:hover:text-white"><BackIcon className="w-6 h-6"/><span className="hidden sm:inline">უკან</span></button>
+                            <button onClick={navigateBack} className="flex items-center gap-1 text-gray-500 hover:text-black dark:text-gray-400 dark:hover:text-white"><BackIcon className="w-6 h-6"/><span className="hidden sm:inline">{t.header_back}</span></button>
                             <button onClick={navigateToHome} className="flex items-center gap-1 text-gray-500 hover:text-black dark:text-gray-400 dark:hover:text-white"><HomeIcon className="w-6 h-6"/></button>
                         </>
                     )}
@@ -397,7 +432,7 @@ function App() {
                 <div className="flex items-center gap-2 flex-shrink-0">
                     {/* Desktop Search Buttons */}
                     <div className="hidden sm:flex items-center gap-2">
-                        <button onClick={() => setIsSearchOpen(true)} className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200" title="ძიება"><SearchIcon className="w-6 h-6"/></button>
+                        <button onClick={() => setIsSearchOpen(true)} className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200" title={t.menu_search}><SearchIcon className="w-6 h-6"/></button>
                         <button onClick={() => googleAI.setIsOpen(true)} className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200" title="Google AI"><GlobeIcon className="w-6 h-6"/></button>
                     </div>
                     
@@ -406,54 +441,81 @@ function App() {
                         {isMenuOpen && (
                             <div className="absolute right-0 mt-2 w-72 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md shadow-lg z-20">
                                 <ul className="py-2 max-h-[80vh] overflow-y-auto">
-                                    <li><div className={MENU_HEADER_CLASS}>ნავიგაცია</div></li>
-                                    <li><button onClick={() => { setIsViewingTree(false); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}><HomeIcon className="w-5 h-5"/><span>საწყისი გვერდი</span></button></li>
-                                    {!isReadOnly && <li><button onClick={() => { setIsShareModalOpen(true); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}><ShareIcon className="w-5 h-5"/><span>გაზიარება</span></button></li>}
+                                    <li><div className={MENU_HEADER_CLASS}>{t.menu_navigation}</div></li>
+                                    <li><button onClick={() => { setIsViewingTree(false); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}><HomeIcon className="w-5 h-5"/><span>{t.menu_home}</span></button></li>
+                                    {!isReadOnly && <li><button onClick={() => { setIsNotificationSenderOpen(true); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}><MessageIcon className="w-5 h-5"/><span>{t.menu_message}</span></button></li>}
+                                    {!isReadOnly && <li><button onClick={() => { setIsShareModalOpen(true); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}><ShareIcon className="w-5 h-5"/><span>{t.menu_share}</span></button></li>}
                                     
                                     <li><hr className="my-1 border-gray-200 dark:border-gray-700" /></li>
 
                                     {/* Mobile Search Actions */}
                                     <li className="sm:hidden">
-                                        <div className={MENU_HEADER_CLASS}>ძიება</div>
+                                        <div className={MENU_HEADER_CLASS}>{t.menu_search}</div>
                                     </li>
                                     <li className="sm:hidden">
                                         <button onClick={() => { setIsSearchOpen(true); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}>
-                                            <SearchIcon className="w-5 h-5"/><span>პიროვნების ძიება</span>
+                                            <SearchIcon className="w-5 h-5"/><span>{t.menu_search_person}</span>
                                         </button>
                                     </li>
                                     <li className="sm:hidden">
                                         <button onClick={() => { googleAI.setIsOpen(true); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}>
-                                            <GlobeIcon className="w-5 h-5"/><span>ისტორიული ძიება (Google)</span>
+                                            <GlobeIcon className="w-5 h-5"/><span>{t.menu_search_history}</span>
                                         </button>
                                     </li>
                                     <li className="sm:hidden"><hr className="my-1 border-gray-200 dark:border-gray-700" /></li>
                                     
-                                    <li><div className={MENU_HEADER_CLASS}>ანალიზი</div></li>
-                                    <li><button onClick={() => { setIsStatisticsModalOpen(true); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}><StatsIcon className="w-5 h-5"/><span>სტატისტიკა</span></button></li>
-                                    {!isReadOnly && <li><button onClick={handleExportPdf} className={MENU_ITEM_CLASS}><ExportIcon className="w-5 h-5"/><span>PDF ექსპორტი</span></button></li>}
+                                    <li><div className={MENU_HEADER_CLASS}>{t.menu_analysis}</div></li>
+                                    <li><button onClick={() => { setIsStatisticsModalOpen(true); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}><StatsIcon className="w-5 h-5"/><span>{t.menu_stats}</span></button></li>
+                                    {!isReadOnly && <li><button onClick={handleExportPdf} className={MENU_ITEM_CLASS}><ExportIcon className="w-5 h-5"/><span>{t.menu_export_pdf}</span></button></li>}
                                     
                                     
                                     {!isReadOnly && (
                                         <>
                                             <li><hr className="my-1 border-gray-200 dark:border-gray-700" /></li>
-                                            <li><div className={MENU_HEADER_CLASS}>მონაცემები</div></li>
-                                            <li><button onClick={() => { setIsFileManagerOpen(true); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}><DocumentIcon className="w-5 h-5"/><span>მონაცემების მართვა</span></button></li>
-                                            <li><button onClick={() => { setIsImportModalOpen(true); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}><JsonImportIcon className="w-5 h-5"/><span>იმპორტი</span></button></li>
-                                            <li><button onClick={() => { setIsExportModalOpen(true); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}><JsonExportIcon className="w-5 h-5"/><span>ექსპორტი</span></button></li>
+                                            <li><div className={MENU_HEADER_CLASS}>{t.menu_data}</div></li>
+                                            <li><button onClick={() => { setIsFileManagerOpen(true); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}><DocumentIcon className="w-5 h-5"/><span>{t.menu_manage_data}</span></button></li>
+                                            <li><button onClick={() => { setIsImportModalOpen(true); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}><JsonImportIcon className="w-5 h-5"/><span>{t.menu_import}</span></button></li>
+                                            <li><button onClick={() => { setIsExportModalOpen(true); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}><JsonExportIcon className="w-5 h-5"/><span>{t.menu_export}</span></button></li>
                                         </>
                                     )}
                                     
                                     <li><hr className="my-1 border-gray-200 dark:border-gray-700" /></li>
-                                    <li><div className={MENU_HEADER_CLASS}>პარამეტრები</div></li>
-                                    <li><button onClick={toggleTheme} className={`${MENU_ITEM_CLASS} justify-between`}><span>თემის შეცვლა</span> {theme === 'dark' ? <SunIcon className="w-5 h-5 text-yellow-400"/> : <MoonIcon className="w-5 h-5 text-indigo-500"/>}</button></li>
+                                    <li><div className={MENU_HEADER_CLASS}>{t.menu_settings}</div></li>
+                                    <li><button onClick={toggleTheme} className={`${MENU_ITEM_CLASS} justify-between`}><span>{t.menu_theme}</span> {theme === 'dark' ? <SunIcon className="w-5 h-5 text-yellow-400"/> : <MoonIcon className="w-5 h-5 text-indigo-500"/>}</button></li>
                                     
                                     <li><hr className="my-1 border-gray-200 dark:border-gray-700" /></li>
-                                    <li><div className={MENU_HEADER_CLASS}>ხედი</div></li>
-                                    <li><button onClick={() => setViewMode('default')} className={`${MENU_ITEM_CLASS} ${viewMode === 'default' ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400' : ''}`}><ViewNormalIcon className="w-5 h-5"/><span>სტანდარტული</span></button></li>
-                                    <li><button onClick={() => setViewMode('compact')} className={`${MENU_ITEM_CLASS} ${viewMode === 'compact' ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400' : ''}`}><ViewCompactIcon className="w-5 h-5"/><span>კომპაქტური</span></button></li>
-                                    <li><button onClick={() => setViewMode('list')} className={`${MENU_ITEM_CLASS} ${viewMode === 'list' ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400' : ''}`}><ListBulletIcon className="w-5 h-5"/><span>სია</span></button></li>
+                                    <li><div className={MENU_HEADER_CLASS}>{t.menu_view}</div></li>
+                                    <li><button onClick={() => setViewMode('default')} className={`${MENU_ITEM_CLASS} ${viewMode === 'default' ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400' : ''}`}><ViewNormalIcon className="w-5 h-5"/><span>{t.menu_view_default}</span></button></li>
+                                    <li><button onClick={() => setViewMode('compact')} className={`${MENU_ITEM_CLASS} ${viewMode === 'compact' ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400' : ''}`}><ViewCompactIcon className="w-5 h-5"/><span>{t.menu_view_compact}</span></button></li>
+                                    <li><button onClick={() => setViewMode('list')} className={`${MENU_ITEM_CLASS} ${viewMode === 'list' ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400' : ''}`}><ListBulletIcon className="w-5 h-5"/><span>{t.menu_view_list}</span></button></li>
+
+                                    {/* Language Switcher (Moved to Bottom) */}
+                                    <li><hr className="my-1 border-gray-200 dark:border-gray-700" /></li>
+                                    <li className="flex justify-around px-4 py-2">
+                                        <button 
+                                            onClick={() => setLanguage('ka')} 
+                                            className={`px-3 py-1 text-xs rounded-full border ${language === 'ka' ? 'bg-purple-100 border-purple-500 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300' : 'bg-gray-100 border-gray-300 text-gray-600 dark:bg-gray-700 dark:text-gray-300'}`}
+                                        >
+                                            ქართული 🇬🇪
+                                        </button>
+                                        <button 
+                                            onClick={() => setLanguage('es')} 
+                                            className={`px-3 py-1 text-xs rounded-full border ${language === 'es' ? 'bg-purple-100 border-purple-500 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300' : 'bg-gray-100 border-gray-300 text-gray-600 dark:bg-gray-700 dark:text-gray-300'}`}
+                                        >
+                                            Español 🇪🇸
+                                        </button>
+                                    </li>
                                 </ul>
-                                <div className="px-4 py-2 text-xs text-center text-gray-400 border-t border-gray-200 dark:border-gray-700">ბოლოს განახლდა: {formatTimestamp(lastUpdated)}</div>
+                                <div className="px-4 py-2 text-xs text-center text-gray-400 border-t border-gray-200 dark:border-gray-700">
+                                    <div className="mb-1">ბოლოს განახლდა: {formatTimestamp(lastUpdated)}</div>
+                                    <div className="flex items-center justify-center gap-1 opacity-75">
+                                        <span>შექმნა</span>
+                                        <a href="https://avma.carrd.co/" target="_blank" rel="noopener noreferrer" className="inline-block hover:opacity-100 transition-opacity">
+                                            <img src="https://i.postimg.cc/c1T2NJgV/avma.png" alt="AvMa" className="h-2.5 w-auto" />
+                                        </a>
+                                        <span>2025 ©</span>
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </div>
@@ -465,7 +527,7 @@ function App() {
         <div className={`absolute top-0 left-0 right-0 p-4 bg-white/80 dark:bg-gray-900/80 shadow-md transition-transform duration-300 ${isSearchOpen ? 'translate-y-0' : '-translate-y-full'}`}>
             <div className="relative w-full max-w-2xl mx-auto">
                 <SearchIcon className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2"/>
-                <input type="text" placeholder="მოძებნეთ პიროვნება..." value={searchQuery} onChange={handleSearchChange} className="w-full h-12 pl-10 pr-10 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 dark:text-white" autoFocus />
+                <input type="text" placeholder={t.search_placeholder} value={searchQuery} onChange={handleSearchChange} className="w-full h-12 pl-10 pr-10 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 dark:text-white" autoFocus />
                 <button onClick={() => { setIsSearchOpen(false); setSearchQuery(''); setSearchResults([]); setHighlightedPersonId(null); }} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600"><CloseIcon className="w-5 h-5"/></button>
                 {searchResults.length > 0 && (
                 <ul className="absolute left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md shadow-lg max-h-80 overflow-y-auto z-30">
@@ -498,7 +560,7 @@ function App() {
                     </div>
                 </div>
             )
-        ) : <InitialView onStartCreating={handleStartCreating} onImport={() => setIsImportModalOpen(true)} />}
+        ) : <InitialView onStartCreating={handleStartCreating} onImport={() => setIsImportModalOpen(true)} language={language} />}
 
         {/* Floating Controls */}
         {viewMode !== 'list' && (
@@ -517,6 +579,10 @@ function App() {
         )}
 
         <BirthdayNotifier peopleWithBirthdays={peopleWithBirthdays} onNavigate={(id) => { navigateTo(id); setHighlightedPersonId(id); }} />
+        
+        {/* Real-time Notifications */}
+        <NotificationBanner />
+
         {installPrompt && (
           <div className="fixed bottom-20 sm:bottom-4 left-1/2 -translate-x-1/2 bg-white dark:bg-gray-800 p-3 rounded-lg shadow-2xl z-50 flex gap-4 border border-gray-200 dark:border-gray-700">
             <p className="text-sm text-gray-700 dark:text-gray-300">დააინსტალირეთ აპლიკაცია.</p>
@@ -545,7 +611,7 @@ function App() {
           onNavigate={(id) => { setDetailsModalPersonId(null); navigateTo(id); }} isReadOnly={isReadOnly}
         />
       )}
-      {isStatisticsModalOpen && <StatisticsModal isOpen={isStatisticsModalOpen} onClose={() => setIsStatisticsModalOpen(false)} stats={statistics} theme={theme} />} 
+      {isStatisticsModalOpen && <StatisticsModal isOpen={isStatisticsModalOpen} onClose={() => setIsStatisticsModalOpen(false)} stats={statistics} theme={theme} language={language} />} 
 
       {isShareModalOpen && <ShareModal isOpen={isShareModalOpen} onClose={() => setIsShareModalOpen(false)} data={{ people, rootIdStack }} />}
       {isPasswordPromptOpen && <PasswordPromptModal isOpen={isPasswordPromptOpen} onSubmit={handlePasswordSubmit} onClose={() => setIsPasswordPromptOpen(false)} error={decryptionError} isLoading={isDecrypting} />}
@@ -558,6 +624,8 @@ function App() {
       {isImportModalOpen && <ImportModal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} onImportFromFile={handleImportJson} onMergeFromFile={handleMergeJson} onRestore={(d) => { setPeople(d.people); setRootIdStack(d.rootIdStack); setIsReadOnly(false); }} />}
       {isExportModalOpen && <ExportModal isOpen={isExportModalOpen} onClose={() => setIsExportModalOpen(false)} onExportJson={handleExportJson} data={{ people, rootIdStack }} />}
       {isFileManagerOpen && <FileManagerModal isOpen={isFileManagerOpen} onClose={() => setIsFileManagerOpen(false)} />}
+      
+      {isNotificationSenderOpen && <NotificationSenderModal isOpen={isNotificationSenderOpen} onClose={() => setIsNotificationSenderOpen(false)} />}
       
       <input type="file" ref={fileInputRef} onChange={handleFileSelected} accept=".json" style={{ display: 'none' }} />
     </div>

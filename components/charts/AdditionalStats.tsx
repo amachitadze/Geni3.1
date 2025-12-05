@@ -1,5 +1,5 @@
 import React from 'react';
-import { CakeIcon, HeartIcon, HomeIcon } from '../Icons';
+import { CakeIcon, HeartIcon, MapPinIcon, SparklesIcon } from '../Icons';
 
 interface StatCardProps {
     icon: React.ReactNode;
@@ -23,34 +23,44 @@ const StatCard: React.FC<StatCardProps> = ({ icon, title, value, subtext }) => (
 
 interface AdditionalStatsProps {
     oldestPerson: { name: string; age: number; } | null;
+    youngestPerson: { name: string; age: number; } | null;
     avgLifespan: number;
     commonAddress: { address: string; count: number; } | null;
+    t: any;
 }
 
-const AdditionalStats: React.FC<AdditionalStatsProps> = ({ oldestPerson, avgLifespan, commonAddress }) => {
+const AdditionalStats: React.FC<AdditionalStatsProps> = ({ oldestPerson, youngestPerson, avgLifespan, commonAddress, t }) => {
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
             {oldestPerson && (
                 <StatCard 
                     icon={<CakeIcon className="w-6 h-6 text-purple-600 dark:text-purple-400" />}
-                    title="ყველაზე ხანდაზმული (ცოცხალი)"
-                    value={`${oldestPerson.age} წლის`}
+                    title={t.card_oldest}
+                    value={`${oldestPerson.age} ${t === 'ka' ? 'წლის' : ''}`}
                     subtext={oldestPerson.name}
+                />
+            )}
+            {youngestPerson && (
+                <StatCard 
+                    icon={<SparklesIcon className="w-6 h-6 text-purple-600 dark:text-purple-400" />}
+                    title={t.card_youngest}
+                    value={`${youngestPerson.age} ${t === 'ka' ? 'წლის' : ''}`}
+                    subtext={youngestPerson.name}
                 />
             )}
             {avgLifespan > 0 && (
                 <StatCard 
                     icon={<HeartIcon className="w-6 h-6 text-purple-600 dark:text-purple-400" />}
-                    title="სიცოცხლის საშ. ხანგრძლივობა"
-                    value={`${avgLifespan} წელი`}
-                    subtext="(გარდაცვლილების მიხედვით)"
+                    title={t.card_lifespan}
+                    value={`${avgLifespan} ${t === 'ka' ? 'წელი' : ''}`}
+                    subtext={t.card_lifespan_sub}
                 />
             )}
             {commonAddress && (
                 <StatCard 
-                    icon={<HomeIcon className="w-6 h-6 text-purple-600 dark:text-purple-400" />}
-                    title="ყველაზე გავრც. მისამართი"
-                    value={`${commonAddress.count} ადამიანი`}
+                    icon={<MapPinIcon className="w-6 h-6 text-purple-600 dark:text-purple-400" />}
+                    title={t.card_address}
+                    value={`${commonAddress.count} ${t.card_address_sub}`}
                     subtext={commonAddress.address}
                 />
             )}

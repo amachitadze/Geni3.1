@@ -1,7 +1,10 @@
 import React from 'react';
+import { translations, Language } from '../utils/translations';
 
 interface LandingPageProps {
   onEnter: () => void;
+  language: Language;
+  onLanguageChange: (lang: Language) => void;
 }
 
 const ArrowRightIcon: React.FC<{ className?: string }> = ({ className }) => (
@@ -53,43 +56,39 @@ const DocumentIcon: React.FC<{ className?: string }> = ({ className }) => (
     </svg>
 );
 
-const UserGroupIcon: React.FC<{ className?: string }> = ({ className }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m-7.5-2.962a3.75 3.75 0 100-7.5 3.75 3.75 0 000 7.5zM3.75 19.125a9.094 9.094 0 018.25-3.469 9.094 9.094 0 018.25 3.469m-16.5 0a9.094 9.094 0 003.741.479m7.5-2.962a3.75 3.75 0 100-7.5 3.75 3.75 0 000 7.5z" />
-    </svg>
-);
+const LandingPage: React.FC<LandingPageProps> = ({ onEnter, language, onLanguageChange }) => {
+    const t = translations[language];
 
-const LandingPage: React.FC<LandingPageProps> = ({ onEnter }) => {
     const features = [
         {
             icon: <InfiniteIcon className="w-8 h-8 text-purple-600" />,
-            title: "შეზღუდვების გარეშე",
-            description: "დაამატეთ უსასრულო რაოდენობის პიროვნება. მშობლები, შვილები, მეუღლეები, დედმამიშვილები — ხე იზრდება თქვენთან ერთად."
+            title: t.feat_unlimited_title,
+            description: t.feat_unlimited_desc
         },
         {
             icon: <LockClosedIcon className="w-8 h-8 text-green-600" />,
-            title: "100% კონფიდენციალური",
-            description: "თქვენი მონაცემები ინახება მხოლოდ თქვენს მოწყობილობაში. ჩვენ არ გვაქვს წვდომა თქვენს ოჯახურ ისტორიაზე."
+            title: t.feat_private_title,
+            description: t.feat_private_desc
         },
         {
             icon: <ShareIcon className="w-8 h-8 text-blue-600" />,
-            title: "დაცული გაზიარება",
-            description: "გაუზიარეთ ხე ნათესავებს სპეციალური, დაშიფრული ბმულით. ინფორმაციის ნახვა მხოლოდ პაროლითაა შესაძლებელი."
+            title: t.feat_share_title,
+            description: t.feat_share_desc
         },
         {
             icon: <ChartBarIcon className="w-8 h-8 text-orange-500" />,
-            title: "ჭკვიანი სტატისტიკა",
-            description: "ავტომატური ანალიზი: სიცოცხლის ხანგრძლივობა, თაობების განაწილება, პოპულარული სახელები და გენდერული ბალანსი."
+            title: t.feat_stats_title,
+            description: t.feat_stats_desc
         },
         {
             icon: <DocumentIcon className="w-8 h-8 text-red-500" />,
-            title: "იმპორტი & ექსპორტი",
-            description: "შეინახეთ მონაცემები JSON ფორმატში სარეზერვო ასლისთვის ან გადმოწერეთ ხე მაღალი ხარისხის PDF ფაილად."
+            title: t.feat_import_title,
+            description: t.feat_import_desc
         },
         {
             icon: <DevicePhoneMobileIcon className="w-8 h-8 text-indigo-500" />,
-            title: "მობილურზე მორგებული",
-            description: "სრულად ადაპტირებული ინტერფეისი. მართეთ თქვენი ხე ნებისმიერი ადგილიდან, ნებისმიერი მოწყობილობით."
+            title: t.feat_mobile_title,
+            description: t.feat_mobile_desc
         }
     ];
 
@@ -109,22 +108,38 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnter }) => {
                 
                 <div className="relative z-10 container mx-auto px-6 text-center">
                     <div className="inline-block mb-4 px-4 py-1.5 rounded-full bg-purple-600/30 border border-purple-500/50 backdrop-blur-md text-purple-200 text-sm font-medium tracking-wide animate-fade-in-up">
-                        ანალოგი არ აქვს
+                        {t.landing_badge}
                     </div>
                     <h1 className="text-5xl md:text-7xl lg:text-8xl font-black mb-6 text-white tracking-tight drop-shadow-2xl animate-fade-in-up delay-100">
-                        თქვენი ისტორია,<br />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-500 to-red-500">უსასრულო</span> და დაცული.
+                        {t.landing_title_1}<br />
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-500 to-red-500">{t.landing_title_2}</span>{t.landing_title_3}
                     </h1>
                     <p className="text-lg md:text-2xl mb-10 text-gray-300 max-w-3xl mx-auto leading-relaxed animate-fade-in-up delay-200">
-                        შექმენით გენეალოგიური ხე შეზღუდვების გარეშე. სრული კონფიდენციალურობა, დეტალური სტატისტიკა და მარტივი გაზიარება — ყველაფერი ერთ სივრცეში.
+                        {t.landing_desc}
                     </p>
-                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up delay-300">
+                    <div className="flex flex-col items-center justify-center gap-6 animate-fade-in-up delay-300">
                         <button 
                             onClick={onEnter}
                             className="w-full sm:w-auto px-8 py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-2xl text-lg transition-all transform hover:scale-105 shadow-[0_0_20px_rgba(147,51,234,0.5)] flex items-center justify-center gap-2"
                         >
-                            დაიწყეთ ახლავე <ArrowRightIcon className="w-5 h-5" />
+                            {t.landing_cta} <ArrowRightIcon className="w-5 h-5" />
                         </button>
+
+                        {/* Centered Language Switcher */}
+                        <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md rounded-full p-1 border border-white/20">
+                            <button 
+                                onClick={() => onLanguageChange('ka')} 
+                                className={`px-3 py-1 text-xs rounded-full transition-colors ${language === 'ka' ? 'bg-white text-gray-900 font-bold shadow-sm' : 'text-gray-300 hover:text-white hover:bg-white/10'}`}
+                            >
+                                ქართული
+                            </button>
+                            <button 
+                                onClick={() => onLanguageChange('es')} 
+                                className={`px-3 py-1 text-xs rounded-full transition-colors ${language === 'es' ? 'bg-white text-gray-900 font-bold shadow-sm' : 'text-gray-300 hover:text-white hover:bg-white/10'}`}
+                            >
+                                Español
+                            </button>
+                        </div>
                     </div>
                 </div>
             </header>
@@ -133,9 +148,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnter }) => {
             <section className="py-24 bg-gray-50 dark:bg-gray-900 relative">
                 <div className="container mx-auto px-6">
                     <div className="text-center mb-16">
-                        <h2 className="text-3xl md:text-5xl font-bold mb-4 text-gray-900 dark:text-white">რატომ არის ჩვენი პლატფორმა უნიკალური?</h2>
+                        <h2 className="text-3xl md:text-5xl font-bold mb-4 text-gray-900 dark:text-white">{t.landing_features_title}</h2>
                         <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-                            ჩვენ გავაერთიანეთ სიმარტივე და სიმძლავრე, რათა თქვენი ოჯახის ისტორია იყოს დაცული და ადვილად სამართავი.
+                            {t.landing_features_desc}
                         </p>
                     </div>
 
@@ -164,15 +179,15 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnter }) => {
             <section className="py-20 bg-gray-900 text-white relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-purple-900/20 to-pink-900/20 pointer-events-none"></div>
                 <div className="container mx-auto px-6 text-center relative z-10">
-                    <h2 className="text-3xl md:text-4xl font-bold mb-8">შეინახეთ წარსული მომავლისთვის</h2>
+                    <h2 className="text-3xl md:text-4xl font-bold mb-8">{t.landing_footer_cta_title}</h2>
                     <p className="text-gray-300 mb-10 max-w-xl mx-auto">
-                        თქვენი ოჯახის ისტორია იმსახურებს საუკეთესო ადგილს. დაიწყეთ დღესვე, სრულიად უფასოდ.
+                        {t.landing_footer_cta_desc}
                     </p>
                     <button 
                         onClick={onEnter}
                         className="inline-flex items-center justify-center px-8 py-3 border border-gray-600 hover:border-white rounded-full text-lg font-medium transition-colors hover:bg-white hover:text-gray-900"
                     >
-                        ხის გახსნა
+                        {t.landing_open_tree}
                     </button>
                 </div>
             </section>
@@ -180,9 +195,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnter }) => {
             <footer className="bg-gray-50 dark:bg-black py-8 border-t border-gray-200 dark:border-gray-800">
                 <div className="container mx-auto px-6 text-center text-gray-500 dark:text-gray-500 text-sm">
                     <p className="flex items-center justify-center gap-1 flex-wrap">
-                        <span>&copy; {new Date().getFullYear()} გენეალოგიური ხე. ყველა უფლება დაცულია.</span>
+                        <span>&copy; {new Date().getFullYear()} {t.landing_copyright}</span>
                         <span className="flex items-center gap-1">
-                            შექმნილია
+                            {t.landing_created_by}
                             <a href="https://bit.ly/av-ma" target="_blank" rel="noopener noreferrer" className="inline-block transition-opacity hover:opacity-80">
                                 <img 
                                     src="https://i.postimg.cc/c1T2NJgV/avma.png" 
@@ -191,7 +206,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnter }) => {
                                     style={{ display: 'inline', verticalAlign: 'middle' }}
                                 />
                             </a>
-                            -ს მიერ
+                            {t.landing_by}
                         </span>
                     </p>
                 </div>
