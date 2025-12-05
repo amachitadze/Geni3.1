@@ -40,8 +40,8 @@ const DetailsModal: React.FC<DetailsModalProps> = ({ person, people, onClose, on
   const exSpouses = person.exSpouseIds?.map(id => people[id]).filter(Boolean) || [];
   const age = calculateAge(person.birthDate, person.deathDate);
 
-  const ActionButtons = ({ isMenu }: { isMenu?: boolean }) => (
-    <>
+  const renderActionButtons = (isMenu?: boolean) => (
+    <React.Fragment>
       <button
         onClick={() => onGoogleSearch(person)}
         className={isMenu ? "w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3" : "p-2 rounded-full text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 hover:text-black dark:hover:text-white transition-colors"}
@@ -53,7 +53,7 @@ const DetailsModal: React.FC<DetailsModalProps> = ({ person, people, onClose, on
       </button>
 
       {!isReadOnly && (
-        <>
+        <React.Fragment>
           <button
             onClick={() => onEdit(person.id)}
             className={isMenu ? "w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3" : "p-2 rounded-full text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 hover:text-black dark:hover:text-white transition-colors"}
@@ -72,9 +72,9 @@ const DetailsModal: React.FC<DetailsModalProps> = ({ person, people, onClose, on
                 {isMenu && <span>წაშლა</span>}
               </button>
           )}
-        </>
+        </React.Fragment>
       )}
-    </>
+    </React.Fragment>
   );
 
   return (
@@ -99,7 +99,7 @@ const DetailsModal: React.FC<DetailsModalProps> = ({ person, people, onClose, on
            <div className="flex items-center gap-2 flex-shrink-0">
             {/* Desktop Buttons */}
             <div className="hidden sm:flex items-center gap-2">
-              <ActionButtons />
+              {renderActionButtons()}
             </div>
 
             {/* Mobile Menu */}
@@ -113,7 +113,7 @@ const DetailsModal: React.FC<DetailsModalProps> = ({ person, people, onClose, on
                 </button>
                 {isMenuOpen && (
                     <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md shadow-lg z-20 py-1">
-                      <ActionButtons isMenu />
+                      {renderActionButtons(true)}
                     </div>
                 )}
             </div>
