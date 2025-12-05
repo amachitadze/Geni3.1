@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 
 export const useGestures = () => {
   const [transform, setTransform] = useState({ scale: 1, x: 0, y: 0 });

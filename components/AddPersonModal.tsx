@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Gender, ModalContext, Person, Relationship } from '../types';
 import { convertDisplayToStorage, convertStorageToDisplay } from '../utils/dateUtils';
+import { getStoredSupabaseConfig, getSupabaseClient } from '../utils/supabaseClient';
 import { 
     ImageIcon, DeleteIcon, CloseIcon, CheckIcon, CloudUploadIcon
 } from './Icons';
@@ -52,34 +53,34 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
   
   // Upload state
   const [isUploading, setIsUploading] = useState(false);
-  const [hasValidApiKey, setHasValidApiKey] = useState(false);
-  const [useCloudStorage, setUseCloudStorage] = useState(true); // Default to true if key exists
+  const [hasSupabaseConfig, setHasSupabaseConfig] = useState(false); // Supabase Config
+  const [useCloudStorage, setUseCloudStorage] = useState(true);
+
+  // Crop State
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [tempImgSrc, setTempImgSrc] = useState<string | null>(null);
+  const [cropZoom, setCropZoom] = useState(1);
+  const [cropOffset, setCropOffset] = useState({ x: 0, y: 0 });
+  const [isDraggingCrop, setIsDraggingCrop] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const imgRef = useRef<HTMLImageElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isEditMode = context?.action === 'edit';
 
-  // Check for API key on mount
+  // Check for API keys/Config on mount
   useEffect(() => {
-      let envKey = '';
-      // @ts-ignore
-      if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.REACT_APP_IMGBB_API_KEY) {
-           // @ts-ignore
-          envKey = import.meta.env.REACT_APP_IMGBB_API_KEY;
-      } else if (typeof process !== 'undefined' && process.env && process.env.REACT_APP_IMGBB_API_KEY) {
-          envKey = process.env.REACT_APP_IMGBB_API_KEY;
-      }
-
-      const localKey = localStorage.getItem('imgbb_api_key');
-      
-      if (envKey || localKey) {
-          setHasValidApiKey(true);
+      // Check Supabase
+      const sbConfig = getStoredSupabaseConfig();
+      if (sbConfig.url && sbConfig.key) {
+          setHasSupabaseConfig(true);
           setUseCloudStorage(true);
       } else {
-          setHasValidApiKey(false);
           setUseCloudStorage(false);
       }
   }, []);
 
-  // Effect to initialize or reset the form when the modal opens or its context changes.
+  // Effect to initialize or reset the form
   useEffect(() => {
     if (!isOpen) return;
 
@@ -99,6 +100,8 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
       setSpouseMode('new');
       setSelectedExSpouseId('');
       setIsUploading(false);
+      setCropModalOpen(false);
+      setTempImgSrc(null);
     };
 
     if (isEditMode && personToEdit) {
@@ -122,7 +125,7 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
     }
   }, [isOpen, context, personToEdit, isEditMode]);
 
-  // Effect to dynamically update the UI (title, gender, last name) based on the selected relationship.
+  // Effect for UI texts
   useEffect(() => {
     if (isOpen && context?.action === 'add' && anchorPerson) {
       const relationshipTranslations: Record<Relationship, string> = {
@@ -137,16 +140,12 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
 
       if (relationship === 'spouse') {
           setGender(anchorPerson.gender === Gender.Male ? Gender.Female : Gender.Male);
-          // Reset spouse mode when relationship changes
           setSpouseMode('new');
           setSelectedExSpouseId('');
       }
 
       if (relationship === 'child') {
-        const father = anchorPerson.gender === Gender.Male 
-          ? anchorPerson 
-          : anchorSpouse;
-        
+        const father = anchorPerson.gender === Gender.Male ? anchorPerson : anchorSpouse;
         if (father && father.lastName) {
           setLastName(father.lastName);
         } else {
@@ -160,78 +159,130 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
     }
   }, [isOpen, context, anchorPerson, anchorSpouse, relationship, isEditMode]);
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
-          alert("სურათის ზომა არ უნდა აღემატებოდეს 5MB-ს.");
-          return;
-      }
+  const transliterate = (text: string) => {
+    const map: Record<string, string> = {
+      'ა': 'a', 'ბ': 'b', 'გ': 'g', 'დ': 'd', 'ე': 'e', 'ვ': 'v', 'ზ': 'z', 'თ': 't',
+      'ი': 'i', 'კ': 'k', 'ლ': 'l', 'მ': 'm', 'ნ': 'n', 'ო': 'o', 'პ': 'p', 'ჟ': 'zh',
+      'რ': 'r', 'ს': 's', 'ტ': 't', 'უ': 'u', 'ფ': 'p', 'ქ': 'k', 'ღ': 'gh', 'ყ': 'q',
+      'შ': 'sh', 'ჩ': 'ch', 'ც': 'ts', 'ძ': 'dz', 'წ': 'ts', 'ჭ': 'ch', 'ხ': 'kh', 'ჯ': 'j', 'ჰ': 'h'
+    };
+    return text.split('').map(char => map[char] || char).join('');
+  };
 
-      // Priority: 1. Env Var, 2. Local Storage
-      let apiKey = '';
-       // @ts-ignore
-      if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.REACT_APP_IMGBB_API_KEY) {
-           // @ts-ignore
-          apiKey = import.meta.env.REACT_APP_IMGBB_API_KEY;
-      } else if (typeof process !== 'undefined' && process.env && process.env.REACT_APP_IMGBB_API_KEY) {
-          apiKey = process.env.REACT_APP_IMGBB_API_KEY;
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) {
+          const reader = new FileReader();
+          reader.onload = () => {
+              setTempImgSrc(reader.result as string);
+              setCropZoom(1);
+              setCropOffset({ x: 0, y: 0 });
+              setCropModalOpen(true);
+              if (fileInputRef.current) fileInputRef.current.value = ''; // Reset input
+          };
+          reader.readAsDataURL(file);
+      }
+  };
+
+  const handleCropSave = async () => {
+      if (!imgRef.current) return;
+      
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      // Set output size to 500x500 for consistency and storage saving
+      const OUTPUT_SIZE = 500;
+      canvas.width = OUTPUT_SIZE;
+      canvas.height = OUTPUT_SIZE;
+      
+      // Fill background (white for transparency if any)
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, OUTPUT_SIZE, OUTPUT_SIZE);
+      
+      const CONTAINER_SIZE = 280;
+      const ratio = OUTPUT_SIZE / CONTAINER_SIZE;
+
+      // Move context to center
+      ctx.translate(OUTPUT_SIZE / 2, OUTPUT_SIZE / 2);
+      ctx.scale(ratio, ratio); // Scale up to match output resolution
+      ctx.translate(cropOffset.x, cropOffset.y);
+      ctx.scale(cropZoom, cropZoom);
+      
+      // Draw image centered
+      const img = imgRef.current;
+      const aspect = img.naturalWidth / img.naturalHeight;
+      let renderWidth, renderHeight;
+      if (aspect > 1) {
+          // Wider
+          renderWidth = CONTAINER_SIZE;
+          renderHeight = CONTAINER_SIZE / aspect;
+      } else {
+          // Taller
+          renderHeight = CONTAINER_SIZE;
+          renderWidth = CONTAINER_SIZE * aspect;
       }
       
-      if (!apiKey) {
-          apiKey = localStorage.getItem('imgbb_api_key') || '';
+      ctx.drawImage(img, -renderWidth / 2, -renderHeight / 2, renderWidth, renderHeight);
+
+      // Convert to Blob (JPEG, 0.8 quality)
+      canvas.toBlob((blob) => {
+          if (blob) {
+              uploadProcessedImage(blob);
+          }
+          setCropModalOpen(false);
+          setTempImgSrc(null);
+      }, 'image/jpeg', 0.8);
+  };
+
+  const uploadProcessedImage = async (blob: Blob) => {
+      // Determine upload method
+      // Priority 1: Supabase (if configured and enabled)
+      // Priority 2: Local Base64 (fallback)
+
+      if (useCloudStorage && hasSupabaseConfig) {
+         setIsUploading(true);
+
+         // --- METHOD 1: SUPABASE ---
+         try {
+             const config = getStoredSupabaseConfig();
+             const supabase = getSupabaseClient(config.url, config.key);
+             
+             const fileExt = 'jpg';
+             const latinName = transliterate(firstName || 'img').replace(/[^a-zA-Z0-9]/g, '');
+             const fileName = `${latinName}_${Date.now()}.${fileExt}`;
+
+             const { error: uploadError } = await supabase.storage
+                .from('images')
+                .upload(fileName, blob, {
+                    contentType: 'image/jpeg',
+                    upsert: false
+                });
+
+             if (uploadError) throw uploadError;
+
+             const { data } = supabase.storage
+                .from('images')
+                .getPublicUrl(fileName);
+             
+             setImageUrl(data.publicUrl);
+             setIsUploading(false);
+             return; // Exit after successful Supabase upload
+
+         } catch (err: any) {
+             console.error("Supabase Upload Failed:", err);
+             alert(`Supabase-ზე ატვირთვა ვერ მოხერხდა: ${err.message}. ვცდით ლოკალურ შენახვას.`);
+             // Fallthrough to Local Base64 if Supabase fails
+         }
       }
 
-      // Check if user has opted for cloud storage AND has a key
-      if (apiKey && useCloudStorage) {
-        // --- ImgBB Logic ---
-        setIsUploading(true);
-        const formData = new FormData();
-        formData.append('image', file);
-        
-        // Name Logic: Use Person Name if available, otherwise original filename
-        const personName = `${firstName} ${lastName}`.trim();
-        if (personName) {
-            formData.append('name', personName);
-        } else {
-            // Fallback to original filename without extension
-            const originalName = file.name.split('.').slice(0, -1).join('.');
-            formData.append('name', originalName || 'image');
-        }
-
-        try {
-            const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
-                method: 'POST',
-                body: formData,
-            });
-            const data = await response.json();
-            
-            if (data.success) {
-                setImageUrl(data.data.url);
-            } else {
-                throw new Error(data.error?.message || 'ატვირთვა ვერ მოხერხდა');
-            }
-        } catch (error) {
-            console.error("ImgBB upload failed:", error);
-            alert("სურათის სერვერზე ატვირთვა ვერ მოხერხდა. გამოყენებული იქნება ლოკალური შენახვა (Base64).");
-            
-            // Fallback: Convert to Base64 (Local Storage) if API fails
-            const reader = new FileReader();
-            reader.onloadend = () => setImageUrl(reader.result as string);
-            reader.readAsDataURL(file);
-        } finally {
-            setIsUploading(false);
-        }
-      } else {
-        // --- Default Logic (No API Key OR Cloud Storage Disabled) ---
-        // Convert to Base64 (Store inside JSON)
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            setImageUrl(reader.result as string);
-        };
-        reader.readAsDataURL(file);
-      }
-    }
+      // --- METHOD 2: LOCAL BASE64 (Fallback) ---
+      const reader = new FileReader();
+      reader.onloadend = () => {
+          setImageUrl(reader.result as string);
+          setIsUploading(false);
+      };
+      reader.readAsDataURL(blob);
   };
   
     const handleDateBlur = (e: React.FocusEvent<HTMLInputElement>, setter: React.Dispatch<React.SetStateAction<string>>) => {
@@ -240,10 +291,7 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
             setter('');
             return;
         }
-
-        // Normalize separators and remove any non-digit/non-dot characters
         let cleanedValue = value.replace(/[-/\\_]/g, '.').replace(/[^0-9.]/g, '');
-
         const parts = cleanedValue.split('.').filter(Boolean);
 
         if (parts.length === 3) {
@@ -253,19 +301,16 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
             if (year.length === 4) {
                  setter(`${day}.${month}.${year}`);
             } else {
-                setter(cleanedValue); // Keep as is if year is not 4 digits
+                setter(cleanedValue);
             }
         } else if (parts.length === 1 && parts[0].length === 8) {
-            // Handle case where user types DDMMYYYY
             const day = parts[0].slice(0, 2);
             const month = parts[0].slice(2, 4);
             const year = parts[0].slice(4, 8);
             setter(`${day}.${month}.${year}`);
         } else if (parts.length === 1 && /^\d{4}$/.test(parts[0])) {
-            // It's a valid year
             setter(parts[0]);
         } else {
-            // For other invalid or incomplete formats, just keep the cleaned value
             setter(cleanedValue);
         }
     };
@@ -306,6 +351,31 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
     }
   }
 
+  // Crop Handlers
+  const onMouseDown = (e: React.MouseEvent) => {
+      setIsDraggingCrop(true);
+      setDragStart({ x: e.clientX - cropOffset.x, y: e.clientY - cropOffset.y });
+  };
+  const onMouseMove = (e: React.MouseEvent) => {
+      if (!isDraggingCrop) return;
+      setCropOffset({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y });
+  };
+  const onMouseUp = () => setIsDraggingCrop(false);
+  
+  // Touch handlers for mobile cropping
+  const onTouchStart = (e: React.TouchEvent) => {
+      if (e.touches.length === 1) {
+          setIsDraggingCrop(true);
+          setDragStart({ x: e.touches[0].clientX - cropOffset.x, y: e.touches[0].clientY - cropOffset.y });
+      }
+  };
+  const onTouchMove = (e: React.TouchEvent) => {
+      if (isDraggingCrop && e.touches.length === 1) {
+          setCropOffset({ x: e.touches[0].clientX - dragStart.x, y: e.touches[0].clientY - dragStart.y });
+      }
+  };
+
+
   if (!isOpen || !context) return null;
 
   const showGenderSelector = isEditMode || relationship !== 'spouse';
@@ -316,6 +386,72 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 transition-opacity p-4" onClick={onClose}>
+      
+      {/* CROP MODAL OVERLAY */}
+      {cropModalOpen && tempImgSrc && (
+          <div 
+            className="absolute inset-0 z-[60] bg-black bg-opacity-90 flex flex-col justify-center items-center p-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+              <h3 className="text-white text-lg font-bold mb-4">სურათის მორგება</h3>
+              
+              {/* Crop Container */}
+              <div 
+                className="relative overflow-hidden bg-gray-900 border-2 border-white shadow-2xl" 
+                style={{ width: '280px', height: '280px', cursor: isDraggingCrop ? 'grabbing' : 'grab' }}
+                onMouseDown={onMouseDown}
+                onMouseMove={onMouseMove}
+                onMouseUp={onMouseUp}
+                onMouseLeave={onMouseUp}
+                onTouchStart={onTouchStart}
+                onTouchMove={onTouchMove}
+                onTouchEnd={onMouseUp}
+              >
+                  {/* Image Display */}
+                  <div className="w-full h-full flex items-center justify-center pointer-events-none">
+                     <img 
+                        ref={imgRef}
+                        src={tempImgSrc} 
+                        alt="Crop Preview" 
+                        style={{ 
+                            maxWidth: '100%', 
+                            maxHeight: '100%',
+                            transform: `translate(${cropOffset.x}px, ${cropOffset.y}px) scale(${cropZoom})`,
+                            transition: isDraggingCrop ? 'none' : 'transform 0.1s'
+                        }}
+                     />
+                  </div>
+                  
+                  {/* Grid Overlay */}
+                  <div className="absolute inset-0 pointer-events-none border border-white/30 grid grid-cols-3 grid-rows-3">
+                      <div className="border-r border-b border-white/20"></div><div className="border-r border-b border-white/20"></div><div className="border-b border-white/20"></div>
+                      <div className="border-r border-b border-white/20"></div><div className="border-r border-b border-white/20"></div><div className="border-b border-white/20"></div>
+                      <div className="border-r border-white/20"></div><div className="border-r border-white/20"></div><div></div>
+                  </div>
+              </div>
+
+              {/* Controls */}
+              <div className="mt-6 w-full max-w-xs space-y-4">
+                  <div>
+                      <label className="text-white text-xs mb-1 block">გადიდება: {cropZoom.toFixed(1)}x</label>
+                      <input 
+                        type="range" 
+                        min="0.5" 
+                        max="3" 
+                        step="0.1" 
+                        value={cropZoom} 
+                        onChange={(e) => setCropZoom(parseFloat(e.target.value))}
+                        className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-purple-500"
+                      />
+                  </div>
+                  <div className="flex gap-4">
+                      <button onClick={() => setCropModalOpen(false)} className="flex-1 py-2 bg-gray-600 text-white rounded hover:bg-gray-500 transition-colors">გაუქმება</button>
+                      <button onClick={handleCropSave} className="flex-1 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors font-semibold">შენახვა</button>
+                  </div>
+              </div>
+          </div>
+      )}
+
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-lg border border-gray-300 dark:border-gray-700 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <h2 className="text-2xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-600">{title}</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -397,9 +533,10 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
                         type="file"
                         id="imageUpload"
                         accept="image/png, image/jpeg, image/gif"
-                        onChange={handleImageUpload}
+                        onChange={handleFileSelect}
                         className="hidden"
                         disabled={isUploading}
+                        ref={fileInputRef}
                         />
                         <label htmlFor="imageUpload" className={`cursor-pointer px-3 py-2 rounded-md bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors text-sm font-medium text-gray-800 dark:text-gray-100 flex items-center gap-2 ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
                             {isUploading ? (
@@ -418,9 +555,9 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
                         )}
                     </div>
                     
-                    {/* ImgBB Status */}
+                    {/* Storage Status */}
                     <div className="mt-2 p-2 bg-gray-50 dark:bg-gray-700/30 rounded border border-gray-200 dark:border-gray-700">
-                        {hasValidApiKey ? (
+                        {hasSupabaseConfig ? (
                             <div className="flex items-center gap-2 mb-1">
                                 <input 
                                     type="checkbox" 
@@ -430,15 +567,17 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
                                     className="w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500 dark:focus:ring-purple-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
                                 />
                                 <label htmlFor="cloudToggle" className="text-xs font-medium text-gray-700 dark:text-gray-300 select-none cursor-pointer">
-                                    სურათის სერვერზე (ImgBB) ატვირთვა
+                                    სურათის სერვერზე ატვირთვა
                                 </label>
                             </div>
                         ) : null}
 
-                        <p className={`text-xs ${hasValidApiKey && useCloudStorage ? 'text-green-600 dark:text-green-400' : 'text-gray-500'}`}>
-                            {hasValidApiKey 
-                                ? (useCloudStorage ? "✅ ImgBB API აქტიურია. სურათი აიტვირთება სერვერზე." : "ℹ️ ატვირთვა გამორთულია. სურათი შეინახება ფაილში (ლოკალურად).")
-                                : "⚠️ ImgBB API არ არის ნაპოვნი. სურათი შეინახება ფაილში (გაზრდის ზომას)."}
+                        <p className={`text-xs ${hasSupabaseConfig && useCloudStorage ? 'text-green-600 dark:text-green-400' : 'text-gray-500'}`}>
+                            {hasSupabaseConfig 
+                                ? (useCloudStorage 
+                                    ? "✅ Supabase Storage აქტიურია. უსაფრთხო ატვირთვა." 
+                                    : "ℹ️ ატვირთვა გამორთულია. სურათი შეინახება ფაილში (ლოკალურად).")
+                                : "⚠️ სერვერი ვერ მოიძებნა. სურათი შეინახება ფაილში (გაზრდის ზომას)."}
                         </p>
                     </div>
                 </div>
