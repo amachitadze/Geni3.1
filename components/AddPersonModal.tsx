@@ -169,6 +169,31 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
     return text.split('').map(char => map[char] || char).join('');
   };
 
+  const deleteImageFromStorage = async (url: string) => {
+      if (!url || !hasSupabaseConfig) return;
+      
+      // Check if it's actually a Supabase URL
+      const config = getStoredSupabaseConfig();
+      if (!url.includes(config.url)) return; // Don't try to delete external images or base64
+
+      try {
+          const supabase = getSupabaseClient(config.url, config.key);
+          
+          // Extract filename from URL
+          // Example: https://xyz.supabase.co/storage/v1/object/public/images/Name_Surname_123.jpg
+          const parts = url.split('/');
+          const fileName = parts[parts.length - 1];
+          
+          if (fileName) {
+              const { error } = await supabase.storage.from('images').remove([fileName]);
+              if (error) console.error("Error deleting old image:", error);
+              else console.log("Old image deleted successfully:", fileName);
+          }
+      } catch (err) {
+          console.error("Failed to delete image:", err);
+      }
+  };
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (file) {
@@ -245,12 +270,20 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
 
          // --- METHOD 1: SUPABASE ---
          try {
+             // 1. If we are editing and replacing an existing image, DELETE the old one first.
+             // We do this check before upload.
+             if (isEditMode && personToEdit?.imageUrl) {
+                 await deleteImageFromStorage(personToEdit.imageUrl);
+             }
+
              const config = getStoredSupabaseConfig();
              const supabase = getSupabaseClient(config.url, config.key);
              
-             const fileExt = 'jpg';
-             const latinName = transliterate(firstName || 'img').replace(/[^a-zA-Z0-9]/g, '');
-             const fileName = `${latinName}_${Date.now()}.${fileExt}`;
+             // 2. Generate Naming: LatinName_LatinSurname_Timestamp.jpg
+             const latinFirst = transliterate(firstName || 'Name').replace(/[^a-zA-Z0-9]/g, '');
+             const latinLast = transliterate(lastName || 'Surname').replace(/[^a-zA-Z0-9]/g, '');
+             const timestamp = Date.now();
+             const fileName = `${latinFirst}_${latinLast}_${timestamp}.jpg`;
 
              const { error: uploadError } = await supabase.storage
                 .from('images')
@@ -284,8 +317,17 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
       };
       reader.readAsDataURL(blob);
   };
+
+  const handleManualImageDelete = async () => {
+      if (imageUrl && hasSupabaseConfig) {
+          setIsUploading(true); // show loading during delete
+          await deleteImageFromStorage(imageUrl);
+          setIsUploading(false);
+      }
+      setImageUrl('');
+  };
   
-    const handleDateBlur = (e: React.FocusEvent<HTMLInputElement>, setter: React.Dispatch<React.SetStateAction<string>>) => {
+  const handleDateBlur = (e: React.FocusEvent<HTMLInputElement>, setter: React.Dispatch<React.SetStateAction<string>>) => {
         let value = e.target.value.trim();
         if (!value) {
             setter('');
@@ -345,8 +387,12 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
     }
   };
   
-  const handleDelete = () => {
+  const handleDeletePerson = async () => {
     if(isEditMode && personToEdit){
+      // If person has an image in Supabase, delete it first
+      if (personToEdit.imageUrl && hasSupabaseConfig) {
+          await deleteImageFromStorage(personToEdit.imageUrl);
+      }
       onDelete(personToEdit.id);
     }
   }
@@ -549,7 +595,7 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
                             )}
                         </label>
                         {imageUrl && !isUploading && (
-                        <button type="button" onClick={() => setImageUrl('')} className="text-xs text-red-500 dark:text-red-400 hover:underline">
+                        <button type="button" onClick={handleManualImageDelete} className="text-xs text-red-500 dark:text-red-400 hover:underline">
                             წაშლა
                         </button>
                         )}
@@ -644,7 +690,7 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
               {isEditMode && personToEdit?.id !== 'root' && (
                 <button
                   type="button"
-                  onClick={handleDelete}
+                  onClick={handleDeletePerson}
                   className="h-10 px-3 sm:px-4 rounded-md bg-red-600 hover:bg-red-700 text-white transition-colors flex items-center gap-2"
                   title="წაშლა"
                 >
