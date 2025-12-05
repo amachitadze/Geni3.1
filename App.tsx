@@ -14,6 +14,7 @@ import ImportModal from './components/ImportModal';
 import ExportModal from './components/ExportModal';
 import LandingPage from './components/LandingPage';
 import InitialView from './components/InitialView';
+import FileManagerModal from './components/FileManagerModal';
 import { decryptData, base64ToBuffer } from './utils/crypto';
 import { calculateAge, formatTimestamp } from './utils/dateUtils';
 import { validatePeopleData, getFamilyUnitFromConnection } from './utils/treeUtils';
@@ -21,7 +22,7 @@ import {
     SearchIcon, BackIcon, HomeIcon, MenuIcon, ExportIcon, 
     CenterIcon, StatsIcon, CloseIcon, ShareIcon, JsonExportIcon, 
     JsonImportIcon, SunIcon, MoonIcon, ViewCompactIcon, ViewNormalIcon, 
-    ListBulletIcon, GlobeIcon, DocumentTextIcon, LockClosedIcon 
+    ListBulletIcon, GlobeIcon, DocumentTextIcon, LockClosedIcon, DocumentIcon 
 } from './components/Icons';
 import { getSupabaseClient } from './utils/supabaseClient';
 
@@ -71,6 +72,7 @@ function App() {
   const [isStatisticsModalOpen, setIsStatisticsModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [isFileManagerOpen, setIsFileManagerOpen] = useState(false);
   const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   
@@ -173,9 +175,23 @@ function App() {
                 const text = await data.text();
                 setEncryptedData(text);
 
+                // --- ONE-TIME VIEW POLICY ---
+                // Delete the file immediately after downloading
+                // Note: This requires the 'anon' role to have DELETE permissions in Supabase policies
+                try {
+                    await supabase
+                        .storage
+                        .from('shares')
+                        .remove([sbId]);
+                    console.log("File removed from server (One-time view policy)");
+                } catch (deleteError) {
+                    // We don't block the user if delete fails, but we log it
+                    console.warn("Failed to delete shared file:", deleteError);
+                }
+
             } catch (error: any) {
                  console.error("Failed to fetch data:", error);
-                 setDecryptionError("მონაცემების ჩამოტვირთვა ვერ მოხერხდა. ბმული დაზიანებულია ან კონფიგურაცია არასწორია.");
+                 setDecryptionError("მონაცემების ჩამოტვირთვა ვერ მოხერხდა. ბმული დაზიანებულია ან ფაილი უკვე წაშლილია (ერთჯერადი ბმული).");
                  setIsPasswordPromptOpen(true);
             }
         };
@@ -647,6 +663,11 @@ function App() {
   };
   
   const handleExportPdf = async () => {
+    if (isReadOnly) {
+        alert("დათვალიერების რეჟიმში PDF-ის გადმოწერა შეზღუდულია.");
+        setIsMenuOpen(false);
+        return;
+    }
     const treeElement = viewportRef.current?.querySelector('.p-16 > div');
     if (!treeElement) { alert('ხის ექსპორტი ვერ მოხერხდა.'); return; }
     document.body.classList.add('pdf-exporting');
@@ -693,6 +714,11 @@ function App() {
   };
 
   const handleExportJson = () => {
+    if (isReadOnly) {
+        alert("დათვალიერების რეჟიმში მონაცემების ექსპორტი შეზღუდულია.");
+        setIsMenuOpen(false);
+        return;
+    }
     try {
         const dataToSave = JSON.stringify({ people, rootIdStack }, null, 2);
         const blob = new Blob([dataToSave], { type: 'application/json' });
@@ -715,6 +741,11 @@ function App() {
   };
 
   const handleImportJson = () => {
+      if (isReadOnly) {
+          alert("დათვალიერების რეჟიმში მონაცემების იმპორტი შეზღუდულია.");
+          setIsMenuOpen(false);
+          return;
+      }
       setFileAction('import');
       fileInputRef.current?.click();
   };
@@ -722,6 +753,47 @@ function App() {
   const handleMergeJson = () => {
     setFileAction('merge');
     fileInputRef.current?.click();
+  };
+  
+  const handleShareClick = () => {
+      if (isReadOnly) {
+          alert("დათვალიერების რეჟიმში გაზიარება შეზღუდულია.");
+          setIsMenuOpen(false);
+          return;
+      }
+      setIsShareModalOpen(true);
+      setIsMenuOpen(false);
+  };
+  
+  const handleImportModalOpen = () => {
+      if (isReadOnly) {
+          alert("დათვალიერების რეჟიმში იმპორტი შეზღუდულია.");
+          setIsMenuOpen(false);
+          return;
+      }
+      setIsImportModalOpen(true);
+      setIsMenuOpen(false);
+  };
+  
+  const handleExportModalOpen = () => {
+      if (isReadOnly) {
+          alert("დათვალიერების რეჟიმში ექსპორტი შეზღუდულია.");
+          setIsMenuOpen(false);
+          return;
+      }
+      setIsExportModalOpen(true);
+      setIsMenuOpen(false);
+  };
+
+  const handleExitReadOnly = () => {
+      if(window.confirm("ნამდვილად გსურთ გამოსვლა? ეს გაწყვეტს კავშირს მიმდინარე ხესთან და დაბრუნდებით საწყის გვერდზე.")) {
+        setPeople({});
+        setRootIdStack([]);
+        setIsReadOnly(false);
+        setIsViewingTree(false);
+        // Clear URL params and history state
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
   };
 
   const mergePeopleData = (currentPeople: People, importedPeople: People): People => {
@@ -1184,11 +1256,6 @@ const peopleWithBirthdays = useMemo(() => {
                     <h1 className={`font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-600 transition-all duration-300 truncate pb-1 ${isHeaderCollapsed ? 'text-2xl sm:text-4xl' : 'text-3xl sm:text-5xl'}`}>
                         {headerTitle}
                     </h1>
-                    {isReadOnly && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 mb-1">
-                            👁️ დამთვალიერებლის რეჟიმი
-                        </span>
-                    )}
                     <p className={`text-xs sm:text-sm text-gray-500 dark:text-gray-400 transition-opacity duration-300 truncate ${isHeaderCollapsed ? 'opacity-0 h-0' : 'opacity-100'}`}>
                         {headerSubtitle}
                     </p>
@@ -1209,20 +1276,16 @@ const peopleWithBirthdays = useMemo(() => {
                                     <li><button onClick={() => { setIsViewingTree(false); setIsMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors"><HomeIcon className="w-5 h-5"/><span>საწყისი გვერდი</span></button></li>
                                     <li><hr className="my-1 border-gray-200 dark:border-gray-700" /></li>
                                     <li className="px-4 py-2 text-xs text-gray-400 dark:text-gray-500">მენიუ</li>
-                                    <li><button onClick={() => { setIsShareModalOpen(true); setIsMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors"><ShareIcon className="w-5 h-5"/><span>გაზიარება</span></button></li>
+                                    <li><button onClick={handleShareClick} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors"><ShareIcon className="w-5 h-5"/><span>გაზიარება</span></button></li>
                                     <li><button onClick={() => { setIsStatisticsModalOpen(true); setIsMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors"><StatsIcon className="w-5 h-5"/><span>სტატისტიკა</span></button></li>
-                                    <li><button onClick={() => { handleExportPdf(); setIsMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors"><ExportIcon className="w-5 h-5"/><span>PDF ექსპორტი</span></button></li>
+                                    <li><button onClick={handleExportPdf} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors"><ExportIcon className="w-5 h-5"/><span>PDF ექსპორტი</span></button></li>
                                     <li><hr className="my-1 border-gray-200 dark:border-gray-700" /></li>
                                     
-                                    {!isReadOnly && (
-                                        <>
-                                            <li className="px-4 py-2 text-xs text-gray-400 dark:text-gray-500">მონაცემები და რესურსები</li>
-                                            <li><a href="https://forms.gle/rCJN5PG7mMzVGHsv7" target="_blank" rel="noopener noreferrer" className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors"><DocumentTextIcon className="w-5 h-5"/><span>მონაცემების დამატება ფორმით</span></a></li>
-                                            <li><button onClick={() => { setIsImportModalOpen(true); setIsMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors"><JsonImportIcon className="w-5 h-5"/><span>მონაცემების იმპორტი</span></button></li>
-                                            <li><button onClick={() => { setIsExportModalOpen(true); setIsMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors"><JsonExportIcon className="w-5 h-5"/><span>მონაცემების ექსპორტი</span></button></li>
-                                            <li><hr className="my-1 border-gray-200 dark:border-gray-700" /></li>
-                                        </>
-                                    )}
+                                    <li className="px-4 py-2 text-xs text-gray-400 dark:text-gray-500">მონაცემები და რესურსები</li>
+                                    <li><button onClick={() => { setIsFileManagerOpen(true); setIsMenuOpen(false); }} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors"><DocumentIcon className="w-5 h-5"/><span>მონაცემების მართვა</span></button></li>
+                                    <li><button onClick={handleImportModalOpen} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors"><JsonImportIcon className="w-5 h-5"/><span>მონაცემების იმპორტი</span></button></li>
+                                    <li><button onClick={handleExportModalOpen} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors"><JsonExportIcon className="w-5 h-5"/><span>მონაცემების ექსპორტი</span></button></li>
+                                    <li><hr className="my-1 border-gray-200 dark:border-gray-700" /></li>
 
                                     <li className="px-4 py-2 text-xs text-gray-400 dark:text-gray-500">ინტერფეისი</li>
                                     <li><button onClick={() => setTheme(prevTheme => (prevTheme === 'dark' ? 'light' : 'dark'))} className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-between transition-colors"><span>თემის შეცვლა</span> {theme === 'dark' ? <SunIcon className="w-5 h-5 text-yellow-400"/> : <MoonIcon className="w-5 h-5 text-indigo-500"/>}</button></li>
@@ -1350,6 +1413,21 @@ const peopleWithBirthdays = useMemo(() => {
                 <button onClick={resetTransform} className="w-10 h-10 rounded-full bg-gray-700/50 text-white backdrop-blur-sm flex items-center justify-center hover:bg-gray-600/70" title="ხედის განულება"><CenterIcon className="w-5 h-5"/></button>
             </div>
         )}
+        
+        {/* Read Only Badge - Centered Bottom */}
+        {isReadOnly && (
+            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-yellow-100 border border-yellow-300 text-yellow-800 px-4 py-2 rounded-full shadow-lg animate-fade-in-up">
+                <span className="font-medium text-sm whitespace-nowrap">👁️ დამთვალიერებლის რეჟიმი</span>
+                <button 
+                    onClick={handleExitReadOnly} 
+                    className="ml-2 p-1 hover:bg-yellow-200 rounded-full transition-colors text-yellow-900"
+                    title="რეჟიმიდან გამოსვლა"
+                >
+                    <CloseIcon className="w-4 h-4" />
+                </button>
+            </div>
+        )}
+
         <BirthdayNotifier 
             peopleWithBirthdays={peopleWithBirthdays}
             onNavigate={(personId) => {
@@ -1447,6 +1525,12 @@ const peopleWithBirthdays = useMemo(() => {
             onClose={() => setIsExportModalOpen(false)}
             onExportJson={handleExportJson}
             data={{ people, rootIdStack }}
+        />
+      )}
+      {isFileManagerOpen && (
+        <FileManagerModal
+            isOpen={isFileManagerOpen}
+            onClose={() => setIsFileManagerOpen(false)}
         />
       )}
       <input type="file" ref={fileInputRef} onChange={handleFileSelected} accept=".json" style={{ display: 'none' }} />

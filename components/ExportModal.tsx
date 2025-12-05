@@ -61,7 +61,12 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, onExportJson
             const date = new Date();
             const dateStr = date.toISOString().slice(0, 10);
             const timeStr = date.toTimeString().slice(0, 5).replace(':', '-');
-            const fileName = `backup_${dateStr}_${timeStr}.json`;
+            
+            // Get Root Person Last Name for Filename
+            const rootPerson = data.people[data.rootIdStack[0]]; // Assuming first in stack is root
+            const lastName = rootPerson?.lastName ? rootPerson.lastName.replace(/[^a-zA-Z0-9\u10A0-\u10FF]/g, '') : 'Family';
+            
+            const fileName = `backup_${lastName}_${dateStr}_${timeStr}.json`;
             
             const jsonString = JSON.stringify(data, null, 2);
             const blob = new Blob([jsonString], { type: 'application/json' });
