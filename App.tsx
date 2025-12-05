@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Person, ModalState, Gender } from './types';
 import TreeNode from './components/TreeNode';
@@ -213,9 +214,9 @@ function App() {
   useEffect(() => {
       const rootPerson = people['root'];
       if(rootPerson?.lastName){
-        document.title = `${rootPerson.lastName}ების გენეალოგიური ხე`;
+        document.title = `${rootPerson.lastName} - Geni`;
       } else {
-        document.title = 'გენეალოგიური ხე';
+        document.title = 'Geni';
       }
   }, [people]);
 
@@ -407,7 +408,16 @@ function App() {
   }, [people]);
 
   const rootPerson = people['root'];
-  const headerTitle = rootPerson?.lastName ? `${rootPerson.lastName}ების გენეალოგიური ხე` : 'გენეალოგიური ხე';
+  
+  // Dynamic Title Construction
+  let headerTitle = t.tree_default_title;
+  if (rootPerson?.lastName) {
+      if (language === 'ka') {
+          headerTitle = `${rootPerson.lastName}${t.tree_title_suffix}`;
+      } else {
+          headerTitle = `${t.tree_title_prefix}${rootPerson.lastName}`;
+      }
+  }
 
   if (isInitialLoad) return <div className="h-screen bg-white dark:bg-gray-900 flex items-center justify-center text-xl text-gray-800 dark:text-gray-200">იტვირთება...</div>;
   if (!isViewingTree) return <LandingPage onEnter={() => setIsViewingTree(true)} language={language} onLanguageChange={setLanguage} />;
@@ -488,23 +498,6 @@ function App() {
                                     <li><button onClick={() => setViewMode('default')} className={`${MENU_ITEM_CLASS} ${viewMode === 'default' ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400' : ''}`}><ViewNormalIcon className="w-5 h-5"/><span>{t.menu_view_default}</span></button></li>
                                     <li><button onClick={() => setViewMode('compact')} className={`${MENU_ITEM_CLASS} ${viewMode === 'compact' ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400' : ''}`}><ViewCompactIcon className="w-5 h-5"/><span>{t.menu_view_compact}</span></button></li>
                                     <li><button onClick={() => setViewMode('list')} className={`${MENU_ITEM_CLASS} ${viewMode === 'list' ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400' : ''}`}><ListBulletIcon className="w-5 h-5"/><span>{t.menu_view_list}</span></button></li>
-
-                                    {/* Language Switcher (Moved to Bottom) */}
-                                    <li><hr className="my-1 border-gray-200 dark:border-gray-700" /></li>
-                                    <li className="flex justify-around px-4 py-2">
-                                        <button 
-                                            onClick={() => setLanguage('ka')} 
-                                            className={`px-3 py-1 text-xs rounded-full border ${language === 'ka' ? 'bg-purple-100 border-purple-500 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300' : 'bg-gray-100 border-gray-300 text-gray-600 dark:bg-gray-700 dark:text-gray-300'}`}
-                                        >
-                                            ქართული 🇬🇪
-                                        </button>
-                                        <button 
-                                            onClick={() => setLanguage('es')} 
-                                            className={`px-3 py-1 text-xs rounded-full border ${language === 'es' ? 'bg-purple-100 border-purple-500 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300' : 'bg-gray-100 border-gray-300 text-gray-600 dark:bg-gray-700 dark:text-gray-300'}`}
-                                        >
-                                            Español 🇪🇸
-                                        </button>
-                                    </li>
                                 </ul>
                                 <div className="px-4 py-2 text-xs text-center text-gray-400 border-t border-gray-200 dark:border-gray-700">
                                     <div className="mb-1">ბოლოს განახლდა: {formatTimestamp(lastUpdated)}</div>
@@ -544,7 +537,7 @@ function App() {
       <main className="flex-grow flex flex-col relative overflow-hidden">
         {Object.keys(people).length > 0 && people[rootId] ? (
             viewMode === 'list' ? (
-                <TreeViewList rootId={rootId} people={people} onNavigate={(id) => { navigateTo(id); setHighlightedPersonId(id); }} onShowDetails={setDetailsModalPersonId} highlightedPersonId={highlightedPersonId} />
+                <TreeViewList rootId={rootId} people={people} onNavigate={(id) => { navigateTo(id); setHighlightedPersonId(id); }} onShowDetails={setDetailsModalPersonId} highlightedPersonId={highlightedPersonId} language={language} />
             ) : (
                 <div ref={viewportRef} className="flex-grow flex flex-col relative overflow-hidden" {...handlers} onClick={() => setHighlightedPeople(null)} style={{cursor: isPanning ? 'grabbing' : 'grab', touchAction: 'none'}}>
                     <div className={`flex-grow flex items-center justify-center ${isZoomingViaWheel ? '' : 'transition-transform duration-200 ease-out'}`} style={{ transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})` }}>
@@ -555,6 +548,7 @@ function App() {
                                 highlightedPersonId={highlightedPersonId} highlightedPeople={highlightedPeople} 
                                 onConnectionClick={handleConnectionClick} hoveredConnections={hoveredConnections} onSetHover={setHoveredPersonId}
                                 viewMode={viewMode as 'default' | 'compact'} isReadOnly={isReadOnly}
+                                language={language}
                             />
                         </div>
                     </div>
@@ -581,7 +575,7 @@ function App() {
         <BirthdayNotifier peopleWithBirthdays={peopleWithBirthdays} onNavigate={(id) => { navigateTo(id); setHighlightedPersonId(id); }} />
         
         {/* Real-time Notifications */}
-        <NotificationBanner />
+        <NotificationBanner language={language} />
 
         {installPrompt && (
           <div className="fixed bottom-20 sm:bottom-4 left-1/2 -translate-x-1/2 bg-white dark:bg-gray-800 p-3 rounded-lg shadow-2xl z-50 flex gap-4 border border-gray-200 dark:border-gray-700">
@@ -600,6 +594,7 @@ function App() {
           anchorSpouse={people[modalState.context.personId]?.spouseId ? people[people[modalState.context.personId].spouseId!] : null}
           personToEdit={modalState.context.action === 'edit' ? people[modalState.context.personId] : null}
           anchorPersonExSpouses={people[modalState.context.personId]?.exSpouseIds?.map(id => people[id]).filter(Boolean)}
+          language={language}
         />
       )}
       {detailsModalPersonId && (
@@ -609,23 +604,25 @@ function App() {
           onGoogleSearch={googleAI.openSearchForPerson}
           onShowOnMap={(addr) => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}`, '_blank')}
           onNavigate={(id) => { setDetailsModalPersonId(null); navigateTo(id); }} isReadOnly={isReadOnly}
+          language={language}
         />
       )}
       {isStatisticsModalOpen && <StatisticsModal isOpen={isStatisticsModalOpen} onClose={() => setIsStatisticsModalOpen(false)} stats={statistics} theme={theme} language={language} />} 
 
-      {isShareModalOpen && <ShareModal isOpen={isShareModalOpen} onClose={() => setIsShareModalOpen(false)} data={{ people, rootIdStack }} />}
-      {isPasswordPromptOpen && <PasswordPromptModal isOpen={isPasswordPromptOpen} onSubmit={handlePasswordSubmit} onClose={() => setIsPasswordPromptOpen(false)} error={decryptionError} isLoading={isDecrypting} />}
+      {isShareModalOpen && <ShareModal isOpen={isShareModalOpen} onClose={() => setIsShareModalOpen(false)} data={{ people, rootIdStack }} language={language} />}
+      {isPasswordPromptOpen && <PasswordPromptModal isOpen={isPasswordPromptOpen} onSubmit={handlePasswordSubmit} onClose={() => setIsPasswordPromptOpen(false)} error={decryptionError} isLoading={isDecrypting} language={language} />}
       
       <GoogleSearchPanel 
           isOpen={googleAI.isOpen} onClose={() => googleAI.setIsOpen(false)} onSearch={() => googleAI.handleSearch()}
           query={googleAI.query} setQuery={googleAI.setQuery} result={googleAI.result} sources={googleAI.sources} isLoading={googleAI.isLoading} error={googleAI.error}
+          language={language}
       />
 
-      {isImportModalOpen && <ImportModal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} onImportFromFile={handleImportJson} onMergeFromFile={handleMergeJson} onRestore={(d) => { setPeople(d.people); setRootIdStack(d.rootIdStack); setIsReadOnly(false); }} />}
-      {isExportModalOpen && <ExportModal isOpen={isExportModalOpen} onClose={() => setIsExportModalOpen(false)} onExportJson={handleExportJson} data={{ people, rootIdStack }} />}
-      {isFileManagerOpen && <FileManagerModal isOpen={isFileManagerOpen} onClose={() => setIsFileManagerOpen(false)} />}
+      {isImportModalOpen && <ImportModal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} onImportFromFile={handleImportJson} onMergeFromFile={handleMergeJson} onRestore={(d) => { setPeople(d.people); setRootIdStack(d.rootIdStack); setIsReadOnly(false); }} language={language} />}
+      {isExportModalOpen && <ExportModal isOpen={isExportModalOpen} onClose={() => setIsExportModalOpen(false)} onExportJson={handleExportJson} data={{ people, rootIdStack }} language={language} />}
+      {isFileManagerOpen && <FileManagerModal isOpen={isFileManagerOpen} onClose={() => setIsFileManagerOpen(false)} language={language} />}
       
-      {isNotificationSenderOpen && <NotificationSenderModal isOpen={isNotificationSenderOpen} onClose={() => setIsNotificationSenderOpen(false)} />}
+      {isNotificationSenderOpen && <NotificationSenderModal isOpen={isNotificationSenderOpen} onClose={() => setIsNotificationSenderOpen(false)} language={language} />}
       
       <input type="file" ref={fileInputRef} onChange={handleFileSelected} accept=".json" style={{ display: 'none' }} />
     </div>

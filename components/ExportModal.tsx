@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { CloseIcon, JsonExportIcon, CloudUploadIcon, LockClosedIcon, CheckIcon } from './Icons';
 import { People } from '../types';
 import { getStoredSupabaseConfig, getSupabaseClient, getAdminPassword } from '../utils/supabaseClient';
+import { translations, Language } from '../utils/translations';
 
 interface ExportModalProps {
   isOpen: boolean;
@@ -11,9 +12,11 @@ interface ExportModalProps {
       people: People;
       rootIdStack: string[];
   };
+  language: Language;
 }
 
-const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, onExportJson, data }) => {
+const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, onExportJson, data, language }) => {
+    const t = translations[language];
     const [view, setView] = useState<'menu' | 'auth'>('menu');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -47,12 +50,12 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, onExportJson
         const correctPassword = getAdminPassword();
 
         if (!correctPassword) {
-            setError("ადმინისტრატორის პაროლი არ არის კონფიგურირებული სისტემაში.");
+            setError(t.fm_admin_pass + " not set");
             return;
         }
 
         if (password !== correctPassword) {
-            setError('პაროლი არასწორია.');
+            setError('Error');
             return;
         }
 
@@ -63,7 +66,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, onExportJson
         try {
             const config = getStoredSupabaseConfig();
             if (!config.url || !config.key) {
-                throw new Error("Supabase კონფიგურაცია არ მოიძებნა. გთხოვთ, ჯერ შეამოწმოთ გარემოს ცვლადები.");
+                throw new Error("Supabase config missing");
             }
 
             const supabase = getSupabaseClient(config.url, config.key);
@@ -72,10 +75,8 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, onExportJson
             const dateStr = date.toISOString().slice(0, 10);
             const timeStr = date.toTimeString().slice(0, 5).replace(':', '-');
             
-            // Get Root Person Last Name for Filename and Transliterate
-            const rootPerson = data.people[data.rootIdStack[0]]; // Assuming first in stack is root
+            const rootPerson = data.people[data.rootIdStack[0]]; 
             const rawLastName = rootPerson?.lastName || 'Family';
-            // Transliterate Georgian to Latin and remove any remaining non-alphanumeric chars
             const latinLastName = transliterate(rawLastName).replace(/[^a-zA-Z0-9]/g, '');
             
             const fileName = `backup_${latinLastName || 'Tree'}_${dateStr}_${timeStr}.json`;
@@ -93,7 +94,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, onExportJson
 
             if (uploadError) throw uploadError;
 
-            setSuccessMessage(`მონაცემები წარმატებით აიტვირთა: ${fileName}`);
+            setSuccessMessage(`Success: ${fileName}`);
             setTimeout(() => {
                 onClose();
                 setView('menu');
@@ -102,7 +103,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, onExportJson
 
         } catch (err: any) {
             console.error("Upload failed:", err);
-            setError(err.message || "ატვირთვა ვერ მოხერხდა.");
+            setError(err.message || "Upload Failed");
         } finally {
             setIsLoading(false);
         }
@@ -117,15 +118,15 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, onExportJson
         <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 transition-opacity p-4" onClick={onClose}>
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-lg border border-gray-300 dark:border-gray-700 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
                 <header className="flex items-start justify-between mb-4">
-                    <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">მონაცემების ექსპორტი</h2>
-                    <button onClick={onClose} className="p-2 -mt-2 -mr-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" aria-label="დახურვა">
+                    <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">{t.exp_title}</h2>
+                    <button onClick={onClose} className="p-2 -mt-2 -mr-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" aria-label={t.close}>
                         <CloseIcon className="w-6 h-6" />
                     </button>
                 </header>
 
                 {view === 'menu' ? (
                     <>
-                        <p className="text-gray-600 dark:text-gray-400 mb-6">აირჩიეთ, როგორ გსურთ მონაცემების შენახვა.</p>
+                        <p className="text-gray-600 dark:text-gray-400 mb-6">{t.exp_desc}</p>
                         <div className="space-y-4">
                             <button
                                 onClick={handleExportClick}
@@ -133,8 +134,8 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, onExportJson
                             >
                                 <JsonExportIcon className="w-8 h-8 text-purple-500 flex-shrink-0" />
                                 <div className="flex-grow">
-                                    <span className="font-semibold text-gray-800 dark:text-gray-200">ექსპორტი ფაილში (.json)</span>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">ინახავს თქვენს გენეალოგიურ ხეს .json ფაილად.</p>
+                                    <span className="font-semibold text-gray-800 dark:text-gray-200">{t.exp_file}</span>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">{t.exp_file_sub}</p>
                                 </div>
                             </button>
 
@@ -144,8 +145,8 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, onExportJson
                             >
                                 <CloudUploadIcon className="w-8 h-8 text-blue-500 flex-shrink-0" />
                                 <div className="flex-grow">
-                                    <span className="font-semibold text-gray-800 dark:text-gray-200">ღრუბელში ატვირთვა (Backup)</span>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">ატვირთეთ განახლება Supabase საცავში (საჭიროებს პაროლს).</p>
+                                    <span className="font-semibold text-gray-800 dark:text-gray-200">{t.exp_cloud}</span>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">{t.exp_cloud_sub}</p>
                                 </div>
                             </button>
                         </div>
@@ -153,9 +154,9 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, onExportJson
                 ) : (
                     <div className="bg-gray-50 dark:bg-gray-700/30 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
                         <div className="flex items-center gap-2 mb-4">
-                            <button onClick={() => setView('menu')} className="text-sm text-purple-600 hover:underline">უკან</button>
+                            <button onClick={() => setView('menu')} className="text-sm text-purple-600 hover:underline">{t.back}</button>
                             <span className="text-gray-400">|</span>
-                            <h3 className="text-md font-semibold text-gray-800 dark:text-gray-200">ადმინისტრატორის დადასტურება</h3>
+                            <h3 className="text-md font-semibold text-gray-800 dark:text-gray-200">{t.fm_admin_pass}</h3>
                         </div>
 
                         {successMessage ? (
@@ -166,7 +167,6 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, onExportJson
                         ) : (
                             <form onSubmit={handleAdminLoginAndUpload} className="space-y-4">
                                 <div>
-                                    <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">პაროლი</label>
                                     <div className="relative">
                                         <LockClosedIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"/>
                                         <input 
@@ -174,7 +174,6 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, onExportJson
                                             value={password}
                                             onChange={(e) => setPassword(e.target.value)}
                                             className="w-full pl-9 pr-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-purple-500 outline-none dark:text-white"
-                                            placeholder="შეიყვანეთ ადმინ პაროლი"
                                             autoFocus
                                             disabled={isLoading}
                                         />
@@ -186,7 +185,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, onExportJson
                                     disabled={isLoading || !password}
                                     className="w-full py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 dark:disabled:bg-purple-800 text-white rounded text-sm transition-colors flex items-center justify-center gap-2"
                                 >
-                                    {isLoading ? 'იტვირთება...' : <><CloudUploadIcon className="w-4 h-4" /> ატვირთვა</>}
+                                    {isLoading ? t.loading : <><CloudUploadIcon className="w-4 h-4" /> Upload</>}
                                 </button>
                             </form>
                         )}

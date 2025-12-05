@@ -1,5 +1,6 @@
 import React from 'react';
 import { CloseIcon, SearchIcon, GlobeIcon } from './Icons';
+import { translations, Language } from '../utils/translations';
 
 interface GoogleSearchPanelProps {
   isOpen: boolean;
@@ -11,9 +12,12 @@ interface GoogleSearchPanelProps {
   sources: any[];
   isLoading: boolean;
   error: string | null;
+  language: Language;
 }
 
-const GoogleSearchPanel: React.FC<GoogleSearchPanelProps> = ({ isOpen, onClose, onSearch, query, setQuery, result, sources, isLoading, error }) => {
+const GoogleSearchPanel: React.FC<GoogleSearchPanelProps> = ({ isOpen, onClose, onSearch, query, setQuery, result, sources, isLoading, error, language }) => {
+  const t = translations[language];
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       onSearch();
@@ -35,12 +39,12 @@ const GoogleSearchPanel: React.FC<GoogleSearchPanelProps> = ({ isOpen, onClose, 
           <header className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between flex-shrink-0">
             <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
               <GlobeIcon className="w-6 h-6 text-purple-500" />
-              ისტორიული ძიება
+              {t.search_history_title}
             </h2>
             <button
               onClick={onClose}
               className="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-              aria-label="ძიების პანელის დახურვა"
+              aria-label={t.close}
             >
               <CloseIcon className="w-6 h-6" />
             </button>
@@ -53,7 +57,7 @@ const GoogleSearchPanel: React.FC<GoogleSearchPanelProps> = ({ isOpen, onClose, 
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="მაგ: ბრძოლა დიდგორში..."
+                placeholder={t.search_placeholder_example}
                 className="w-full h-12 pl-4 pr-20 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
               <button
@@ -62,7 +66,7 @@ const GoogleSearchPanel: React.FC<GoogleSearchPanelProps> = ({ isOpen, onClose, 
                 className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-2 rounded-md bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 dark:disabled:bg-purple-800 disabled:cursor-not-allowed transition-colors text-white text-sm font-semibold flex items-center gap-2"
               >
                 <SearchIcon className="w-4 h-4" />
-                <span>ძიება</span>
+                <span>{t.search}</span>
               </button>
             </div>
           </div>
@@ -71,12 +75,12 @@ const GoogleSearchPanel: React.FC<GoogleSearchPanelProps> = ({ isOpen, onClose, 
             {isLoading && (
               <div className="flex flex-col items-center justify-center h-full text-center text-gray-500 dark:text-gray-400">
                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mb-4"></div>
-                 <p>ინფორმაციის მოძიება...</p>
+                 <p>{t.search_searching}</p>
               </div>
             )}
             {error && (
               <div className="p-4 rounded-md bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-300">
-                <p><strong>შეცდომა:</strong> {error}</p>
+                <p><strong>Error:</strong> {error}</p>
               </div>
             )}
             {result && (
@@ -86,7 +90,7 @@ const GoogleSearchPanel: React.FC<GoogleSearchPanelProps> = ({ isOpen, onClose, 
             )}
              {sources.length > 0 && (
                 <div className="mt-6">
-                    <h3 className="font-semibold text-gray-800 dark:text-gray-100 border-b border-gray-300 dark:border-gray-700 pb-1 mb-2">წყაროები</h3>
+                    <h3 className="font-semibold text-gray-800 dark:text-gray-100 border-b border-gray-300 dark:border-gray-700 pb-1 mb-2">{t.search_sources}</h3>
                     <ul className="space-y-2">
                         {sources.map((source, index) => (
                             <li key={index} className="flex items-start gap-2">
@@ -107,7 +111,7 @@ const GoogleSearchPanel: React.FC<GoogleSearchPanelProps> = ({ isOpen, onClose, 
             )}
             {!isLoading && !result && !error && (
                 <div className="flex flex-col items-center justify-center h-full text-center text-gray-500 dark:text-gray-400">
-                    <p className="mb-2">მოიძიეთ ინფორმაცია თქვენს წინაპრებთან დაკავშირებულ ისტორიულ მოვლენებზე, ადგილებსა და პიროვნებებზე.</p>
+                    <p className="mb-2">{t.search_empty_desc}</p>
                 </div>
             )}
           </div>

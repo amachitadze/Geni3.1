@@ -1,6 +1,8 @@
+
 import React from 'react';
 import { People } from '../types';
 import PersonCard from './PersonCard';
+import { translations, Language } from '../utils/translations';
 
 interface TreeNodeProps {
   personId: string;
@@ -18,6 +20,7 @@ interface TreeNodeProps {
   viewMode: 'default' | 'compact';
   parentId?: string; // ID of the parent for this node, used for highlighting connection
   isReadOnly?: boolean;
+  language?: Language;
 }
 
 const LinePaths: React.FC<{
@@ -60,11 +63,13 @@ const TreeNode: React.FC<TreeNodeProps> = ({
   onSetHover,
   viewMode,
   parentId,
-  isReadOnly
+  isReadOnly,
+  language = 'ka'
 }) => {
   const person = people[personId];
   if (!person) return null;
 
+  const t = translations[language];
   const isViewRoot = personId === viewRootId;
   const isCompact = viewMode === 'compact';
 
@@ -108,7 +113,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({
                            isHoverHighlighted={isLineHoverHighlighted(parents[0].id, parent.id)}
                         />
                         <text x={spouseConnectorWidth / 2} y="15" textAnchor="middle" className="line-label">
-                          მეუღლე
+                          {t.conn_spouse}
                         </text>
                      </g>
                    </svg>
@@ -126,6 +131,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({
                     onSetHover={onSetHover}
                     viewMode={viewMode}
                     isReadOnly={isReadOnly}
+                    language={language}
                   />
                 </div>
               </React.Fragment>
@@ -140,7 +146,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({
                     isHoverHighlighted={parents.some(p => isLineHoverHighlighted(p.id, personId))}
                 />
                 <text x="68" y={parentToChildConnectorHeight / 2} textAnchor="start" dominantBaseline="middle" className="line-label">
-                    მშობლები
+                    {t.conn_parents}
                 </text>
              </g>
            </svg>
@@ -166,7 +172,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({
                               isHoverHighlighted={isLineHoverHighlighted(parentId, personId)}
                             />
                             <text x="68" y={childToParentConnectorHeight / 2} textAnchor="start" dominantBaseline="middle" className="line-label">
-                                შვილი
+                                {t.conn_child}
                             </text>
                           </g>
                       </svg>
@@ -184,6 +190,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({
                     onSetHover={onSetHover}
                     viewMode={viewMode}
                     isReadOnly={isReadOnly}
+                    language={language}
                 />
             </div>
             {spouse && (
@@ -197,7 +204,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({
                        isHoverHighlighted={isLineHoverHighlighted(person.id, spouse.id)}
                     />
                     <text x={spouseConnectorWidth / 2} y="15" textAnchor="middle" className="line-label">
-                      მეუღლე
+                      {t.conn_spouse}
                     </text>
                   </g>
                 </svg>
@@ -214,6 +221,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({
                         onSetHover={onSetHover}
                         viewMode={viewMode}
                         isReadOnly={isReadOnly}
+                        language={language}
                     />
                 </div>
                 </>
@@ -238,7 +246,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({
                     isHoverHighlighted={children.some(c => isLineHoverHighlighted(person.id, c.id))}
                  />
                  <text x="68" y={coupleToChildrenConnectorHeight / 2} textAnchor="start" dominantBaseline="middle" className="line-label">
-                    მშობლები
+                    {t.conn_parents}
                 </text>
                </g>
              </svg>
@@ -266,6 +274,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({
                   viewMode={viewMode}
                   parentId={person.id}
                   isReadOnly={isReadOnly}
+                  language={language}
                 />
               </div>
             ))}

@@ -3,8 +3,9 @@ import { Person, People } from '../types';
 import { formatDate, calculateAge } from '../utils/dateUtils';
 import { 
     EditIcon, DeleteIcon, PhoneIcon, EmailIcon, AddressIcon, 
-    GlobeIcon, EllipsisVerticalIcon 
+    GlobeIcon, EllipsisVerticalIcon, CloseIcon
 } from './Icons';
+import { translations, Language } from '../utils/translations';
 
 interface DetailsModalProps {
   person: Person | null;
@@ -16,11 +17,13 @@ interface DetailsModalProps {
   onGoogleSearch: (person: Person) => void;
   onShowOnMap: (address: string) => void;
   isReadOnly?: boolean;
+  language: Language;
 }
 
-const DetailsModal: React.FC<DetailsModalProps> = ({ person, people, onClose, onEdit, onDelete, onNavigate, onGoogleSearch, onShowOnMap, isReadOnly }) => {
+const DetailsModal: React.FC<DetailsModalProps> = ({ person, people, onClose, onEdit, onDelete, onNavigate, onGoogleSearch, onShowOnMap, isReadOnly, language }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const t = translations[language];
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -45,11 +48,11 @@ const DetailsModal: React.FC<DetailsModalProps> = ({ person, people, onClose, on
       <button
         onClick={() => onGoogleSearch(person)}
         className={isMenu ? "w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3" : "p-2 rounded-full text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 hover:text-black dark:hover:text-white transition-colors"}
-        title="ინფორმაციის მოძიება Google-ში"
-        aria-label={`${fullName}-ს შესახებ ინფორმაციის მოძიება`}
+        title={t.btn_google_search}
+        aria-label={t.btn_google_search}
       >
         <GlobeIcon className="h-5 w-5" />
-        {isMenu && <span>ძიება Google-ში</span>}
+        {isMenu && <span>{t.btn_google_search}</span>}
       </button>
 
       {!isReadOnly && (
@@ -57,19 +60,21 @@ const DetailsModal: React.FC<DetailsModalProps> = ({ person, people, onClose, on
           <button
             onClick={() => onEdit(person.id)}
             className={isMenu ? "w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3" : "p-2 rounded-full text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 hover:text-black dark:hover:text-white transition-colors"}
-            aria-label={`${fullName}-ს რედაქტირება`}
+            aria-label={t.edit}
+            title={t.edit}
           >
             <EditIcon className="h-5 w-5" />
-            {isMenu && <span>რედაქტირება</span>}
+            {isMenu && <span>{t.edit}</span>}
           </button>
           {person.id !== 'root' && (
              <button
                 onClick={() => onDelete(person.id)}
                 className={isMenu ? "w-full text-left px-4 py-2 text-sm hover:bg-red-100 dark:hover:bg-red-900/50 flex items-center gap-3 text-red-600 dark:text-red-400" : "p-2 rounded-full text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 hover:bg-red-500 dark:hover:bg-red-600 hover:text-white transition-colors"}
-                aria-label={`${fullName}-ს წაშლა`}
+                aria-label={t.delete}
+                title={t.delete}
               >
                 <DeleteIcon className="h-5 w-5" />
-                {isMenu && <span>წაშლა</span>}
+                {isMenu && <span>{t.delete}</span>}
               </button>
           )}
         </React.Fragment>
@@ -81,9 +86,6 @@ const DetailsModal: React.FC<DetailsModalProps> = ({ person, people, onClose, on
     <div
       className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 transition-opacity p-4"
       onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="details-modal-title"
     >
       <div
         className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-lg border border-gray-300 dark:border-gray-700 max-h-[90vh] overflow-y-auto"
@@ -91,10 +93,10 @@ const DetailsModal: React.FC<DetailsModalProps> = ({ person, people, onClose, on
       >
         <header className="flex items-start justify-between mb-4 gap-4">
           <div className="flex-1 min-w-0">
-            <h2 id="details-modal-title" className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-600 break-words">
+            <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-600 break-words">
               {fullName}
             </h2>
-            <p className={`capitalize font-semibold ${genderColor}`}>{person.gender === 'male' ? 'მამრობითი' : 'მდედრობითი'}</p>
+            <p className={`capitalize font-semibold ${genderColor}`}>{person.gender === 'male' ? t.lbl_male : t.lbl_female}</p>
           </div>
            <div className="flex items-center gap-2 flex-shrink-0">
             {/* Desktop Buttons */}
@@ -107,7 +109,6 @@ const DetailsModal: React.FC<DetailsModalProps> = ({ person, people, onClose, on
                 <button
                     onClick={() => setIsMenuOpen(prev => !prev)}
                     className="p-2 rounded-full text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"
-                    aria-label="More actions"
                 >
                     <EllipsisVerticalIcon className="h-5 w-5" />
                 </button>
@@ -121,11 +122,8 @@ const DetailsModal: React.FC<DetailsModalProps> = ({ person, people, onClose, on
             <button
               onClick={onClose}
               className="p-2 rounded-full text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 hover:text-black dark:hover:text-white transition-colors"
-              aria-label="დეტალების ფანჯრის დახურვა"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <CloseIcon className="h-5 w-5" />
             </button>
           </div>
         </header>
@@ -144,32 +142,32 @@ const DetailsModal: React.FC<DetailsModalProps> = ({ person, people, onClose, on
             <div className="text-center sm:text-left">
               {person.birthDate && (
                 <p>
-                  <strong>დაიბადა:</strong> {formatDate(person.birthDate)}
-                  {!person.deathDate && age !== null && <span className="text-gray-500 dark:text-gray-400 ml-2">({age} წლის)</span>}
+                  <strong>{t.det_born}:</strong> {formatDate(person.birthDate)}
+                  {!person.deathDate && age !== null && <span className="text-gray-500 dark:text-gray-400 ml-2">({age} {t.det_years})</span>}
                 </p>
               )}
               {person.deathDate && (
                  <p>
-                    <strong>გარდაიცვალა:</strong> {formatDate(person.deathDate)}
-                    {age !== null && <span className="text-gray-500 dark:text-gray-400 ml-2">({age} წლის ასაკში)</span>}
+                    <strong>{t.det_died}:</strong> {formatDate(person.deathDate)}
+                    {age !== null && <span className="text-gray-500 dark:text-gray-400 ml-2">({t.det_age_at_death} {age})</span>}
                  </p>
               )}
               {!person.birthDate && !person.deathDate && (
-                <p className="text-gray-500">თარიღები უცნობია</p>
+                <p className="text-gray-500">{t.det_unknown}</p>
               )}
             </div>
           </div>
           
           {person.bio && (
             <div>
-              <h3 className="font-semibold text-lg text-gray-800 dark:text-gray-100 border-b border-gray-300 dark:border-gray-700 pb-1 mb-2">ბიოგრაფია</h3>
+              <h3 className="font-semibold text-lg text-gray-800 dark:text-gray-100 border-b border-gray-300 dark:border-gray-700 pb-1 mb-2">{t.det_bio}</h3>
               <p className="whitespace-pre-wrap">{person.bio}</p>
             </div>
           )}
 
           {person.deathDate && person.cemeteryAddress && (
             <div>
-              <h3 className="font-semibold text-lg text-gray-800 dark:text-gray-100 border-b border-gray-300 dark:border-gray-700 pb-1 mb-2">სასაფლაოს მისამართი</h3>
+              <h3 className="font-semibold text-lg text-gray-800 dark:text-gray-100 border-b border-gray-300 dark:border-gray-700 pb-1 mb-2">{t.det_cemetery}</h3>
               <div className="flex items-start gap-3 mt-2">
                 <AddressIcon className="w-5 h-5 text-gray-500 dark:text-gray-400 flex-shrink-0 mt-1" />
                 {person.cemeteryAddress.startsWith('http') ? (
@@ -190,7 +188,7 @@ const DetailsModal: React.FC<DetailsModalProps> = ({ person, people, onClose, on
           
           {exSpouses.length > 0 && (
             <div>
-                <h3 className="font-semibold text-lg text-gray-800 dark:text-gray-100 border-b border-gray-300 dark:border-gray-700 pb-1 mb-2">ყოფილი მეუღლეები</h3>
+                <h3 className="font-semibold text-lg text-gray-800 dark:text-gray-100 border-b border-gray-300 dark:border-gray-700 pb-1 mb-2">{t.det_ex_spouses}</h3>
                 <ul className="list-disc list-inside space-y-1 mt-2 text-gray-700 dark:text-gray-300">
                     {exSpouses.map(ex => (
                         <li key={ex.id}>
@@ -208,7 +206,7 @@ const DetailsModal: React.FC<DetailsModalProps> = ({ person, people, onClose, on
 
           {hasContactInfo && (
             <div>
-              <h3 className="font-semibold text-lg text-gray-800 dark:text-gray-100 border-b border-gray-300 dark:border-gray-700 pb-1 mb-2">საკონტაქტო ინფორმაცია</h3>
+              <h3 className="font-semibold text-lg text-gray-800 dark:text-gray-100 border-b border-gray-300 dark:border-gray-700 pb-1 mb-2">{t.det_contact}</h3>
               <ul className="space-y-2 mt-2">
                  {person.contactInfo?.phone && (
                    <li className="flex items-center gap-3">
@@ -228,7 +226,7 @@ const DetailsModal: React.FC<DetailsModalProps> = ({ person, people, onClose, on
                       <button
                         onClick={() => onShowOnMap(person.contactInfo!.address!)}
                         className="text-left whitespace-pre-wrap text-purple-600 dark:text-purple-400 hover:underline focus:outline-none"
-                        title="რუკაზე ჩვენება"
+                        title="Map"
                       >
                         {person.contactInfo.address}
                       </button>

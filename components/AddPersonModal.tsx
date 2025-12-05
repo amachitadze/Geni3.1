@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Gender, ModalContext, Person, Relationship } from '../types';
 import { convertDisplayToStorage, convertStorageToDisplay } from '../utils/dateUtils';
 import { getStoredSupabaseConfig, getSupabaseClient } from '../utils/supabaseClient';
+import { translations, Language } from '../utils/translations';
 import { 
     ImageIcon, DeleteIcon, CloseIcon, CheckIcon, CloudUploadIcon
 } from './Icons';
@@ -28,9 +29,12 @@ interface AddPersonModalProps {
   anchorSpouse?: Person | null;
   personToEdit?: Person | null;
   anchorPersonExSpouses?: Person[];
+  language: Language;
 }
 
-const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubmit, onDelete, context, anchorPerson, anchorSpouse, personToEdit, anchorPersonExSpouses }) => {
+const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubmit, onDelete, context, anchorPerson, anchorSpouse, personToEdit, anchorPersonExSpouses, language }) => {
+  const t = translations[language];
+
   // Form fields
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -105,8 +109,8 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
     };
 
     if (isEditMode && personToEdit) {
-      setTitle('პიროვნების რედაქტირება');
-      setSubmitText('შენახვა');
+      setTitle(t.modal_edit_title);
+      setSubmitText(t.save);
       setFirstName(personToEdit.firstName);
       setLastName(personToEdit.lastName);
       setGender(personToEdit.gender);
@@ -119,24 +123,28 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
       setBio(personToEdit.bio || '');
       setCemeteryAddress(personToEdit.cemeteryAddress || '');
     } else if (context?.action === 'add') {
-      setTitle('ნათესავის დამატება');
-      setSubmitText('დამატება');
+      setTitle(t.modal_add_title);
+      setSubmitText(t.add);
       resetFields();
     }
-  }, [isOpen, context, personToEdit, isEditMode]);
+  }, [isOpen, context, personToEdit, isEditMode, language]);
 
   // Effect for UI texts
   useEffect(() => {
     if (isOpen && context?.action === 'add' && anchorPerson) {
       const relationshipTranslations: Record<Relationship, string> = {
-        child: 'შვილის',
-        spouse: 'მეუღლის',
-        parent: 'მშობლის',
-        sibling: 'დის/ძმის'
+        child: t.modal_add_child_of,
+        spouse: t.modal_add_spouse_of,
+        parent: t.modal_add_parent_of,
+        sibling: t.modal_add_sibling_of
       };
-      const relText = relationshipTranslations[relationship] || '';
+      // For simple title, we can just use the translation. 
+      // If we want "Add Child for [Name]", we'd need more complex interpolation, 
+      // but let's stick to simple translated strings + Name
+      
       const anchorFullName = `${anchorPerson.firstName} ${anchorPerson.lastName}`.trim();
-      setTitle(`${relText} დამატება ${anchorFullName}-თვის`);
+      // Using a simpler approach: "Add Child (For Name)"
+      setTitle(`${relationshipTranslations[relationship]} (${anchorFullName})`);
 
       if (relationship === 'spouse') {
           setGender(anchorPerson.gender === Gender.Male ? Gender.Female : Gender.Male);
@@ -157,7 +165,7 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
         }
       }
     }
-  }, [isOpen, context, anchorPerson, anchorSpouse, relationship, isEditMode]);
+  }, [isOpen, context, anchorPerson, anchorSpouse, relationship, isEditMode, language]);
 
   const transliterate = (text: string) => {
     const map: Record<string, string> = {
@@ -180,14 +188,12 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
           const supabase = getSupabaseClient(config.url, config.key);
           
           // Extract filename from URL
-          // Example: https://xyz.supabase.co/storage/v1/object/public/images/Name_Surname_123.jpg
           const parts = url.split('/');
           const fileName = parts[parts.length - 1];
           
           if (fileName) {
               const { error } = await supabase.storage.from('images').remove([fileName]);
               if (error) console.error("Error deleting old image:", error);
-              else console.log("Old image deleted successfully:", fileName);
           }
       } catch (err) {
           console.error("Failed to delete image:", err);
@@ -304,7 +310,7 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
 
          } catch (err: any) {
              console.error("Supabase Upload Failed:", err);
-             alert(`Supabase-ზე ატვირთვა ვერ მოხერხდა: ${err.message}. ვცდით ლოკალურ შენახვას.`);
+             alert(`Supabase upload failed: ${err.message}. Saving locally.`);
              // Fallthrough to Local Base64 if Supabase fails
          }
       }
@@ -439,9 +445,8 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
             className="absolute inset-0 z-[60] bg-black bg-opacity-90 flex flex-col justify-center items-center p-4"
             onClick={(e) => e.stopPropagation()}
           >
-              <h3 className="text-white text-lg font-bold mb-4">სურათის მორგება</h3>
+              <h3 className="text-white text-lg font-bold mb-4">{t.lbl_photo}</h3>
               
-              {/* Crop Container */}
               <div 
                 className="relative overflow-hidden bg-gray-900 border-2 border-white shadow-2xl" 
                 style={{ width: '280px', height: '280px', cursor: isDraggingCrop ? 'grabbing' : 'grab' }}
@@ -453,7 +458,6 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
                 onTouchMove={onTouchMove}
                 onTouchEnd={onMouseUp}
               >
-                  {/* Image Display */}
                   <div className="w-full h-full flex items-center justify-center pointer-events-none">
                      <img 
                         ref={imgRef}
@@ -467,8 +471,6 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
                         }}
                      />
                   </div>
-                  
-                  {/* Grid Overlay */}
                   <div className="absolute inset-0 pointer-events-none border border-white/30 grid grid-cols-3 grid-rows-3">
                       <div className="border-r border-b border-white/20"></div><div className="border-r border-b border-white/20"></div><div className="border-b border-white/20"></div>
                       <div className="border-r border-b border-white/20"></div><div className="border-r border-b border-white/20"></div><div className="border-b border-white/20"></div>
@@ -476,10 +478,9 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
                   </div>
               </div>
 
-              {/* Controls */}
               <div className="mt-6 w-full max-w-xs space-y-4">
                   <div>
-                      <label className="text-white text-xs mb-1 block">გადიდება: {cropZoom.toFixed(1)}x</label>
+                      <label className="text-white text-xs mb-1 block">Zoom: {cropZoom.toFixed(1)}x</label>
                       <input 
                         type="range" 
                         min="0.5" 
@@ -491,8 +492,8 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
                       />
                   </div>
                   <div className="flex gap-4">
-                      <button onClick={() => setCropModalOpen(false)} className="flex-1 py-2 bg-gray-600 text-white rounded hover:bg-gray-500 transition-colors">გაუქმება</button>
-                      <button onClick={handleCropSave} className="flex-1 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors font-semibold">შენახვა</button>
+                      <button onClick={() => setCropModalOpen(false)} className="flex-1 py-2 bg-gray-600 text-white rounded hover:bg-gray-500 transition-colors">{t.cancel}</button>
+                      <button onClick={handleCropSave} className="flex-1 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors font-semibold">{t.save}</button>
                   </div>
               </div>
           </div>
@@ -504,36 +505,36 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
 
           {!isEditMode && anchorPerson && (
              <div>
-                <label htmlFor="relationship" className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">ურთიერთობა</label>
+                <label htmlFor="relationship" className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">{t.lbl_relationship}</label>
                 <select id="relationship" value={relationship} onChange={e => setRelationship(e.target.value as Relationship)} className={selectStyles}>
-                    <option value="child">შვილი</option>
-                    <option value="spouse">მეუღლე</option>
-                    <option value="parent" disabled={anchorPerson.parentIds.length >= 2}>მშობელი</option>
-                    <option value="sibling" disabled={anchorPerson.parentIds.length === 0}>და/ძმა</option>
+                    <option value="child">{t.rel_child}</option>
+                    <option value="spouse">{t.rel_spouse}</option>
+                    <option value="parent" disabled={anchorPerson.parentIds.length >= 2}>{t.rel_parent}</option>
+                    <option value="sibling" disabled={anchorPerson.parentIds.length === 0}>{t.rel_sibling}</option>
                 </select>
-                {relationship === 'sibling' && anchorPerson.parentIds.length === 0 && <p className="text-xs text-yellow-500 dark:text-yellow-400 mt-1">არ შეგიძლიათ დაამატოთ და/ძმა პიროვნებას, რომელსაც ხეში მშობლები განსაზღვრული არ აქვს.</p>}
-                {relationship === 'parent' && anchorPerson.parentIds.length >= 2 && <p className="text-xs text-yellow-500 dark:text-yellow-400 mt-1">ამ პიროვნებას უკვე ჰყავს ორი მშობელი.</p>}
+                {relationship === 'sibling' && anchorPerson.parentIds.length === 0 && <p className="text-xs text-yellow-500 dark:text-yellow-400 mt-1">{t.msg_sibling_limit}</p>}
+                {relationship === 'parent' && anchorPerson.parentIds.length >= 2 && <p className="text-xs text-yellow-500 dark:text-yellow-400 mt-1">{t.msg_parent_limit}</p>}
              </div>
           )}
           
           {!isEditMode && relationship === 'spouse' && anchorPersonExSpouses && anchorPersonExSpouses.length > 0 && (
              <div className="p-3 rounded-md border border-gray-300 dark:border-gray-700">
-                <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">მეუღლის დამატების მეთოდი</label>
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">{t.rel_spouse}</label>
                 <div className="flex gap-4">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="radio" name="spouseMode" value="new" checked={spouseMode === 'new'} onChange={() => setSpouseMode('new')} className="form-radio text-purple-500 bg-gray-200 dark:bg-gray-700 border-gray-400 dark:border-gray-600 focus:ring-purple-500" />
-                    <span>ახალი პიროვნება</span>
+                    <span>{t.spouse_mode_new}</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="radio" name="spouseMode" value="existing" checked={spouseMode === 'existing'} onChange={() => setSpouseMode('existing')} className="form-radio text-purple-500 bg-gray-200 dark:bg-gray-700 border-gray-400 dark:border-gray-600 focus:ring-purple-500" />
-                    <span>არსებულის არჩევა</span>
+                    <span>{t.spouse_mode_existing}</span>
                   </label>
                 </div>
                  {spouseMode === 'existing' && (
                     <div className="mt-3">
-                        <label htmlFor="exSpouseSelect" className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">აირჩიეთ ყოფილი მეუღლე</label>
+                        <label htmlFor="exSpouseSelect" className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">{t.lbl_select_ex_spouse}</label>
                         <select id="exSpouseSelect" value={selectedExSpouseId} onChange={e => setSelectedExSpouseId(e.target.value)} className={selectStyles} required>
-                            <option value="" disabled>აირჩიეთ...</option>
+                            <option value="" disabled>...</option>
                             {anchorPersonExSpouses.map(p => <option key={p.id} value={p.id}>{p.firstName} {p.lastName}</option>)}
                         </select>
                     </div>
@@ -545,21 +546,21 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
             <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                    <label htmlFor="firstName" className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">სახელი</label>
-                    <input type="text" id="firstName" value={firstName} onChange={(e) => setFirstName(e.target.value)} className={inputStyles} placeholder="შეიყვანეთ სახელი" required autoFocus />
+                    <label htmlFor="firstName" className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">{t.lbl_firstname}</label>
+                    <input type="text" id="firstName" value={firstName} onChange={(e) => setFirstName(e.target.value)} className={inputStyles} required autoFocus />
                     </div>
                     <div>
-                    <label htmlFor="lastName" className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">გვარი</label>
-                    <input type="text" id="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} className={inputStyles} placeholder="შეიყვანეთ გვარი" />
+                    <label htmlFor="lastName" className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">{t.lbl_lastname}</label>
+                    <input type="text" id="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} className={inputStyles} />
                     </div>
                 </div>
                 
                 <div>
-                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">პროფილის სურათი</label>
+                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">{t.lbl_photo}</label>
                     <div className="mt-2 flex items-center gap-4">
                         {imageUrl ? (
                         <div className="relative">
-                            <img src={imageUrl} alt="პროფილი" className="w-16 h-16 rounded-full object-cover border-2 border-gray-300 dark:border-gray-600" />
+                            <img src={imageUrl} alt="Profile" className="w-16 h-16 rounded-full object-cover border-2 border-gray-300 dark:border-gray-600" />
                             {isUploading && (
                                 <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full">
                                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
@@ -586,17 +587,17 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
                         />
                         <label htmlFor="imageUpload" className={`cursor-pointer px-3 py-2 rounded-md bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors text-sm font-medium text-gray-800 dark:text-gray-100 flex items-center gap-2 ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
                             {isUploading ? (
-                                <span>იტვირთება...</span>
+                                <span>{t.loading}</span>
                             ) : (
                                 <>
                                     <CloudUploadIcon className="w-4 h-4" />
-                                    <span>სურათის არჩევა</span>
+                                    <span>{t.lbl_upload_photo}</span>
                                 </>
                             )}
                         </label>
                         {imageUrl && !isUploading && (
                         <button type="button" onClick={handleManualImageDelete} className="text-xs text-red-500 dark:text-red-400 hover:underline">
-                            წაშლა
+                            {t.lbl_delete_photo}
                         </button>
                         )}
                     </div>
@@ -613,71 +614,63 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
                                     className="w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500 dark:focus:ring-purple-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
                                 />
                                 <label htmlFor="cloudToggle" className="text-xs font-medium text-gray-700 dark:text-gray-300 select-none cursor-pointer">
-                                    სურათის სერვერზე ატვირთვა
+                                    {t.lbl_cloud_upload}
                                 </label>
                             </div>
                         ) : null}
-
-                        <p className={`text-xs ${hasSupabaseConfig && useCloudStorage ? 'text-green-600 dark:text-green-400' : 'text-gray-500'}`}>
-                            {hasSupabaseConfig 
-                                ? (useCloudStorage 
-                                    ? "✅ Supabase Storage აქტიურია. უსაფრთხო ატვირთვა." 
-                                    : "ℹ️ ატვირთვა გამორთულია. სურათი შეინახება ფაილში (ლოკალურად).")
-                                : "⚠️ სერვერი ვერ მოიძებნა. სურათი შეინახება ფაილში (გაზრდის ზომას)."}
-                        </p>
                     </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label htmlFor="birthDate" className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">დაბადების თარიღი</label>
-                        <input type="text" id="birthDate" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} onBlur={(e) => handleDateBlur(e, setBirthDate)} className={inputStyles} placeholder="DD.MM.YYYY ან YYYY"/>
+                        <label htmlFor="birthDate" className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">{t.lbl_birthdate}</label>
+                        <input type="text" id="birthDate" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} onBlur={(e) => handleDateBlur(e, setBirthDate)} className={inputStyles} placeholder="DD.MM.YYYY"/>
                     </div>
                     <div>
-                        <label htmlFor="deathDate" className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">გარდაცვალების თარიღი</label>
-                        <input type="text" id="deathDate" value={deathDate} onChange={(e) => setDeathDate(e.target.value)} onBlur={(e) => handleDateBlur(e, setDeathDate)} className={inputStyles} placeholder="DD.MM.YYYY ან YYYY"/>
+                        <label htmlFor="deathDate" className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">{t.lbl_deathdate}</label>
+                        <input type="text" id="deathDate" value={deathDate} onChange={(e) => setDeathDate(e.target.value)} onBlur={(e) => handleDateBlur(e, setDeathDate)} className={inputStyles} placeholder="DD.MM.YYYY"/>
                     </div>
                 </div>
 
                 {convertDisplayToStorage(deathDate) && (
                   <div>
-                    <label htmlFor="cemeteryAddress" className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">სასაფლაოს მისამართი</label>
-                    <input type="text" id="cemeteryAddress" value={cemeteryAddress} onChange={(e) => setCemeteryAddress(e.target.value)} className={inputStyles} placeholder="მისამართი ან Google Maps-ის ბმული"/>
+                    <label htmlFor="cemeteryAddress" className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">{t.lbl_cemetery}</label>
+                    <input type="text" id="cemeteryAddress" value={cemeteryAddress} onChange={(e) => setCemeteryAddress(e.target.value)} className={inputStyles} />
                   </div>
                 )}
                 
                 <div className="space-y-4 rounded-md border border-gray-300 dark:border-gray-700 p-3">
-                    <h3 className="text-sm font-medium text-gray-600 dark:text-gray-300">საკონტაქტო ინფორმაცია</h3>
+                    <h3 className="text-sm font-medium text-gray-600 dark:text-gray-300">{t.lbl_contact_info}</h3>
                     <div>
-                        <label htmlFor="phone" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">ტელეფონი</label>
-                        <input type="tel" id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="ტელეფონის ნომერი" className={inputStyles}/>
+                        <label htmlFor="phone" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{t.lbl_phone}</label>
+                        <input type="tel" id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} className={inputStyles}/>
                     </div>
                     <div>
-                        <label htmlFor="email" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">ელ. ფოსტა</label>
-                        <input type="email" id="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="ელექტრონული ფოსტა" className={inputStyles}/>
+                        <label htmlFor="email" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{t.lbl_email}</label>
+                        <input type="email" id="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputStyles}/>
                     </div>
                     <div>
-                        <label htmlFor="address" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">მისამართი</label>
-                        <input type="text" id="address" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="საცხოვრებელი მისამართი" className={inputStyles}/>
+                        <label htmlFor="address" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{t.lbl_address}</label>
+                        <input type="text" id="address" value={address} onChange={(e) => setAddress(e.target.value)} className={inputStyles}/>
                     </div>
                 </div>
                 
                 <div>
-                    <label htmlFor="bio" className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">ბიოგრაფია</label>
-                    <textarea id="bio" value={bio} onChange={(e) => setBio(e.target.value)} rows={3} placeholder="მოკლე ბიოგრაფია..." className={inputStyles}></textarea>
+                    <label htmlFor="bio" className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">{t.lbl_bio}</label>
+                    <textarea id="bio" value={bio} onChange={(e) => setBio(e.target.value)} rows={3} className={inputStyles}></textarea>
                 </div>
 
                 {showGenderSelector && (
                     <div>
-                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">სქესი</label>
+                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">{t.lbl_gender}</label>
                     <div className="flex gap-4">
                         <label className="flex items-center gap-2 cursor-pointer">
                         <input type="radio" name="gender" value={Gender.Male} checked={gender === Gender.Male} onChange={() => setGender(Gender.Male)} className="form-radio text-blue-500 bg-gray-200 dark:bg-gray-700 border-gray-400 dark:border-gray-600 focus:ring-blue-500" />
-                        <span className="text-blue-600 dark:text-blue-400">მამრობითი</span>
+                        <span className="text-blue-600 dark:text-blue-400">{t.lbl_male}</span>
                         </label>
                         <label className="flex items-center gap-2 cursor-pointer">
                         <input type="radio" name="gender" value={Gender.Female} checked={gender === Gender.Female} onChange={() => setGender(Gender.Female)} className="form-radio text-pink-500 bg-gray-200 dark:bg-gray-700 border-gray-400 dark:border-gray-600 focus:ring-pink-500" />
-                        <span className="text-pink-600 dark:text-pink-400">მდედრობითი</span>
+                        <span className="text-pink-600 dark:text-pink-400">{t.lbl_female}</span>
                         </label>
                     </div>
                     </div>
@@ -692,17 +685,17 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
                   type="button"
                   onClick={handleDeletePerson}
                   className="h-10 px-3 sm:px-4 rounded-md bg-red-600 hover:bg-red-700 text-white transition-colors flex items-center gap-2"
-                  title="წაშლა"
+                  title={t.delete}
                 >
                   <DeleteIcon className="w-5 h-5" />
-                  <span className="hidden sm:inline">წაშლა</span>
+                  <span className="hidden sm:inline">{t.delete}</span>
                 </button>
               )}
             </div>
             <div className="flex justify-end gap-3">
-              <button type="button" onClick={onClose} className="h-10 px-3 sm:px-4 rounded-md bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 text-gray-800 dark:text-gray-100 transition-colors flex items-center gap-2" title="გაუქმება">
+              <button type="button" onClick={onClose} className="h-10 px-3 sm:px-4 rounded-md bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 text-gray-800 dark:text-gray-100 transition-colors flex items-center gap-2" title={t.cancel}>
                 <CloseIcon className="w-5 h-5" />
-                <span className="hidden sm:inline">გაუქმება</span>
+                <span className="hidden sm:inline">{t.cancel}</span>
               </button>
               <button type="submit" disabled={isUploading} className="h-10 px-3 sm:px-4 rounded-md bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 dark:disabled:bg-purple-800 disabled:cursor-not-allowed text-white transition-colors flex items-center gap-2" title={submitText}>
                 <CheckIcon className="w-5 h-5" />

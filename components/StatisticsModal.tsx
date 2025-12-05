@@ -45,7 +45,7 @@ const StatisticsModal: React.FC<StatisticsModalProps> = ({ isOpen, onClose, stat
                         <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-600">{t.stats_title}</h2>
                         <p className="text-gray-500 dark:text-gray-400 text-sm">{t.stats_total}: {stats.totalPeople}</p>
                     </div>
-                    <button onClick={onClose} className="p-2 rounded-full text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 hover:text-black dark:hover:text-white transition-colors" aria-label={t.btn_close}>
+                    <button onClick={onClose} className="p-2 rounded-full text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 hover:text-black dark:hover:text-white transition-colors" aria-label={t.close}>
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                         </svg>

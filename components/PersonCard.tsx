@@ -1,6 +1,8 @@
+
 import React from 'react';
 import { Person, Gender } from '../types';
 import { PlusIcon, AncestorsIcon, DefaultAvatar } from './Icons';
+import { translations, Language } from '../utils/translations';
 
 interface PersonCardProps {
   person: Person;
@@ -14,6 +16,7 @@ interface PersonCardProps {
   onSetHover: (personId: string | null) => void;
   viewMode: 'default' | 'compact';
   isReadOnly?: boolean;
+  language?: Language;
 }
 
 const genderStyles = {
@@ -31,9 +34,10 @@ const genderStyles = {
   },
 };
 
-const PersonCard: React.FC<PersonCardProps> = ({ person, onAdd, onShowDetails, onNavigate, isHighlighted, isConnectionHighlighted, isHoverConnected, onSetHover, viewMode, isReadOnly }) => {
+const PersonCard: React.FC<PersonCardProps> = ({ person, onAdd, onShowDetails, onNavigate, isHighlighted, isConnectionHighlighted, isHoverConnected, onSetHover, viewMode, isReadOnly, language = 'ka' }) => {
   const styles = genderStyles[person.gender];
   const fullName = `${person.firstName} ${person.lastName}`;
+  const t = translations[language];
 
   const getYear = (dateString?: string) => {
     if (!dateString) return '';
@@ -102,8 +106,8 @@ const PersonCard: React.FC<PersonCardProps> = ({ person, onAdd, onShowDetails, o
                     <button
                         onClick={handleNavigateClick}
                         className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${styles.buttonCompact}`}
-                        title="წინაპრების ნახვა"
-                        aria-label={`${fullName}-ს წინაპრების ნახვა`}
+                        title={t.btn_show_ancestors}
+                        aria-label={`${fullName} - ${t.btn_show_ancestors}`}
                     >
                         <AncestorsIcon className="w-4 h-4" />
                     </button>
@@ -145,21 +149,21 @@ const PersonCard: React.FC<PersonCardProps> = ({ person, onAdd, onShowDetails, o
             <button 
             onClick={handleAddButtonClick}
             className={`w-full flex-grow text-xs py-1.5 px-2 rounded-md flex items-center justify-center gap-1 transition-colors ${styles.button}`}
-            aria-label={`${fullName}-თვის ნათესავის დამატება`}
-            title="დაამატე ნათესავი"
+            aria-label={`${fullName} - ${t.btn_add_relative}`}
+            title={t.modal_add_title}
             >
-            <PlusIcon className="w-3 h-3"/> დამატება
+            <PlusIcon className="w-3 h-3"/> {t.add}
             </button>
         )}
         {canNavigateToAncestors && (
             <button
                 onClick={handleNavigateClick}
                 className={`flex-shrink-0 p-2 rounded-md transition-colors ${styles.button} ${isReadOnly ? 'w-full flex justify-center' : ''}`}
-                title="წინაპრების ნახვა"
-                aria-label={`${fullName}-ს წინაპრების ნახვა`}
+                title={t.btn_show_ancestors}
+                aria-label={`${fullName} - ${t.btn_show_ancestors}`}
             >
                 <AncestorsIcon className="w-4 h-4" />
-                {isReadOnly && <span className="ml-2 text-xs">წინაპრები</span>}
+                {isReadOnly && <span className="ml-2 text-xs">{t.btn_show_ancestors}</span>}
             </button>
         )}
       </div>

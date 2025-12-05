@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { CloseIcon, MessageIcon, CheckIcon, PollIcon, LockClosedIcon, DeleteIcon, BackIcon } from './Icons';
 import { getStoredSupabaseConfig, getSupabaseClient, getAdminPassword } from '../utils/supabaseClient';
+import { translations, Language } from '../utils/translations';
 
 interface NotificationSenderModalProps {
   isOpen: boolean;
   onClose: () => void;
+  language: Language;
 }
 
 interface NotificationItem {
@@ -16,7 +18,8 @@ interface NotificationItem {
     expiresAt: string;
 }
 
-const NotificationSenderModal: React.FC<NotificationSenderModalProps> = ({ isOpen, onClose }) => {
+const NotificationSenderModal: React.FC<NotificationSenderModalProps> = ({ isOpen, onClose, language }) => {
+  const t = translations[language];
   // View State: 'send', 'auth', 'list'
   const [view, setView] = useState<'send' | 'auth' | 'list'>('send');
   
@@ -24,7 +27,7 @@ const NotificationSenderModal: React.FC<NotificationSenderModalProps> = ({ isOpe
   const [message, setMessage] = useState('');
   const [link, setLink] = useState('');
   const [isPoll, setIsPoll] = useState(false);
-  const [expiryDate, setExpiryDate] = useState(''); // New state for custom expiration
+  const [expiryDate, setExpiryDate] = useState(''); 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -54,14 +57,13 @@ const NotificationSenderModal: React.FC<NotificationSenderModalProps> = ({ isOpe
   const getSupabase = () => {
     const config = getStoredSupabaseConfig();
     if (!config.url || !config.key) {
-        throw new Error("სერვერთან კავშირი არ არის (Supabase Keys missing).");
+        throw new Error("Supabase Keys missing.");
     }
     return getSupabaseClient(config.url, config.key);
   };
 
   const fetchNotifications = async (): Promise<NotificationItem[]> => {
       const supabase = getSupabase();
-      // Bypass cache
       const { data, error } = await supabase
         .storage
         .from('shares')
@@ -114,7 +116,6 @@ const NotificationSenderModal: React.FC<NotificationSenderModalProps> = ({ isOpe
             expiresAt: new Date(expiryDate).toISOString()
         };
 
-        // Append new item. Keep last 50.
         const updatedList = [...currentList, newItem].slice(-50);
         
         await saveNotifications(updatedList);
@@ -126,7 +127,7 @@ const NotificationSenderModal: React.FC<NotificationSenderModalProps> = ({ isOpe
 
     } catch (err: any) {
         console.error("Failed to send notification:", err);
-        setError(err.message || "შეტყობინების გაგზავნა ვერ მოხერხდა.");
+        setError(err.message || "Failed to send.");
     } finally {
         setIsLoading(false);
     }
@@ -136,7 +137,7 @@ const NotificationSenderModal: React.FC<NotificationSenderModalProps> = ({ isOpe
       e.preventDefault();
       const correct = getAdminPassword();
       if (!correct) {
-          setError("ადმინისტრატორის პაროლი არ არის კონფიგურირებული.");
+          setError(t.fm_admin_pass + " missing configuration");
           return;
       }
       if (adminPasswordInput === correct) {
@@ -144,7 +145,7 @@ const NotificationSenderModal: React.FC<NotificationSenderModalProps> = ({ isOpe
           setView('list');
           loadHistory();
       } else {
-          setError('პაროლი არასწორია.');
+          setError('Incorrect password.');
       }
   };
 
@@ -152,32 +153,31 @@ const NotificationSenderModal: React.FC<NotificationSenderModalProps> = ({ isOpe
       setIsLoading(true);
       try {
           const list = await fetchNotifications();
-          // Sort by newest first
           setNotificationHistory(list.sort((a, b) => b.id - a.id));
       } catch (err: any) {
-          setError("ისტორიის ჩატვირთვა ვერ მოხერხდა.");
+          setError("Failed to load history.");
       } finally {
           setIsLoading(false);
       }
   };
 
   const handleDeleteItem = async (id: number) => {
-      if(!window.confirm("ნამდვილად გსურთ ამ შეტყობინების წაშლა?")) return;
+      if(!window.confirm(t.delete + "?")) return;
       
       setIsLoading(true);
       try {
           const newList = notificationHistory.filter(item => item.id !== id);
-          await saveNotifications(newList.sort((a,b) => a.id - b.id)); // Store ordered by ID
-          setNotificationHistory(newList.sort((a, b) => b.id - a.id)); // View ordered newest first
+          await saveNotifications(newList.sort((a,b) => a.id - b.id)); 
+          setNotificationHistory(newList.sort((a, b) => b.id - a.id)); 
       } catch (err: any) {
-          alert("წაშლა ვერ მოხერხდა: " + err.message);
+          alert("Delete failed: " + err.message);
       } finally {
           setIsLoading(false);
       }
   };
 
   const formatDate = (iso: string) => {
-      return new Date(iso).toLocaleString('ka-GE', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      return new Date(iso).toLocaleString(language === 'es' ? 'es-ES' : 'ka-GE', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   };
 
   const isExpired = (iso: string) => new Date(iso) < new Date();
@@ -192,16 +192,16 @@ const NotificationSenderModal: React.FC<NotificationSenderModalProps> = ({ isOpe
         <header className="flex items-start justify-between mb-4">
           <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
             <MessageIcon className="w-6 h-6 text-purple-600" />
-            {view === 'send' ? 'შეტყობინების გაგზავნა' : 'შეტყობინებების მართვა'}
+            {view === 'send' ? t.msg_title_send : t.msg_title_manage}
           </h2>
           <div className="flex gap-2">
               {view === 'send' && (
-                  <button onClick={() => setView('auth')} className="p-2 -mt-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" title="მართვა">
+                  <button onClick={() => setView('auth')} className="p-2 -mt-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
                     <LockClosedIcon className="w-5 h-5" />
                   </button>
               )}
               {view !== 'send' && (
-                  <button onClick={() => setView('send')} className="p-2 -mt-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" title="უკან">
+                  <button onClick={() => setView('send')} className="p-2 -mt-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
                     <BackIcon className="w-5 h-5" />
                   </button>
               )}
@@ -216,29 +216,27 @@ const NotificationSenderModal: React.FC<NotificationSenderModalProps> = ({ isOpe
             success ? (
                 <div className="flex flex-col items-center justify-center py-8 text-green-600 dark:text-green-400 animate-fade-in-up">
                     <CheckIcon className="w-12 h-12 mb-3" />
-                    <p className="text-lg font-medium text-center">შეტყობინება წარმატებით გაიგზავნა!</p>
-                    <p className="text-sm text-center text-gray-500 mt-2">ის გამოჩნდება ყველა აქტიურ მომხმარებელთან.</p>
+                    <p className="text-lg font-medium text-center">{t.msg_success}</p>
                 </div>
             ) : (
                 <form onSubmit={handleSend} className="space-y-4">
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                        შეტყობინება მომენტალურად გაიგზავნება სერვერზე და გამოჩნდება აპლიკაციაში.
+                        {t.msg_desc}
                     </p>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">ტექსტი</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t.lbl_text}</label>
                         <textarea 
                             value={message}
                             onChange={(e) => setMessage(e.target.value)}
                             rows={3}
                             className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 dark:text-white"
-                            placeholder="შეიყვანეთ ტექსტი..."
                             required
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">ბმული (არასავალდებულო)</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t.lbl_link}</label>
                         <input 
                             type="url" 
                             value={link}
@@ -249,7 +247,7 @@ const NotificationSenderModal: React.FC<NotificationSenderModalProps> = ({ isOpe
                     </div>
                     
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">ვადა (როდის გაქრეს)</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t.lbl_expiry}</label>
                         <input 
                             type="datetime-local" 
                             value={expiryDate}
@@ -270,8 +268,8 @@ const NotificationSenderModal: React.FC<NotificationSenderModalProps> = ({ isOpe
                         <label htmlFor="isPoll" className="text-sm text-gray-700 dark:text-gray-200 flex items-center gap-2 cursor-pointer select-none">
                             <PollIcon className="w-4 h-4 text-purple-500" />
                             <div>
-                                <span className="font-semibold block">მონიშნე როგორც გამოკითხვა</span>
-                                <span className="text-xs text-gray-500 dark:text-gray-400">შეიცვლება აიქონი და ფერი, რომ ყურადღება მიიქციოს.</span>
+                                <span className="font-semibold block">{t.lbl_poll}</span>
+                                <span className="text-xs text-gray-500 dark:text-gray-400">{t.lbl_poll_desc}</span>
                             </div>
                         </label>
                     </div>
@@ -283,7 +281,7 @@ const NotificationSenderModal: React.FC<NotificationSenderModalProps> = ({ isOpe
                         disabled={isLoading || !message.trim()}
                         className="w-full py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 dark:disabled:bg-purple-800 text-white rounded-md transition-colors font-medium flex items-center justify-center gap-2"
                     >
-                        {isLoading ? 'იგზავნება...' : 'გაგზავნა'}
+                        {isLoading ? t.loading : t.btn_send}
                     </button>
                 </form>
             )
@@ -292,7 +290,7 @@ const NotificationSenderModal: React.FC<NotificationSenderModalProps> = ({ isOpe
         {/* --- VIEW: AUTH --- */}
         {view === 'auth' && (
             <form onSubmit={handleAdminAuth} className="space-y-4 py-4">
-                <p className="text-sm text-gray-600 dark:text-gray-300">ისტორიის სანახავად შეიყვანეთ ადმინისტრატორის პაროლი.</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">{t.fm_admin_pass}</p>
                 <div className="relative">
                     <LockClosedIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"/>
                     <input 
@@ -300,12 +298,11 @@ const NotificationSenderModal: React.FC<NotificationSenderModalProps> = ({ isOpe
                         value={adminPasswordInput}
                         onChange={(e) => setAdminPasswordInput(e.target.value)}
                         className="w-full pl-9 pr-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-purple-500 outline-none dark:text-white"
-                        placeholder="პაროლი"
                         autoFocus
                     />
                 </div>
                 {error && <p className="text-sm text-red-500">{error}</p>}
-                <button type="submit" className="w-full py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-md">შესვლა</button>
+                <button type="submit" className="w-full py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-md">{t.fm_login}</button>
             </form>
         )}
 
@@ -313,9 +310,9 @@ const NotificationSenderModal: React.FC<NotificationSenderModalProps> = ({ isOpe
         {view === 'list' && (
             <div className="space-y-4">
                 {isLoading ? (
-                    <p className="text-center text-gray-500">იტვირთება...</p>
+                    <p className="text-center text-gray-500">{t.loading}</p>
                 ) : notificationHistory.length === 0 ? (
-                    <p className="text-center text-gray-500 py-4">ისტორია ცარიელია</p>
+                    <p className="text-center text-gray-500 py-4">{t.msg_history_empty}</p>
                 ) : (
                     <ul className="space-y-3 max-h-[50vh] overflow-y-auto pr-2">
                         {notificationHistory.map((item) => {
@@ -327,19 +324,19 @@ const NotificationSenderModal: React.FC<NotificationSenderModalProps> = ({ isOpe
                                             {item.isPoll && <PollIcon className="w-3 h-3 text-blue-500"/>}
                                             <span className="text-xs text-gray-400">{formatDate(item.createdAt)}</span>
                                             {expired ? (
-                                                 <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-300">ვადაგასული</span>
+                                                 <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-300">{t.status_expired}</span>
                                             ) : (
-                                                 <span className="text-[10px] px-1.5 py-0.5 rounded bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-300">აქტიური</span>
+                                                 <span className="text-[10px] px-1.5 py-0.5 rounded bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-300">{t.status_active}</span>
                                             )}
                                         </div>
                                         <p className="text-sm text-gray-800 dark:text-gray-200 font-medium break-words">{item.text}</p>
-                                        <p className="text-xs text-gray-500 mt-1">ვადა: {formatDate(item.expiresAt)}</p>
+                                        <p className="text-xs text-gray-500 mt-1">Exp: {formatDate(item.expiresAt)}</p>
                                         {item.link && <a href={item.link} target="_blank" rel="noopener noreferrer" className="text-xs text-purple-600 hover:underline truncate block max-w-xs mt-1">{item.link}</a>}
                                     </div>
                                     <button 
                                         onClick={() => handleDeleteItem(item.id)}
                                         className="p-1.5 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 rounded flex-shrink-0"
-                                        title="წაშლა"
+                                        title={t.delete}
                                     >
                                         <DeleteIcon className="w-4 h-4" />
                                     </button>

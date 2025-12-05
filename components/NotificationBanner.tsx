@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getStoredSupabaseConfig, getSupabaseClient } from '../utils/supabaseClient';
 import { CloseIcon, MessageIcon, PollIcon, ArrowRightIcon, ChevronRightIcon, BackIcon } from './Icons';
+import { translations, Language } from '../utils/translations';
 
 interface NotificationData {
     id: number;
@@ -11,7 +12,12 @@ interface NotificationData {
     expiresAt: string;
 }
 
-const NotificationBanner: React.FC = () => {
+interface NotificationBannerProps {
+    language: Language;
+}
+
+const NotificationBanner: React.FC<NotificationBannerProps> = ({ language }) => {
+    const t = translations[language];
     const [notifications, setNotifications] = useState<NotificationData[]>([]);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isVisible, setIsVisible] = useState(false);
@@ -72,7 +78,8 @@ const NotificationBanner: React.FC = () => {
                         // Notify Browser System
                         if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
                             const latest = activeList[0];
-                            new Notification(latest.isPoll ? "ახალი გამოკითხვა" : "ახალი შეტყობინება", {
+                            const title = latest.isPoll ? t.banner_new_poll : t.banner_new_msg;
+                            new Notification(title, {
                                 body: latest.text,
                                 icon: '/favicon.ico'
                             });
@@ -150,7 +157,7 @@ const NotificationBanner: React.FC = () => {
                     {/* Content */}
                     <div className="flex-grow min-w-0">
                         <h4 className="font-bold text-gray-900 dark:text-white mb-1 flex items-center justify-between">
-                            <span>{isPoll ? "გამოკითხვა" : "შეტყობინება"}</span>
+                            <span>{isPoll ? t.banner_poll : t.banner_msg}</span>
                             {notifications.length > 1 && (
                                 <span className="text-xs font-normal text-gray-500 bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded-full">
                                     {safeIndex + 1} / {notifications.length}
@@ -171,7 +178,7 @@ const NotificationBanner: React.FC = () => {
                                                 ? 'bg-blue-600 hover:bg-blue-700 text-white' 
                                                 : 'bg-purple-600 hover:bg-purple-700 text-white'}`}
                             >
-                                {isPoll ? "ხმის მიცემა" : "ნახვა"}
+                                {isPoll ? t.btn_vote : t.btn_view}
                                 <ArrowRightIcon className="w-4 h-4" />
                             </a>
                         )}
@@ -181,7 +188,7 @@ const NotificationBanner: React.FC = () => {
                     <button 
                         onClick={handleClose} 
                         className="p-1 -mt-1 -mr-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
-                        aria-label="დახურვა"
+                        aria-label={t.close}
                     >
                         <CloseIcon className="w-5 h-5" />
                     </button>
@@ -194,13 +201,13 @@ const NotificationBanner: React.FC = () => {
                             onClick={handlePrev}
                             className="p-1 text-gray-500 hover:text-purple-600 dark:hover:text-purple-400 transition-colors flex items-center gap-1 text-xs"
                         >
-                            <BackIcon className="w-4 h-4" /> წინა
+                            <BackIcon className="w-4 h-4" /> {t.prev}
                         </button>
                         <button 
                             onClick={handleNext}
                             className="p-1 text-gray-500 hover:text-purple-600 dark:hover:text-purple-400 transition-colors flex items-center gap-1 text-xs"
                         >
-                            შემდეგი <div className="transform rotate-180"><BackIcon className="w-4 h-4" /></div>
+                            {t.next} <div className="transform rotate-180"><BackIcon className="w-4 h-4" /></div>
                         </button>
                     </div>
                 )}

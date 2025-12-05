@@ -1,6 +1,8 @@
+
 import React from 'react';
 import { Person, People, Gender } from '../types';
 import { ChevronRightIcon, DefaultAvatar } from './Icons';
+import { translations, Language } from '../utils/translations';
 
 interface TreeViewListProps {
   rootId: string;
@@ -8,6 +10,7 @@ interface TreeViewListProps {
   onNavigate: (personId: string) => void;
   onShowDetails: (personId: string) => void;
   highlightedPersonId: string | null;
+  language: Language;
 }
 
 const ListItem: React.FC<{ 
@@ -15,8 +18,9 @@ const ListItem: React.FC<{
     onNavigate: (id: string) => void, 
     onShowDetails: (id: string) => void,
     isHighlighted: boolean, 
-    isSpouse?: boolean 
-}> = ({ person, onNavigate, onShowDetails, isHighlighted, isSpouse }) => {
+    isSpouse?: boolean,
+    spouseLabel?: string 
+}> = ({ person, onNavigate, onShowDetails, isHighlighted, isSpouse, spouseLabel }) => {
     // Show navigation arrow if person has children OR has a spouse.
     // This allows navigating to a childless couple to see the spouse.
     const showNavigation = (person.children && person.children.length > 0) || person.spouseId;
@@ -66,7 +70,7 @@ const ListItem: React.FC<{
                     <div className="flex-grow w-0">
                         <p className="font-semibold text-gray-800 dark:text-gray-100 truncate">
                             {person.firstName} {person.lastName}
-                            {isSpouse && <span className="ml-2 text-xs font-normal text-gray-500 dark:text-gray-400">(მეუღლე)</span>}
+                            {isSpouse && <span className="ml-2 text-xs font-normal text-gray-500 dark:text-gray-400">{spouseLabel}</span>}
                         </p>
                         <p className="text-sm text-gray-500 dark:text-gray-400">{lifeRange}</p>
                     </div>
@@ -101,8 +105,9 @@ const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title
     </div>
 );
 
-const TreeViewList: React.FC<TreeViewListProps> = ({ rootId, people, onNavigate, onShowDetails, highlightedPersonId }) => {
+const TreeViewList: React.FC<TreeViewListProps> = ({ rootId, people, onNavigate, onShowDetails, highlightedPersonId, language }) => {
   const rootPerson = people[rootId];
+  const t = translations[language];
 
   if (!rootPerson) {
     return <div className="p-4 text-center text-gray-500">პიროვნება ვერ მოიძებნა.</div>;
@@ -115,7 +120,7 @@ const TreeViewList: React.FC<TreeViewListProps> = ({ rootId, people, onNavigate,
   return (
     <div className="w-full max-w-2xl mx-auto p-2 sm:p-4">
         {parents.length > 0 && (
-            <Section title="მშობლები">
+            <Section title={t.sect_parents}>
                 {parents.map(p => (
                     <ListItem 
                         key={p.id} 
@@ -128,7 +133,7 @@ const TreeViewList: React.FC<TreeViewListProps> = ({ rootId, people, onNavigate,
             </Section>
         )}
 
-        <Section title="ოჯახი">
+        <Section title={t.sect_family}>
             <ListItem 
                 person={rootPerson} 
                 onNavigate={onNavigate} 
@@ -143,12 +148,13 @@ const TreeViewList: React.FC<TreeViewListProps> = ({ rootId, people, onNavigate,
                     onShowDetails={onShowDetails}
                     isHighlighted={spouse.id === highlightedPersonId}
                     isSpouse
+                    spouseLabel={t.lbl_spouse_role}
                 />
             )}
         </Section>
         
         {children.length > 0 && (
-            <Section title="შვილები">
+            <Section title={t.sect_children}>
                  {children.map(c => (
                     <ListItem 
                         key={c.id} 
