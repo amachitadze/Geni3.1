@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { getStoredSupabaseConfig, getSupabaseClient } from '../utils/supabaseClient';
 import { CloseIcon, MessageIcon, PollIcon, ArrowRightIcon, ChevronRightIcon, BackIcon } from './Icons';
@@ -15,6 +16,8 @@ interface NotificationData {
 interface NotificationBannerProps {
     language: Language;
 }
+
+const NOTIFICATION_FILE_PATH = 'notifications/notifications.json';
 
 const NotificationBanner: React.FC<NotificationBannerProps> = ({ language }) => {
     const t = translations[language];
@@ -41,7 +44,7 @@ const NotificationBanner: React.FC<NotificationBannerProps> = ({ language }) => 
             const { data, error } = await supabase
                 .storage
                 .from('shares')
-                .download(`notifications.json?t=${Date.now()}`);
+                .download(`${NOTIFICATION_FILE_PATH}?t=${Date.now()}`);
 
             if (error) return;
 

@@ -1,5 +1,7 @@
+
 import React from 'react';
 import { translations, Language } from '../utils/translations';
+import { CheckIcon, CloseIcon } from './Icons';
 
 interface LandingPageProps {
   onEnter: () => void;
@@ -17,12 +19,6 @@ const InfiniteIcon: React.FC<{ className?: string }> = ({ className }) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15a4.5 4.5 0 004.5 4.5H18a3.75 3.75 0 001.332-7.257 3 3 0 00-3.758-3.848 5.25 5.25 0 00-10.233 2.33A4.502 4.502 0 002.25 15z" />
         <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /> {/* Stylized infinite-like cloud/network */}
-    </svg>
-);
-
-const ShieldCheckIcon: React.FC<{ className?: string }> = ({ className }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
     </svg>
 );
 
@@ -50,9 +46,9 @@ const ShareIcon: React.FC<{ className?: string }> = ({ className }) => (
     </svg>
 );
 
-const DocumentIcon: React.FC<{ className?: string }> = ({ className }) => (
+const CloudIcon: React.FC<{ className?: string }> = ({ className }) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
     </svg>
 );
 
@@ -81,7 +77,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnter, language, onLanguage
             description: t.feat_stats_desc
         },
         {
-            icon: <DocumentIcon className="w-8 h-8 text-red-500" />,
+            icon: <CloudIcon className="w-8 h-8 text-red-500" />,
             title: t.feat_import_title,
             description: t.feat_import_desc
         },
@@ -89,6 +85,38 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnter, language, onLanguage
             icon: <DevicePhoneMobileIcon className="w-8 h-8 text-indigo-500" />,
             title: t.feat_mobile_title,
             description: t.feat_mobile_desc
+        }
+    ];
+
+    const plans = [
+        {
+            name: t.plan_free,
+            features: [
+                { text: t.feat_members_limit, included: true },
+                { text: t.feat_stats_basic, included: true },
+                { text: t.feat_messages, included: false },
+                { text: t.feat_storage_local, included: true },
+                { text: t.feat_share, included: true },
+                { text: t.feat_import_export, included: true },
+                { text: t.feat_export_pdf, included: false }
+            ],
+            buttonText: t.btn_start,
+            primary: false
+        },
+        {
+            name: t.plan_premium,
+            features: [
+                { text: t.feat_members_unlimited, included: true },
+                { text: t.feat_stats_full, included: true },
+                { text: t.feat_messages, included: true },
+                { text: t.feat_storage_cloud, included: true },
+                { text: t.feat_share, included: true },
+                { text: t.feat_import_export, included: true },
+                { text: t.feat_export_pdf, included: true }
+            ],
+            buttonText: t.btn_activate,
+            primary: true,
+            badge: t.plan_recommended
         }
     ];
 
@@ -175,8 +203,67 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnter, language, onLanguage
                 </div>
             </section>
 
-            {/* How It Works / Footer CTA */}
-            <section className="py-20 bg-gray-900 text-white relative overflow-hidden">
+            {/* Pricing / Plans Section */}
+            <section className="py-24 bg-white dark:bg-gray-900 relative border-t border-gray-100 dark:border-gray-800">
+                <div className="container mx-auto px-6">
+                    <div className="text-center mb-16">
+                        <h2 className="text-3xl md:text-5xl font-bold mb-4 text-gray-900 dark:text-white">{t.pricing_title}</h2>
+                        <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+                            {t.pricing_subtitle}
+                        </p>
+                    </div>
+
+                    <div className="flex flex-col md:flex-row justify-center gap-8 items-stretch max-w-5xl mx-auto">
+                        {plans.map((plan, index) => (
+                            <div 
+                                key={index}
+                                className={`flex-1 flex flex-col p-8 rounded-3xl transition-all duration-300 relative ${
+                                    plan.primary 
+                                    ? 'bg-gradient-to-b from-gray-900 to-gray-800 text-white shadow-2xl scale-100 md:scale-105 z-10 border-2 border-purple-500/50' 
+                                    : 'bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700 hover:shadow-lg'
+                                }`}
+                            >
+                                {plan.badge && (
+                                    <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-wider shadow-lg">
+                                        {plan.badge}
+                                    </div>
+                                )}
+                                
+                                <div className="mb-8">
+                                    <h3 className={`text-2xl font-bold mb-2 ${plan.primary ? 'text-white' : 'text-gray-900 dark:text-white'}`}>{plan.name}</h3>
+                                </div>
+
+                                <ul className="flex-grow space-y-4 mb-8">
+                                    {plan.features.map((feature, i) => (
+                                        <li key={i} className={`flex items-start gap-3 ${!feature.included ? 'opacity-50' : ''}`}>
+                                            <div className={`flex-shrink-0 mt-0.5 ${feature.included ? (plan.primary ? 'text-green-400' : 'text-green-600') : 'text-gray-400'}`}>
+                                                {feature.included ? <CheckIcon className="w-5 h-5"/> : <CloseIcon className="w-5 h-5"/>}
+                                            </div>
+                                            <span className={`text-sm ${!feature.included && 'line-through decoration-gray-400'}`}>
+                                                {feature.text}
+                                            </span>
+                                        </li>
+                                    ))}
+                                </ul>
+
+                                <button
+                                    onClick={onEnter}
+                                    className={`w-full py-4 rounded-xl font-bold transition-all transform hover:scale-105 flex items-center justify-center gap-2 ${
+                                        plan.primary
+                                        ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-lg'
+                                        : 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-900 dark:text-white'
+                                    }`}
+                                >
+                                    {plan.buttonText}
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* Footer CTA */}
+            <section className="py-20 bg-gray-900 text-white relative overflow-hidden border-t border-gray-800">
                 <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-purple-900/20 to-pink-900/20 pointer-events-none"></div>
                 <div className="container mx-auto px-6 text-center relative z-10">
                     <h2 className="text-3xl md:text-4xl font-bold mb-8">{t.landing_footer_cta_title}</h2>

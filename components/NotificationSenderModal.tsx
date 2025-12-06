@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { CloseIcon, MessageIcon, CheckIcon, PollIcon, LockClosedIcon, DeleteIcon, BackIcon } from './Icons';
 import { getStoredSupabaseConfig, getSupabaseClient, getAdminPassword } from '../utils/supabaseClient';
@@ -17,6 +18,8 @@ interface NotificationItem {
     createdAt: string;
     expiresAt: string;
 }
+
+const NOTIFICATION_FILE_PATH = 'notifications/notifications.json';
 
 const NotificationSenderModal: React.FC<NotificationSenderModalProps> = ({ isOpen, onClose, language }) => {
   const t = translations[language];
@@ -67,7 +70,7 @@ const NotificationSenderModal: React.FC<NotificationSenderModalProps> = ({ isOpe
       const { data, error } = await supabase
         .storage
         .from('shares')
-        .download(`notifications.json?t=${Date.now()}`);
+        .download(`${NOTIFICATION_FILE_PATH}?t=${Date.now()}`);
       
       if (error) return [];
       
@@ -89,7 +92,7 @@ const NotificationSenderModal: React.FC<NotificationSenderModalProps> = ({ isOpe
       const { error: uploadError } = await supabase
         .storage
         .from('shares')
-        .upload('notifications.json', blob, {
+        .upload(NOTIFICATION_FILE_PATH, blob, {
             contentType: 'application/json',
             upsert: true
         });

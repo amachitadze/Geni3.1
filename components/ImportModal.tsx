@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { CloseIcon, JsonImportIcon, DocumentPlusIcon, CloudDownloadIcon, LockClosedIcon, DocumentIcon } from './Icons';
 import { getStoredSupabaseConfig, getSupabaseClient, getAdminPassword } from '../utils/supabaseClient';
@@ -69,18 +70,19 @@ const ImportModal: React.FC<ImportModalProps> = ({ isOpen, onClose, onImportFrom
             }
             const supabase = getSupabaseClient(config.url, config.key);
             
+            // List files in the 'backups' folder
             const { data, error: listError } = await supabase
                 .storage
                 .from('shares')
-                .list(undefined, {
+                .list('backups', {
                     limit: 100,
                     sortBy: { column: 'created_at', order: 'desc' }
                 });
 
             if (listError) throw listError;
 
-            // Filter only backup files
-            const backupFiles = (data || []).filter(f => f.name.startsWith('backup_'));
+            // 'data' contains items in the folder. We filter to ensure they look like files.
+            const backupFiles = (data || []).filter(f => f.name.endsWith('.json'));
             setBackups(backupFiles);
             setView('list');
 
@@ -103,7 +105,7 @@ const ImportModal: React.FC<ImportModalProps> = ({ isOpen, onClose, onImportFrom
             const { data, error: downloadError } = await supabase
                 .storage
                 .from('shares')
-                .download(fileName);
+                .download(`backups/${fileName}`);
             
             if (downloadError) throw downloadError;
             if (!data) throw new Error("Empty file");

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { CloseIcon, JsonExportIcon, CloudUploadIcon, LockClosedIcon, CheckIcon } from './Icons';
 import { People } from '../types';
@@ -79,7 +80,8 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, onExportJson
             const rawLastName = rootPerson?.lastName || 'Family';
             const latinLastName = transliterate(rawLastName).replace(/[^a-zA-Z0-9]/g, '');
             
-            const fileName = `backup_${latinLastName || 'Tree'}_${dateStr}_${timeStr}.json`;
+            // Store in 'backups/' folder
+            const fileName = `backups/backup_${latinLastName || 'Tree'}_${dateStr}_${timeStr}.json`;
             
             const jsonString = JSON.stringify(data, null, 2);
             const blob = new Blob([jsonString], { type: 'application/json' });

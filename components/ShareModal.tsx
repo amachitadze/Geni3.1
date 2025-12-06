@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { encryptData, bufferToBase64 } from '../utils/crypto';
 import { People } from '../types';
@@ -113,7 +114,8 @@ export const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, data, l
       
       const randomId = Math.random().toString(36).substring(7);
       
-      const fileName = `share_${latinLastName || 'Tree'}_${dateStr}_${randomId}.txt`;
+      // Store in 'links/' folder
+      const fileName = `links/share_${latinLastName || 'Tree'}_${dateStr}_${randomId}.txt`;
       const blob = new Blob([encryptedData], { type: 'text/plain' });
       
       const { error: uploadError } = await supabase

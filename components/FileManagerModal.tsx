@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { CloseIcon, DocumentIcon, DeleteIcon, LockClosedIcon, BackIcon } from './Icons';
 import { getStoredSupabaseConfig, getSupabaseClient, getAdminPassword } from '../utils/supabaseClient';
@@ -18,6 +19,7 @@ const FileManagerModal: React.FC<FileManagerModalProps> = ({ isOpen, onClose, la
   const [adminError, setAdminError] = useState('');
   const [supabaseUrl, setSupabaseUrl] = useState('');
   const [supabaseKey, setSupabaseKey] = useState('');
+  const [currentFolder, setCurrentFolder] = useState('backups'); // Default to backups
 
   useEffect(() => {
       if (isOpen) {
@@ -37,10 +39,11 @@ const FileManagerModal: React.FC<FileManagerModalProps> = ({ isOpen, onClose, la
       setIsLoadingFiles(true);
       try {
           const supabase = getSupabaseClient(supabaseUrl, supabaseKey);
+          // List files in current folder
           const { data, error } = await supabase
             .storage
             .from('shares')
-            .list(undefined, {
+            .list(currentFolder, {
                 sortBy: { column: 'created_at', order: 'desc' }
             });
           
@@ -53,14 +56,22 @@ const FileManagerModal: React.FC<FileManagerModalProps> = ({ isOpen, onClose, la
       }
   };
 
+  useEffect(() => {
+      if (isAdminAuthenticated) {
+          fetchStoredFiles();
+      }
+  }, [isAdminAuthenticated, currentFolder]);
+
   const handleDeleteFile = async (fileName: string) => {
       if (!window.confirm(t.fm_delete_confirm)) return;
       try {
           const supabase = getSupabaseClient(supabaseUrl, supabaseKey);
+          const fullPath = currentFolder ? `${currentFolder}/${fileName}` : fileName;
+          
           const { error } = await supabase
             .storage
             .from('shares')
-            .remove([fileName]);
+            .remove([fullPath]);
           
           if (error) throw error;
           // Refresh list
@@ -83,7 +94,6 @@ const FileManagerModal: React.FC<FileManagerModalProps> = ({ isOpen, onClose, la
       if (adminPasswordInput === correctPassword) {
           setIsAdminAuthenticated(true);
           setAdminError('');
-          fetchStoredFiles();
       } else {
           setAdminError('Error');
       }
@@ -137,33 +147,55 @@ const FileManagerModal: React.FC<FileManagerModalProps> = ({ isOpen, onClose, la
             <>
                 {!supabaseUrl || !supabaseKey ? (
                      <p className="text-red-500 text-center py-4">{t.fm_config_missing}</p>
-                ) : isLoadingFiles ? (
-                    <p className="text-gray-500 text-center py-4">{t.loading}</p>
-                ) : storedFiles.length === 0 ? (
-                    <p className="text-gray-500 text-center py-4">{t.fm_no_files}</p>
                 ) : (
-                    <div className="space-y-2">
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{t.fm_files_server}</p>
-                        <ul className="space-y-2 max-h-[60vh] overflow-y-auto pr-1">
-                            {storedFiles.map((file) => (
-                                <li key={file.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded border border-gray-200 dark:border-gray-700">
-                                    <div className="flex items-center gap-3 overflow-hidden">
-                                        <DocumentIcon className="w-5 h-5 text-gray-400 flex-shrink-0"/>
-                                        <div className="min-w-0">
-                                            <p className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate" title={file.name}>{file.name}</p>
-                                            <p className="text-xs text-gray-500">{formatFileSize(file.metadata?.size)} • {new Date(file.created_at).toLocaleString(language === 'es' ? 'es-ES' : 'ka-GE')}</p>
-                                        </div>
-                                    </div>
-                                    <button 
-                                        onClick={() => handleDeleteFile(file.name)}
-                                        className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors"
-                                        title={t.delete}
-                                    >
-                                        <DeleteIcon className="w-4 h-4"/>
-                                    </button>
-                                </li>
-                            ))}
-                        </ul>
+                    <div className="space-y-4">
+                        {/* Folder Tabs */}
+                        <div className="flex gap-2 border-b border-gray-200 dark:border-gray-700">
+                            <button 
+                                onClick={() => setCurrentFolder('backups')} 
+                                className={`pb-2 px-3 text-sm font-medium transition-colors ${currentFolder === 'backups' ? 'border-b-2 border-purple-500 text-purple-600 dark:text-purple-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'}`}
+                            >
+                                Backups
+                            </button>
+                            <button 
+                                onClick={() => setCurrentFolder('links')} 
+                                className={`pb-2 px-3 text-sm font-medium transition-colors ${currentFolder === 'links' ? 'border-b-2 border-purple-500 text-purple-600 dark:text-purple-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'}`}
+                            >
+                                Links
+                            </button>
+                        </div>
+
+                        {isLoadingFiles ? (
+                             <p className="text-gray-500 text-center py-4">{t.loading}</p>
+                        ) : storedFiles.length === 0 ? (
+                             <p className="text-gray-500 text-center py-4">{t.fm_no_files}</p>
+                        ) : (
+                            <div className="space-y-2">
+                                <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                                    Files in /{currentFolder}
+                                </p>
+                                <ul className="space-y-2 max-h-[50vh] overflow-y-auto pr-1">
+                                    {storedFiles.map((file) => (
+                                        <li key={file.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded border border-gray-200 dark:border-gray-700">
+                                            <div className="flex items-center gap-3 overflow-hidden">
+                                                <DocumentIcon className="w-5 h-5 text-gray-400 flex-shrink-0"/>
+                                                <div className="min-w-0">
+                                                    <p className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate" title={file.name}>{file.name}</p>
+                                                    <p className="text-xs text-gray-500">{formatFileSize(file.metadata?.size)} • {new Date(file.created_at).toLocaleString(language === 'es' ? 'es-ES' : 'ka-GE')}</p>
+                                                </div>
+                                            </div>
+                                            <button 
+                                                onClick={() => handleDeleteFile(file.name)}
+                                                className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors"
+                                                title={t.delete}
+                                            >
+                                                <DeleteIcon className="w-4 h-4"/>
+                                            </button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
                     </div>
                 )}
             </>
