@@ -129,50 +129,41 @@ const TimelineView: React.FC<TimelineViewProps> = ({ people, onShowDetails, high
             {/* Timeline Scroll Area */}
             <div 
                 ref={containerRef}
-                className="flex-grow h-full overflow-auto relative cursor-grab active:cursor-grabbing"
+                className="flex-grow overflow-auto relative cursor-grab active:cursor-grabbing"
                 style={{ scrollBehavior: 'smooth' }}
             >
-                {/* 
-                    minHeight: '100%' ensures the container fills the screen vertically even if content is small.
-                    height: contentHeight ensures the container grows if content is large (enabling scroll).
-                    CSS Rule: if height < min-height, min-height wins.
-                */}
-                <div style={{ width: `${totalWidth}px`, minHeight: '100%', height: `${contentHeight}px`, position: 'relative' }}>
+                <div style={{ width: `${totalWidth}px`, height: `${contentHeight}px`, minHeight: '100%', position: 'relative' }}>
                     
-                    {/* Year Grid Lines - Using inset-0 to fill the container */}
-                    <div className="absolute inset-0 pointer-events-none">
-                        {Array.from({ length: Math.ceil((maxYear - minYear) / 10) + 1 }).map((_, i) => {
-                            const year = Math.ceil(minYear / 10) * 10 + (i * 10);
-                            if (year > maxYear) return null;
-                            const left = (year - minYear) * pixelsPerYear;
-                            
-                            return (
-                                <div key={year} style={{ position: 'absolute', left, top: 0, bottom: 0, borderLeft: '1px dashed rgba(156, 163, 175, 0.2)' }}>
-                                    <span className="absolute top-2 left-1 text-xs text-gray-400 font-mono">{year}</span>
-                                </div>
-                            );
-                        })}
-                    </div>
+                    {/* Year Grid Lines */}
+                    {Array.from({ length: Math.ceil((maxYear - minYear) / 10) + 1 }).map((_, i) => {
+                        const year = Math.ceil(minYear / 10) * 10 + (i * 10);
+                        if (year > maxYear) return null;
+                        const left = (year - minYear) * pixelsPerYear;
+                        
+                        return (
+                            <div key={year} style={{ position: 'absolute', left, top: 0, bottom: 0, borderLeft: '1px dashed rgba(156, 163, 175, 0.2)' }}>
+                                <span className="absolute top-2 left-1 text-xs text-gray-400 font-mono">{year}</span>
+                            </div>
+                        );
+                    })}
 
                     {/* Historical Events */}
-                    <div className="absolute inset-0 pointer-events-none">
-                        {historicalEvents.map((event, idx) => {
-                            if (event.year < minYear || event.year > maxYear) return null;
-                            const left = (event.year - minYear) * pixelsPerYear;
-                            return (
-                                <div key={idx} style={{ position: 'absolute', left, top: 0, bottom: 0, borderLeft: '2px solid rgba(255, 99, 71, 0.3)' }}>
-                                    <div className="absolute bottom-4 left-1 w-40">
-                                        <span className={`text-[10px] uppercase font-bold tracking-wider px-1 py-0.5 rounded ${event.category === 'geo' ? 'text-red-600 bg-red-100/80' : 'text-blue-600 bg-blue-100/80'}`}>
-                                            {event.year}
-                                        </span>
-                                        <p className="text-[10px] text-gray-600 dark:text-gray-400 mt-1 leading-tight font-medium bg-white/50 dark:bg-black/50 p-1 rounded backdrop-blur-sm inline-block">
-                                            {event.label}
-                                        </p>
-                                    </div>
+                    {historicalEvents.map((event, idx) => {
+                        if (event.year < minYear || event.year > maxYear) return null;
+                        const left = (event.year - minYear) * pixelsPerYear;
+                        return (
+                            <div key={idx} style={{ position: 'absolute', left, top: 0, bottom: 0, borderLeft: '2px solid rgba(255, 99, 71, 0.3)', pointerEvents: 'none' }}>
+                                <div className="absolute bottom-4 left-1 w-40">
+                                    <span className={`text-[10px] uppercase font-bold tracking-wider px-1 py-0.5 rounded ${event.category === 'geo' ? 'text-red-600 bg-red-100/80' : 'text-blue-600 bg-blue-100/80'}`}>
+                                        {event.year}
+                                    </span>
+                                    <p className="text-[10px] text-gray-600 dark:text-gray-400 mt-1 leading-tight font-medium bg-white/50 dark:bg-black/50 p-1 rounded backdrop-blur-sm inline-block">
+                                        {event.label}
+                                    </p>
                                 </div>
-                            );
-                        })}
-                    </div>
+                            </div>
+                        );
+                    })}
 
                     {/* People Bars */}
                     <div style={{ position: 'absolute', top: headerHeight, left: 0, right: 0 }}>
