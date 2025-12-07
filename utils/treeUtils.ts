@@ -1,3 +1,4 @@
+
 import { Person, People } from '../types';
 
 export const validatePeopleData = (data: any): { isValid: boolean; error: string | null } => {
@@ -81,4 +82,40 @@ export const getFamilyUnitFromConnection = (id1: string, id2: string, peopleData
     }
     
     return familyIds;
+};
+
+export const findRelationshipPath = (startId: string, endId: string, people: People): string[] | null => {
+    if (startId === endId) return [startId];
+
+    const queue: { id: string, path: string[] }[] = [{ id: startId, path: [startId] }];
+    const visited = new Set<string>();
+    visited.add(startId);
+
+    while (queue.length > 0) {
+        const { id, path } = queue.shift()!;
+
+        if (id === endId) {
+            return path;
+        }
+
+        const person = people[id];
+        if (!person) continue;
+
+        const neighbors: string[] = [];
+        
+        // Add relationships to traverse
+        if (person.spouseId) neighbors.push(person.spouseId);
+        person.children.forEach(cId => neighbors.push(cId));
+        person.parentIds.forEach(pId => neighbors.push(pId));
+        if (person.exSpouseIds) person.exSpouseIds.forEach(exId => neighbors.push(exId));
+
+        for (const neighborId of neighbors) {
+            if (!visited.has(neighborId)) {
+                visited.add(neighborId);
+                queue.push({ id: neighborId, path: [...path, neighborId] });
+            }
+        }
+    }
+
+    return null;
 };

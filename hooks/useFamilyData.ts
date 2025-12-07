@@ -248,6 +248,17 @@ export const useFamilyData = (resetTransform: () => void) => {
     }
   }, [navigateTo]);
 
+  const handleGalleryUpdate = useCallback((personId: string, newGallery: string[]) => {
+      setPeople(prev => {
+          const person = prev[personId];
+          if (!person) return prev;
+          return {
+              ...prev,
+              [personId]: { ...person, gallery: newGallery }
+          };
+      });
+  }, []);
+
   return {
     people,
     setPeople,
@@ -264,6 +275,7 @@ export const useFamilyData = (resetTransform: () => void) => {
     navigateBack,
     navigateToHome,
     handleDeletePerson,
-    handlePersonUpdate
+    handlePersonUpdate,
+    handleGalleryUpdate
   };
 };

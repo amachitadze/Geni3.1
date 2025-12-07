@@ -1,5 +1,3 @@
-
-
 export type Language = 'ka' | 'es';
 
 export const translations = {
@@ -43,6 +41,7 @@ export const translations = {
         menu_analysis: "ანალიზი",
         menu_stats: "სტატისტიკა",
         menu_export_pdf: "PDF ექსპორტი",
+        menu_find_rel: "ნათესაობის პოვნა",
         menu_data: "მონაცემები",
         menu_manage_data: "მონაცემების მართვა",
         menu_import: "იმპორტი",
@@ -53,6 +52,7 @@ export const translations = {
         menu_view_default: "სტანდარტული",
         menu_view_compact: "კომპაქტური",
         menu_view_list: "სია",
+        menu_view_timeline: "თაიმლაინი",
         
         // Settings Modal
         settings_title: "პარამეტრები",
@@ -150,6 +150,25 @@ export const translations = {
         btn_google_search: "ძიება Google-ში",
         btn_show_ancestors: "წინაპრების ნახვა",
         btn_add_relative: "დამატება",
+        btn_ai_bio: "ბიოგრაფიის შექმნა",
+        ai_bio_loading: "AI წერს ისტორიას...",
+        ai_bio_error: "ბიოგრაფიის შექმნა ვერ მოხერხდა.",
+        tab_info: "ინფო",
+        tab_gallery: "გალერეა",
+        gal_add: "ფოტოს დამატება",
+        gal_no_photos: "ფოტოები არ არის ატვირთული.",
+        gal_delete_confirm: "ნამდვილად გსურთ ამ ფოტოს წაშლა?",
+        
+        // Relationship Finder
+        rel_finder_title: "ნათესაობის კალკულატორი",
+        rel_finder_desc: "აირჩიეთ ორი ადამიანი ხიდან, რათა გაიგოთ, როგორ ენათესავებიან ისინი ერთმანეთს.",
+        rel_select_person_1: "პიროვნება 1",
+        rel_select_person_2: "პიროვნება 2",
+        rel_calculate: "გამოთვლა",
+        rel_result: "შედეგი",
+        rel_path: "კავშირის გზა",
+        rel_not_found: "კავშირი ვერ მოიძებნა.",
+        rel_same_person: "გთხოვთ აირჩიოთ სხვადასხვა პიროვნება.",
 
         // Share Modal
         share_title: "ხის გაზიარება",
@@ -369,6 +388,7 @@ export const translations = {
         menu_analysis: "Análisis",
         menu_stats: "Estadísticas",
         menu_export_pdf: "Exportar PDF",
+        menu_find_rel: "Encontrar Relación",
         menu_data: "Datos",
         menu_manage_data: "Gestión de datos",
         menu_import: "Importar",
@@ -379,6 +399,7 @@ export const translations = {
         menu_view_default: "Estándar",
         menu_view_compact: "Compacta",
         menu_view_list: "Lista",
+        menu_view_timeline: "Cronología",
 
         // Settings Modal
         settings_title: "Configuración",
@@ -476,6 +497,25 @@ export const translations = {
         btn_google_search: "Buscar en Google",
         btn_show_ancestors: "Ver antepasados",
         btn_add_relative: "Añadir",
+        btn_ai_bio: "Crear Biografía",
+        ai_bio_loading: "IA escribiendo historia...",
+        ai_bio_error: "Fallo al generar biografía.",
+        tab_info: "Info",
+        tab_gallery: "Galería",
+        gal_add: "Añadir foto",
+        gal_no_photos: "No hay fotos subidas.",
+        gal_delete_confirm: "¿Seguro que quieres eliminar esta foto?",
+
+        // Relationship Finder
+        rel_finder_title: "Calculadora de Relaciones",
+        rel_finder_desc: "Selecciona dos personas del árbol para ver cómo están relacionadas.",
+        rel_select_person_1: "Persona 1",
+        rel_select_person_2: "Persona 2",
+        rel_calculate: "Calcular",
+        rel_result: "Resultado",
+        rel_path: "Ruta de conexión",
+        rel_not_found: "Relación no encontrada.",
+        rel_same_person: "Por favor, selecciona personas diferentes.",
 
         // Share Modal
         share_title: "Compartir árbol",

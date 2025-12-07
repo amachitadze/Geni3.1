@@ -1,9 +1,15 @@
 
 
+
+
+
+
+
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Person, ModalState, Gender } from './types';
 import TreeNode from './components/TreeNode';
 import TreeViewList from './components/TreeViewList';
+import TimelineView from './components/TimelineView';
 import AddPersonModal from './components/AddPersonModal';
 import DetailsModal from './components/DetailsModal';
 import StatisticsModal from './components/StatisticsModal';
@@ -19,6 +25,7 @@ import FileManagerModal from './components/FileManagerModal';
 import NotificationSenderModal from './components/NotificationSenderModal';
 import NotificationBanner from './components/NotificationBanner';
 import SettingsModal from './components/SettingsModal';
+import RelationshipFinderModal from './components/RelationshipFinderModal';
 import { decryptData, base64ToBuffer } from './utils/crypto';
 import { formatTimestamp, calculateAge } from './utils/dateUtils';
 import { validatePeopleData, getFamilyUnitFromConnection } from './utils/treeUtils';
@@ -27,7 +34,7 @@ import {
     SearchIcon, BackIcon, HomeIcon, MenuIcon, ExportIcon, 
     CenterIcon, StatsIcon, CloseIcon, ShareIcon, JsonExportIcon, 
     JsonImportIcon, SunIcon, MoonIcon, ViewCompactIcon, ViewNormalIcon, 
-    ListBulletIcon, GlobeIcon, DocumentIcon, MessageIcon, CogIcon
+    ListBulletIcon, GlobeIcon, DocumentIcon, MessageIcon, CogIcon, CalculatorIcon, ClockIcon
 } from './components/Icons';
 
 // Hooks
@@ -57,7 +64,7 @@ function App() {
       people, setPeople, rootIdStack, setRootIdStack, rootId, 
       isInitialLoad, lastUpdated, isReadOnly, setIsReadOnly,
       viewMode, setViewMode, navigateTo, navigateBack, navigateToHome,
-      handleDeletePerson, handlePersonUpdate
+      handleDeletePerson, handlePersonUpdate, handleGalleryUpdate
   } = useFamilyData(resetTransform);
 
   const [isViewingTree, setIsViewingTree] = useState(false);
@@ -88,6 +95,7 @@ function App() {
   const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isRelationshipModalOpen, setIsRelationshipModalOpen] = useState(false);
   
   // Language State
   const [language, setLanguage] = useState<Language>('ka');
@@ -314,6 +322,19 @@ function App() {
       setDetailsModalPersonId(null);
   }, [handleDeletePerson]);
 
+  const handleSaveBio = useCallback((personId: string, bio: string) => {
+      setPeople(currentPeople => {
+          const person = currentPeople[personId];
+          if (person) {
+              return {
+                  ...currentPeople,
+                  [personId]: { ...person, bio }
+              };
+          }
+          return currentPeople;
+      });
+  }, []);
+
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const query = e.target.value;
       setSearchQuery(query);
@@ -334,6 +355,9 @@ function App() {
 
   const handleExportPdf = async () => {
     if (isReadOnly) return alert("დათვალიერების რეჟიმში PDF-ის გადმოწერა შეზღუდულია.");
+    // PDF export only supports standard view for now
+    if (viewMode !== 'default' && viewMode !== 'compact') return alert("PDF ექსპორტისთვის გადადით სტანდარტულ ან კომპაქტურ ხედზე.");
+
     const treeElement = viewportRef.current?.querySelector('.p-16 > div');
     if (!treeElement) return alert('ხის ექსპორტი ვერ მოხერხდა.');
     document.body.classList.add('pdf-exporting');
@@ -462,6 +486,37 @@ function App() {
       rootName: rootPerson ? `${rootPerson.firstName} ${rootPerson.lastName}` : "N/A"
   };
 
+  const renderContent = () => {
+      if (Object.keys(people).length === 0 || !people[rootId]) {
+          return <InitialView onStartCreating={handleStartCreating} onImport={() => setIsImportModalOpen(true)} language={language} />;
+      }
+
+      switch (viewMode) {
+          case 'list':
+              return <TreeViewList rootId={rootId} people={people} onNavigate={(id) => { navigateTo(id); setHighlightedPersonId(id); }} onShowDetails={setDetailsModalPersonId} highlightedPersonId={highlightedPersonId} language={language} />;
+          case 'timeline':
+              // @ts-ignore
+              return <TimelineView people={people} onShowDetails={setDetailsModalPersonId} highlightedPersonId={highlightedPersonId} />;
+          default:
+              return (
+                <div ref={viewportRef} className="flex-grow flex flex-col relative overflow-hidden" {...handlers} onClick={() => setHighlightedPeople(null)} style={{cursor: isPanning ? 'grabbing' : 'grab', touchAction: 'none'}}>
+                    <div className={`flex-grow flex items-center justify-center ${isZoomingViaWheel ? '' : 'transition-transform duration-200 ease-out'}`} style={{ transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})` }}>
+                        <div className="p-16">
+                            <TreeNode 
+                                personId={rootId} viewRootId={rootId} people={people} 
+                                onAdd={handleOpenAddModal} onEdit={handleOpenEditModal} onShowDetails={setDetailsModalPersonId} onNavigate={navigateTo}
+                                highlightedPersonId={highlightedPersonId} highlightedPeople={highlightedPeople} 
+                                onConnectionClick={handleConnectionClick} hoveredConnections={hoveredConnections} onSetHover={setHoveredPersonId}
+                                viewMode={viewMode as 'default' | 'compact'} isReadOnly={isReadOnly}
+                                language={language}
+                            />
+                        </div>
+                    </div>
+                </div>
+              );
+      }
+  };
+
   if (isInitialLoad) return <div className="h-screen bg-white dark:bg-gray-900 flex items-center justify-center text-xl text-gray-800 dark:text-gray-200">იტვირთება...</div>;
   if (!isViewingTree) return <LandingPage onEnter={handleLandingPageEnter} language={language} onLanguageChange={setLanguage} />;
 
@@ -519,6 +574,7 @@ function App() {
                                     
                                     <li><div className={MENU_HEADER_CLASS}>{t.menu_analysis}</div></li>
                                     <li><button onClick={() => { setIsStatisticsModalOpen(true); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}><StatsIcon className="w-5 h-5"/><span>{t.menu_stats}</span></button></li>
+                                    <li><button onClick={() => { setIsRelationshipModalOpen(true); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}><CalculatorIcon className="w-5 h-5"/><span>{t.menu_find_rel}</span></button></li>
                                     {!isReadOnly && <li><button onClick={handleExportPdf} className={MENU_ITEM_CLASS}><ExportIcon className="w-5 h-5"/><span>{t.menu_export_pdf}</span></button></li>}
                                     
                                     <li><hr className="my-1 border-gray-200 dark:border-gray-700" /></li>
@@ -526,6 +582,7 @@ function App() {
                                     <li><button onClick={() => setViewMode('default')} className={`${MENU_ITEM_CLASS} ${viewMode === 'default' ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400' : ''}`}><ViewNormalIcon className="w-5 h-5"/><span>{t.menu_view_default}</span></button></li>
                                     <li><button onClick={() => setViewMode('compact')} className={`${MENU_ITEM_CLASS} ${viewMode === 'compact' ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400' : ''}`}><ViewCompactIcon className="w-5 h-5"/><span>{t.menu_view_compact}</span></button></li>
                                     <li><button onClick={() => setViewMode('list')} className={`${MENU_ITEM_CLASS} ${viewMode === 'list' ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400' : ''}`}><ListBulletIcon className="w-5 h-5"/><span>{t.menu_view_list}</span></button></li>
+                                    <li><button onClick={() => setViewMode('timeline' as any)} className={`${MENU_ITEM_CLASS} ${viewMode === 'timeline' as any ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400' : ''}`}><ClockIcon className="w-5 h-5"/><span>{t.menu_view_timeline}</span></button></li>
                                     
                                     <li><hr className="my-1 border-gray-200 dark:border-gray-700" /></li>
                                     <li><button onClick={() => { setIsSettingsModalOpen(true); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}><CogIcon className="w-5 h-5"/><span>{t.menu_settings}</span></button></li>
@@ -566,29 +623,10 @@ function App() {
 
       {/* Main Content */}
       <main className="flex-grow flex flex-col relative overflow-hidden">
-        {Object.keys(people).length > 0 && people[rootId] ? (
-            viewMode === 'list' ? (
-                <TreeViewList rootId={rootId} people={people} onNavigate={(id) => { navigateTo(id); setHighlightedPersonId(id); }} onShowDetails={setDetailsModalPersonId} highlightedPersonId={highlightedPersonId} language={language} />
-            ) : (
-                <div ref={viewportRef} className="flex-grow flex flex-col relative overflow-hidden" {...handlers} onClick={() => setHighlightedPeople(null)} style={{cursor: isPanning ? 'grabbing' : 'grab', touchAction: 'none'}}>
-                    <div className={`flex-grow flex items-center justify-center ${isZoomingViaWheel ? '' : 'transition-transform duration-200 ease-out'}`} style={{ transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})` }}>
-                        <div className="p-16">
-                            <TreeNode 
-                                personId={rootId} viewRootId={rootId} people={people} 
-                                onAdd={handleOpenAddModal} onEdit={handleOpenEditModal} onShowDetails={setDetailsModalPersonId} onNavigate={navigateTo}
-                                highlightedPersonId={highlightedPersonId} highlightedPeople={highlightedPeople} 
-                                onConnectionClick={handleConnectionClick} hoveredConnections={hoveredConnections} onSetHover={setHoveredPersonId}
-                                viewMode={viewMode as 'default' | 'compact'} isReadOnly={isReadOnly}
-                                language={language}
-                            />
-                        </div>
-                    </div>
-                </div>
-            )
-        ) : <InitialView onStartCreating={handleStartCreating} onImport={() => setIsImportModalOpen(true)} language={language} />}
+        {renderContent()}
 
-        {/* Floating Controls */}
-        {viewMode !== 'list' && (
+        {/* Floating Controls (Zoom/Center) - Only show in default/compact/timeline modes if needed (timeline has its own) */}
+        {(viewMode === 'default' || viewMode === 'compact') && (
             <div className="fixed bottom-4 right-4 flex flex-col gap-2 z-10">
                 <button onClick={() => handleZoomBtn('in')} className={ZOOM_BTN_CLASS}>+</button>
                 <button onClick={() => handleZoomBtn('out')} className={ZOOM_BTN_CLASS}>-</button>
@@ -636,9 +674,14 @@ function App() {
           onShowOnMap={(addr) => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}`, '_blank')}
           onNavigate={(id) => { setDetailsModalPersonId(null); navigateTo(id); }} isReadOnly={isReadOnly}
           language={language}
+          onGenerateBio={googleAI.generateBiography}
+          onSaveBio={handleSaveBio}
+          onUpdateGallery={handleGalleryUpdate}
         />
       )}
       {isStatisticsModalOpen && <StatisticsModal isOpen={isStatisticsModalOpen} onClose={() => setIsStatisticsModalOpen(false)} stats={statistics} theme={theme} language={language} />} 
+      
+      {isRelationshipModalOpen && <RelationshipFinderModal isOpen={isRelationshipModalOpen} onClose={() => setIsRelationshipModalOpen(false)} people={people} language={language} />}
 
       {isShareModalOpen && <ShareModal isOpen={isShareModalOpen} onClose={() => setIsShareModalOpen(false)} data={{ people, rootIdStack }} language={language} />}
       {isPasswordPromptOpen && <PasswordPromptModal isOpen={isPasswordPromptOpen} onSubmit={handlePasswordSubmit} onClose={() => setIsPasswordPromptOpen(false)} error={decryptionError} isLoading={isDecrypting} language={language} />}

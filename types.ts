@@ -15,6 +15,7 @@ export interface Person {
   birthDate?: string;
   deathDate?: string;
   imageUrl?: string;
+  gallery?: string[]; // Array of image URLs for the media gallery
   contactInfo?: {
     phone?: string;
     email?: string;

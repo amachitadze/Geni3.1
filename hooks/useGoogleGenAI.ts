@@ -1,6 +1,7 @@
+
 import { useState } from 'react';
 import { GoogleGenAI } from "@google/genai";
-import { Person } from '../types';
+import { Person, People } from '../types';
 
 export const useGoogleGenAI = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -55,6 +56,47 @@ export const useGoogleGenAI = () => {
       handleSearch(q);
   };
 
+  const generateBiography = async (person: Person, people: People): Promise<string> => {
+      setIsLoading(true);
+      try {
+          // @ts-ignore
+          const apiKey = typeof process !== 'undefined' && process.env ? process.env.API_KEY : undefined;
+          if (!apiKey) throw new Error("API key missing");
+
+          const ai = new GoogleGenAI({ apiKey });
+          
+          // Context building
+          const spouse = person.spouseId ? people[person.spouseId] : null;
+          const parents = person.parentIds.map(id => people[id]).filter(Boolean);
+          const children = person.children.map(id => people[id]).filter(Boolean);
+          
+          const context = `
+            Name: ${person.firstName} ${person.lastName}
+            Gender: ${person.gender}
+            Birth: ${person.birthDate || 'Unknown'}
+            Death: ${person.deathDate || 'N/A'}
+            Bio Notes: ${person.bio || ''}
+            Spouse: ${spouse ? spouse.firstName + ' ' + spouse.lastName : 'None'}
+            Parents: ${parents.map(p => p.firstName + ' ' + p.lastName).join(', ') || 'Unknown'}
+            Children: ${children.map(c => c.firstName + ' ' + c.lastName).join(', ') || 'None'}
+          `;
+
+          const prompt = `Write a short, engaging, and respectful biography (approx 150 words) for this person based on the genealogical data provided. Use the language of the name (Georgian or English/Latin). \n\nData:\n${context}`;
+
+          const response = await ai.models.generateContent({
+              model: "gemini-2.5-flash",
+              contents: prompt,
+          });
+
+          return response.text || "";
+      } catch (err: any) {
+          console.error("Bio gen failed:", err);
+          throw err;
+      } finally {
+          setIsLoading(false);
+      }
+  };
+
   return {
       isOpen,
       setIsOpen,
@@ -65,6 +107,7 @@ export const useGoogleGenAI = () => {
       isLoading,
       error,
       handleSearch,
-      openSearchForPerson
+      openSearchForPerson,
+      generateBiography
   };
 };
