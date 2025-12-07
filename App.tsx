@@ -517,8 +517,12 @@ function App() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 flex flex-col">
       {/* Header */}
       <header className={`p-4 z-20 bg-white/80 dark:bg-gray-900/80 sticky top-0 transition-all duration-300 ${isZoomingViaWheel ? '' : 'backdrop-blur-sm'} ${isHeaderCollapsed ? 'py-2' : 'sm:py-6'}`}>
+        
+        {/* Main Header Content */}
         <div className={`w-full ${isSearchOpen ? 'hidden' : 'block'}`}>
             <div className="flex items-center justify-between gap-4">
+                
+                {/* Left: Navigation Buttons */}
                 <div className="flex items-center gap-2 flex-shrink-0">
                     {rootIdStack.length > 1 && (
                         <>
@@ -527,9 +531,13 @@ function App() {
                         </>
                     )}
                 </div>
+
+                {/* Center: Title */}
                 <div className="flex-1 text-left xl:text-center min-w-0 flex flex-col items-start xl:items-center">
                     <h1 className={`font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-600 truncate pb-1 ${isHeaderCollapsed ? 'text-2xl sm:text-4xl' : 'text-3xl sm:text-5xl'} w-full`}>{headerTitle}</h1>
                 </div>
+
+                {/* Right: Actions */}
                 <div className="flex items-center gap-2 flex-shrink-0">
                     {/* Desktop Search Buttons */}
                     <div className="hidden sm:flex items-center gap-2">
@@ -537,6 +545,7 @@ function App() {
                         <button onClick={() => googleAI.setIsOpen(true)} className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200" title="Google AI"><GlobeIcon className="w-6 h-6"/></button>
                     </div>
                     
+                    {/* Menu Dropdown */}
                     <div className="relative" ref={menuRef}>
                         <button onClick={() => setIsMenuOpen(p => !p)} className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"><MenuIcon className="w-6 h-6"/></button>
                         {isMenuOpen && (
@@ -586,58 +595,58 @@ function App() {
                     </div>
                 </div>
             </div>
-        </div> {/* CLOSE THE MAIN HEADER CONTENT DIV */}
+        </div>
             
-            {/* Search Bar Mobile/Desktop Overlay */}
-            {isSearchOpen && (
-                <div className="absolute inset-0 bg-white dark:bg-gray-900 z-30 flex items-center px-4 animate-fade-in">
-                    <SearchIcon className="w-6 h-6 text-gray-400 mr-3"/>
-                    <input 
-                        type="text" 
-                        value={searchQuery}
-                        onChange={handleSearchChange}
-                        placeholder={t.search_placeholder}
-                        className="flex-grow bg-transparent border-none outline-none text-lg text-gray-800 dark:text-gray-100 placeholder-gray-400"
-                        autoFocus
-                    />
-                    <button onClick={() => { setIsSearchOpen(false); setSearchQuery(''); setSearchResults([]); }} className="p-2 text-gray-500 dark:text-gray-400">
-                        <CloseIcon className="w-6 h-6"/>
-                    </button>
-                </div>
-            )}
-            
-            {/* Search Results Dropdown */}
-            {isSearchOpen && searchResults.length > 0 && (
-                <div className="absolute top-full left-0 w-full bg-white dark:bg-gray-800 shadow-xl border-t border-gray-200 dark:border-gray-700 max-h-[60vh] overflow-y-auto z-20">
-                    <ul>
-                        {searchResults.map(person => (
-                            <li key={person.id}>
-                                <button 
-                                    onClick={() => { 
-                                        navigateTo(person.id); 
-                                        setHighlightedPersonId(person.id); 
-                                        setIsSearchOpen(false); 
-                                        setSearchQuery('');
-                                    }}
-                                    className="w-full text-left px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-4 border-b border-gray-100 dark:border-gray-700 last:border-0"
-                                >
-                                    {person.imageUrl ? (
-                                        <img src={person.imageUrl} className="w-10 h-10 rounded-full object-cover"/>
-                                    ) : (
-                                        <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-500">
-                                            <SearchIcon className="w-5 h-5"/>
-                                        </div>
-                                    )}
-                                    <div>
-                                        <p className="font-bold text-gray-800 dark:text-gray-100">{person.firstName} {person.lastName}</p>
-                                        <p className="text-xs text-gray-500">{person.birthDate ? person.birthDate.split('-')[0] : '?'}</p>
+        {/* Search Bar Mobile/Desktop Overlay */}
+        {isSearchOpen && (
+            <div className="absolute inset-0 bg-white dark:bg-gray-900 z-30 flex items-center px-4 animate-fade-in">
+                <SearchIcon className="w-6 h-6 text-gray-400 mr-3"/>
+                <input 
+                    type="text" 
+                    value={searchQuery}
+                    onChange={handleSearchChange}
+                    placeholder={t.search_placeholder}
+                    className="flex-grow bg-transparent border-none outline-none text-lg text-gray-800 dark:text-gray-100 placeholder-gray-400"
+                    autoFocus
+                />
+                <button onClick={() => { setIsSearchOpen(false); setSearchQuery(''); setSearchResults([]); }} className="p-2 text-gray-500 dark:text-gray-400">
+                    <CloseIcon className="w-6 h-6"/>
+                </button>
+            </div>
+        )}
+        
+        {/* Search Results Dropdown */}
+        {isSearchOpen && searchResults.length > 0 && (
+            <div className="absolute top-full left-0 w-full bg-white dark:bg-gray-800 shadow-xl border-t border-gray-200 dark:border-gray-700 max-h-[60vh] overflow-y-auto z-20">
+                <ul>
+                    {searchResults.map(person => (
+                        <li key={person.id}>
+                            <button 
+                                onClick={() => { 
+                                    navigateTo(person.id); 
+                                    setHighlightedPersonId(person.id); 
+                                    setIsSearchOpen(false); 
+                                    setSearchQuery('');
+                                }}
+                                className="w-full text-left px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-4 border-b border-gray-100 dark:border-gray-700 last:border-0"
+                            >
+                                {person.imageUrl ? (
+                                    <img src={person.imageUrl} className="w-10 h-10 rounded-full object-cover"/>
+                                ) : (
+                                    <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-500">
+                                        <SearchIcon className="w-5 h-5"/>
                                     </div>
-                                </button>
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            )}
+                                )}
+                                <div>
+                                    <p className="font-bold text-gray-800 dark:text-gray-100">{person.firstName} {person.lastName}</p>
+                                    <p className="text-xs text-gray-500">{person.birthDate ? person.birthDate.split('-')[0] : '?'}</p>
+                                </div>
+                            </button>
+                        </li>
+                    ))}
+                </ul>
+            </div>
+        )}
       </header>
 
       <main className="flex-grow flex flex-col relative z-0">
