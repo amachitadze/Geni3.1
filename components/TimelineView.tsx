@@ -1,9 +1,8 @@
-
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { Person, People } from '../types';
 import { getYear } from '../utils/dateUtils';
 import { historicalEvents } from '../data/historicalEvents';
-import { DefaultAvatar, CenterIcon } from './Icons';
+import { DefaultAvatar } from './Icons';
 
 interface TimelineViewProps {
     people: People;
@@ -14,6 +13,13 @@ interface TimelineViewProps {
 const TimelineView: React.FC<TimelineViewProps> = ({ people, onShowDetails, highlightedPersonId }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [pixelsPerYear, setPixelsPerYear] = useState(10); // Initial zoom
+    
+    // Drag/Pan State
+    const [isDown, setIsDown] = useState(false);
+    const [startX, setStartX] = useState(0);
+    const [startY, setStartY] = useState(0);
+    const [scrollLeft, setScrollLeft] = useState(0);
+    const [scrollTop, setScrollTop] = useState(0);
     
     // Sort people by birth year
     const sortedPeople = useMemo(() => {
@@ -102,6 +108,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ people, onShowDetails, high
     const laneHeight = 60;
     const headerHeight = 40;
     const footerHeight = 100; // For events
+    const contentHeight = headerHeight + (lanes.length * laneHeight) + footerHeight;
 
     const handleZoom = (delta: number) => {
         setPixelsPerYear(prev => Math.max(2, Math.min(50, prev + delta)));
@@ -114,56 +121,104 @@ const TimelineView: React.FC<TimelineViewProps> = ({ people, onShowDetails, high
         }
     }, [totalWidth]);
 
+    // --- Drag & Pan Handlers ---
+    const handleMouseDown = (e: React.MouseEvent) => {
+        // Prevent drag if clicking on a person card or button
+        if ((e.target as HTMLElement).closest('[data-person-id], button')) return;
+        
+        const slider = containerRef.current;
+        if(!slider) return;
+
+        setIsDown(true);
+        setStartX(e.pageX - slider.offsetLeft);
+        setStartY(e.pageY - slider.offsetTop);
+        setScrollLeft(slider.scrollLeft);
+        setScrollTop(slider.scrollTop);
+    };
+
+    const handleMouseLeave = () => {
+        setIsDown(false);
+    };
+
+    const handleMouseUp = () => {
+        setIsDown(false);
+    };
+
+    const handleMouseMove = (e: React.MouseEvent) => {
+        if (!isDown) return;
+        e.preventDefault();
+        const slider = containerRef.current;
+        if(!slider) return;
+
+        const x = e.pageX - slider.offsetLeft;
+        const y = e.pageY - slider.offsetTop;
+        const walkX = (x - startX); // scroll-fast
+        const walkY = (y - startY);
+        slider.scrollLeft = scrollLeft - walkX;
+        slider.scrollTop = scrollTop - walkY;
+    };
+
     if (sortedPeople.length === 0) {
         return <div className="flex items-center justify-center h-full text-gray-500">ინფორმაციის საჩვენებლად საჭიროა დაბადების თარიღების შეყვანა.</div>;
     }
 
     return (
-        <div className="relative flex flex-col h-full bg-gray-100 dark:bg-gray-900 overflow-hidden">
-            {/* Zoom Controls */}
-            <div className="absolute bottom-4 right-4 z-20 flex flex-col gap-2">
-                <button onClick={() => handleZoom(2)} className="w-10 h-10 rounded-full bg-gray-800 text-white shadow-lg flex items-center justify-center text-xl hover:bg-gray-700 opacity-80 hover:opacity-100">+</button>
-                <button onClick={() => handleZoom(-2)} className="w-10 h-10 rounded-full bg-gray-800 text-white shadow-lg flex items-center justify-center text-xl hover:bg-gray-700 opacity-80 hover:opacity-100">-</button>
+        <div className="relative flex flex-col h-full w-full bg-gray-100 dark:bg-gray-900 overflow-hidden">
+            {/* Zoom Controls - Fixed relative to viewport container */}
+            <div className="absolute bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-auto">
+                <button onClick={() => handleZoom(2)} className="w-12 h-12 rounded-full bg-white dark:bg-gray-800 text-gray-800 dark:text-white shadow-xl border border-gray-200 dark:border-gray-700 flex items-center justify-center text-2xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">+</button>
+                <button onClick={() => handleZoom(-2)} className="w-12 h-12 rounded-full bg-white dark:bg-gray-800 text-gray-800 dark:text-white shadow-xl border border-gray-200 dark:border-gray-700 flex items-center justify-center text-2xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">-</button>
             </div>
 
             {/* Timeline Scroll Area */}
             <div 
                 ref={containerRef}
-                className="flex-grow overflow-auto relative cursor-grab active:cursor-grabbing"
-                style={{ scrollBehavior: 'smooth' }}
+                className={`flex-grow h-full w-full overflow-auto relative ${isDown ? 'cursor-grabbing' : 'cursor-grab'}`}
+                onMouseDown={handleMouseDown}
+                onMouseLeave={handleMouseLeave}
+                onMouseUp={handleMouseUp}
+                onMouseMove={handleMouseMove}
             >
-                <div style={{ width: `${totalWidth}px`, height: `${headerHeight + (lanes.length * laneHeight) + footerHeight}px`, position: 'relative' }}>
+                {/* 
+                    minHeight: '100%' ensures the container fills the screen vertically even if content is small.
+                    height: contentHeight ensures the container grows if content is large (enabling scroll).
+                */}
+                <div style={{ width: `${totalWidth}px`, minHeight: '100%', height: `${contentHeight}px`, position: 'relative' }}>
                     
-                    {/* Year Grid Lines */}
-                    {Array.from({ length: Math.ceil((maxYear - minYear) / 10) + 1 }).map((_, i) => {
-                        const year = Math.ceil(minYear / 10) * 10 + (i * 10);
-                        if (year > maxYear) return null;
-                        const left = (year - minYear) * pixelsPerYear;
-                        
-                        return (
-                            <div key={year} style={{ position: 'absolute', left, top: 0, bottom: 0, borderLeft: '1px dashed rgba(156, 163, 175, 0.2)' }}>
-                                <span className="absolute top-2 left-1 text-xs text-gray-400 font-mono">{year}</span>
-                            </div>
-                        );
-                    })}
+                    {/* Year Grid Lines - Using inset-0 to fill the container */}
+                    <div className="absolute inset-0 pointer-events-none">
+                        {Array.from({ length: Math.ceil((maxYear - minYear) / 10) + 1 }).map((_, i) => {
+                            const year = Math.ceil(minYear / 10) * 10 + (i * 10);
+                            if (year > maxYear) return null;
+                            const left = (year - minYear) * pixelsPerYear;
+                            
+                            return (
+                                <div key={year} style={{ position: 'absolute', left, top: 0, bottom: 0, borderLeft: '1px dashed rgba(156, 163, 175, 0.2)' }}>
+                                    <span className="absolute top-2 left-1 text-xs text-gray-400 font-mono select-none">{year}</span>
+                                </div>
+                            );
+                        })}
+                    </div>
 
                     {/* Historical Events */}
-                    {historicalEvents.map((event, idx) => {
-                        if (event.year < minYear || event.year > maxYear) return null;
-                        const left = (event.year - minYear) * pixelsPerYear;
-                        return (
-                            <div key={idx} style={{ position: 'absolute', left, top: 0, bottom: 0, borderLeft: '2px solid rgba(255, 99, 71, 0.3)', pointerEvents: 'none' }}>
-                                <div className="absolute bottom-4 left-1 w-40">
-                                    <span className={`text-[10px] uppercase font-bold tracking-wider px-1 py-0.5 rounded ${event.category === 'geo' ? 'text-red-600 bg-red-100/80' : 'text-blue-600 bg-blue-100/80'}`}>
-                                        {event.year}
-                                    </span>
-                                    <p className="text-[10px] text-gray-600 dark:text-gray-400 mt-1 leading-tight font-medium bg-white/50 dark:bg-black/50 p-1 rounded backdrop-blur-sm inline-block">
-                                        {event.label}
-                                    </p>
+                    <div className="absolute inset-0 pointer-events-none">
+                        {historicalEvents.map((event, idx) => {
+                            if (event.year < minYear || event.year > maxYear) return null;
+                            const left = (event.year - minYear) * pixelsPerYear;
+                            return (
+                                <div key={idx} style={{ position: 'absolute', left, top: 0, bottom: 0, borderLeft: '2px solid rgba(255, 99, 71, 0.3)' }}>
+                                    <div className="absolute bottom-4 left-1 w-40">
+                                        <span className={`text-[10px] uppercase font-bold tracking-wider px-1 py-0.5 rounded select-none ${event.category === 'geo' ? 'text-red-600 bg-red-100/80' : 'text-blue-600 bg-blue-100/80'}`}>
+                                            {event.year}
+                                        </span>
+                                        <p className="text-[10px] text-gray-600 dark:text-gray-400 mt-1 leading-tight font-medium bg-white/50 dark:bg-black/50 p-1 rounded backdrop-blur-sm inline-block select-none">
+                                            {event.label}
+                                        </p>
+                                    </div>
                                 </div>
-                            </div>
-                        );
-                    })}
+                            );
+                        })}
+                    </div>
 
                     {/* People Bars */}
                     <div style={{ position: 'absolute', top: headerHeight, left: 0, right: 0 }}>
@@ -184,6 +239,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ people, onShowDetails, high
                                     return (
                                         <div
                                             key={person.id}
+                                            data-person-id={person.id}
                                             onClick={(e) => { e.stopPropagation(); onShowDetails(person.id); }}
                                             className={`absolute rounded-full shadow-sm flex items-center px-2 cursor-pointer transition-all hover:brightness-110 hover:z-10 group overflow-hidden border ${isHighlighted ? 'ring-2 ring-yellow-400 z-20' : ''}`}
                                             style={{
@@ -200,14 +256,14 @@ const TimelineView: React.FC<TimelineViewProps> = ({ people, onShowDetails, high
                                             {width > 40 && (
                                                 <div className="flex-shrink-0 mr-2 w-6 h-6 rounded-full overflow-hidden border border-white/50">
                                                     {person.imageUrl ? (
-                                                        <img src={person.imageUrl} className="w-full h-full object-cover" alt="" />
+                                                        <img src={person.imageUrl} className="w-full h-full object-cover select-none" alt="" draggable="false" />
                                                     ) : (
                                                         <DefaultAvatar className="w-full h-full bg-white/20 text-white" />
                                                     )}
                                                 </div>
                                             )}
                                             
-                                            <span className={`text-white text-xs font-semibold whitespace-nowrap overflow-hidden text-ellipsis ${width < 30 ? 'hidden' : ''}`}>
+                                            <span className={`text-white text-xs font-semibold whitespace-nowrap overflow-hidden text-ellipsis select-none ${width < 30 ? 'hidden' : ''}`}>
                                                 {person.firstName} {person.lastName}
                                             </span>
 
