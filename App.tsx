@@ -586,6 +586,7 @@ function App() {
                     </div>
                 </div>
             </div>
+        </div> {/* CLOSE THE MAIN HEADER CONTENT DIV */}
             
             {/* Search Bar Mobile/Desktop Overlay */}
             {isSearchOpen && (
