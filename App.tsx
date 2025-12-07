@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Person, ModalState, Gender } from './types';
 import TreeNode from './components/TreeNode';
@@ -26,9 +27,9 @@ import { validatePeopleData, getFamilyUnitFromConnection } from './utils/treeUti
 import { translations, Language } from './utils/translations';
 import { 
     SearchIcon, BackIcon, HomeIcon, MenuIcon, ExportIcon, 
-    CenterIcon, StatsIcon, CloseIcon, ShareIcon, JsonExportIcon, 
-    JsonImportIcon, SunIcon, MoonIcon, ViewCompactIcon, ViewNormalIcon, 
-    ListBulletIcon, GlobeIcon, DocumentIcon, MessageIcon, CogIcon, CalculatorIcon, ClockIcon, MapIcon
+    StatsIcon, CloseIcon, ShareIcon, 
+    ViewCompactIcon, ViewNormalIcon, 
+    ListBulletIcon, GlobeIcon, MessageIcon, CogIcon, CalculatorIcon, ClockIcon, MapIcon
 } from './components/Icons';
 
 // Hooks
@@ -45,7 +46,6 @@ declare const pako: any;
 // Style Constants
 const MENU_ITEM_CLASS = "w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors text-gray-700 dark:text-gray-200";
 const MENU_HEADER_CLASS = "px-4 py-1.5 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mt-1";
-const ZOOM_BTN_CLASS = "w-10 h-10 rounded-full bg-gray-700/50 text-white backdrop-blur-sm flex items-center justify-center text-xl hover:bg-gray-600/70 shadow-md transition-colors";
 
 function App() {
   // --- Hooks Initialization ---
