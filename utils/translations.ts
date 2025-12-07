@@ -20,8 +20,8 @@ export const translations = {
         
         // Tree Header & Connectors
         tree_default_title: "გენეალოგიური ხე",
-        tree_title_suffix: "ების გენეალოგიური ხე", // Used as: [LastName] + suffix
-        tree_title_prefix: "", // Not used in Georgian usually
+        tree_title_suffix: "ების გენეალოგიური ხე", 
+        tree_title_prefix: "", 
         conn_spouse: "მეუღლე",
         conn_parents: "მშობლები",
         conn_child: "შვილი",
@@ -53,6 +53,7 @@ export const translations = {
         menu_view_compact: "კომპაქტური",
         menu_view_list: "სია",
         menu_view_timeline: "თაიმლაინი",
+        menu_view_map: "რუკა (Geospatial)", // New
         
         // Settings Modal
         settings_title: "პარამეტრები",
@@ -115,7 +116,9 @@ export const translations = {
         lbl_male: "მამრობითი",
         lbl_female: "მდედრობითი",
         lbl_birthdate: "დაბადების თარიღი",
+        lbl_birthplace: "დაბადების ადგილი", // New
         lbl_deathdate: "გარდაცვალების თარიღი",
+        lbl_deathplace: "გარდაცვალების ადგილი", // New
         lbl_cemetery: "სასაფლაოს მისამართი",
         lbl_photo: "პროფილის სურათი",
         lbl_upload_photo: "სურათის არჩევა",
@@ -124,7 +127,7 @@ export const translations = {
         lbl_contact_info: "საკონტაქტო ინფორმაცია",
         lbl_phone: "ტელეფონი",
         lbl_email: "ელ. ფოსტა",
-        lbl_address: "მისამართი",
+        lbl_address: "მისამართი (საცხოვრებელი)",
         lbl_bio: "ბიოგრაფია",
         lbl_relationship: "ურთიერთობა",
         rel_child: "შვილი",
@@ -139,7 +142,9 @@ export const translations = {
 
         // Details Modal
         det_born: "დაიბადა",
+        det_born_in: "", // Used as "Born in [Place]"
         det_died: "გარდაიცვალა",
+        det_died_in: "", // Used as "Died in [Place]"
         det_years: "წლის",
         det_age_at_death: "წლის ასაკში",
         det_unknown: "თარიღები უცნობია",
@@ -158,6 +163,14 @@ export const translations = {
         gal_add: "ფოტოს დამატება",
         gal_no_photos: "ფოტოები არ არის ატვირთული.",
         gal_delete_confirm: "ნამდვილად გსურთ ამ ფოტოს წაშლა?",
+        
+        // Map
+        map_loading: "რუკის მონაცემების დამუშავება...",
+        map_empty: "რუკაზე საჩვენებელი მონაცემები (მისამართები) არ მოიძებნა.",
+        map_legend: "ლეგენდა",
+        map_birth: "დაბადება",
+        map_residence: "საცხოვრებელი",
+        map_death: "გარდაცვალება",
         
         // Relationship Finder
         rel_finder_title: "ნათესაობის კალკულატორი",
@@ -349,6 +362,7 @@ export const translations = {
         auth_success: "წარმატება! გადამისამართება...",
     },
     es: {
+        // ... existing es translations ...
         // Common
         save: "Guardar",
         cancel: "Cancelar",
@@ -400,6 +414,7 @@ export const translations = {
         menu_view_compact: "Compacta",
         menu_view_list: "Lista",
         menu_view_timeline: "Cronología",
+        menu_view_map: "Mapa (Geoespacial)", // New
 
         // Settings Modal
         settings_title: "Configuración",
@@ -462,7 +477,9 @@ export const translations = {
         lbl_male: "Masculino",
         lbl_female: "Femenino",
         lbl_birthdate: "Fecha de nacimiento",
+        lbl_birthplace: "Lugar de nacimiento", // New
         lbl_deathdate: "Fecha de fallecimiento",
+        lbl_deathplace: "Lugar de fallecimiento", // New
         lbl_cemetery: "Dirección del cementerio",
         lbl_photo: "Foto de perfil",
         lbl_upload_photo: "Subir foto",
@@ -471,7 +488,7 @@ export const translations = {
         lbl_contact_info: "Información de contacto",
         lbl_phone: "Teléfono",
         lbl_email: "Correo electrónico",
-        lbl_address: "Dirección",
+        lbl_address: "Dirección (Residencia)",
         lbl_bio: "Biografía",
         lbl_relationship: "Relación",
         rel_child: "Hijo/a",
@@ -486,7 +503,9 @@ export const translations = {
 
         // Details Modal
         det_born: "Nacido",
+        det_born_in: "en",
         det_died: "Fallecido",
+        det_died_in: "en",
         det_years: "años",
         det_age_at_death: "a los",
         det_unknown: "Fechas desconocidas",
@@ -505,8 +524,16 @@ export const translations = {
         gal_add: "Añadir foto",
         gal_no_photos: "No hay fotos subidas.",
         gal_delete_confirm: "¿Seguro que quieres eliminar esta foto?",
+        
+        // Map
+        map_loading: "Procesando datos del mapa...",
+        map_empty: "No se encontraron direcciones para mostrar en el mapa.",
+        map_legend: "Leyenda",
+        map_birth: "Nacimiento",
+        map_residence: "Residencia",
+        map_death: "Defunción",
 
-        // Relationship Finder
+        // ... (rest of translation keys) ...
         rel_finder_title: "Calculadora de Relaciones",
         rel_finder_desc: "Selecciona dos personas del árbol para ver cómo están relacionadas.",
         rel_select_person_1: "Persona 1",

@@ -1,15 +1,9 @@
-
-
-
-
-
-
-
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Person, ModalState, Gender } from './types';
 import TreeNode from './components/TreeNode';
 import TreeViewList from './components/TreeViewList';
 import TimelineView from './components/TimelineView';
+import MapPanel from './components/MapPanel';
 import AddPersonModal from './components/AddPersonModal';
 import DetailsModal from './components/DetailsModal';
 import StatisticsModal from './components/StatisticsModal';
@@ -34,7 +28,7 @@ import {
     SearchIcon, BackIcon, HomeIcon, MenuIcon, ExportIcon, 
     CenterIcon, StatsIcon, CloseIcon, ShareIcon, JsonExportIcon, 
     JsonImportIcon, SunIcon, MoonIcon, ViewCompactIcon, ViewNormalIcon, 
-    ListBulletIcon, GlobeIcon, DocumentIcon, MessageIcon, CogIcon, CalculatorIcon, ClockIcon
+    ListBulletIcon, GlobeIcon, DocumentIcon, MessageIcon, CogIcon, CalculatorIcon, ClockIcon, MapIcon
 } from './components/Icons';
 
 // Hooks
@@ -263,9 +257,6 @@ function App() {
         const firstName = parts[0];
         const lastName = parts.slice(1).join(' ');
         
-        // If it was just a quick start (no login), we can optionally set the name as current user if we want
-        // But usually current user implies Auth.
-        // For now, let's assume if they passed Auth modal, startName is the user's name.
         if (startName) setCurrentUser(startName);
         
         setPeople({ 
@@ -497,6 +488,8 @@ function App() {
           case 'timeline':
               // @ts-ignore
               return <TimelineView people={people} onShowDetails={setDetailsModalPersonId} highlightedPersonId={highlightedPersonId} />;
+          case 'map':
+              return <MapPanel people={people} onShowDetails={setDetailsModalPersonId} language={language} />;
           default:
               return (
                 <div ref={viewportRef} className="flex-grow flex flex-col relative overflow-hidden" {...handlers} onClick={() => setHighlightedPeople(null)} style={{cursor: isPanning ? 'grabbing' : 'grab', touchAction: 'none'}}>
@@ -583,166 +576,208 @@ function App() {
                                     <li><button onClick={() => setViewMode('compact')} className={`${MENU_ITEM_CLASS} ${viewMode === 'compact' ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400' : ''}`}><ViewCompactIcon className="w-5 h-5"/><span>{t.menu_view_compact}</span></button></li>
                                     <li><button onClick={() => setViewMode('list')} className={`${MENU_ITEM_CLASS} ${viewMode === 'list' ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400' : ''}`}><ListBulletIcon className="w-5 h-5"/><span>{t.menu_view_list}</span></button></li>
                                     <li><button onClick={() => setViewMode('timeline' as any)} className={`${MENU_ITEM_CLASS} ${viewMode === 'timeline' as any ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400' : ''}`}><ClockIcon className="w-5 h-5"/><span>{t.menu_view_timeline}</span></button></li>
+                                    <li><button onClick={() => setViewMode('map' as any)} className={`${MENU_ITEM_CLASS} ${viewMode === 'map' as any ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400' : ''}`}><MapIcon className="w-5 h-5"/><span>{t.menu_view_map}</span></button></li>
                                     
                                     <li><hr className="my-1 border-gray-200 dark:border-gray-700" /></li>
                                     <li><button onClick={() => { setIsSettingsModalOpen(true); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}><CogIcon className="w-5 h-5"/><span>{t.menu_settings}</span></button></li>
                                 </ul>
-                                <div className="px-4 py-2 text-xs text-center text-gray-400 border-t border-gray-200 dark:border-gray-700">
-                                    <div className="mb-1">ბოლოს განახლდა: {formatTimestamp(lastUpdated)}</div>
-                                    <div className="flex items-center justify-center gap-1 opacity-75">
-                                        <span>შექმნა</span>
-                                        <a href="https://avma.carrd.co/" target="_blank" rel="noopener noreferrer" className="inline-block hover:opacity-100 transition-opacity">
-                                            <img src="https://i.postimg.cc/c1T2NJgV/avma.png" alt="AvMa" className="h-2.5 w-auto" />
-                                        </a>
-                                        <span>2025 ©</span>
-                                    </div>
-                                </div>
                             </div>
                         )}
                     </div>
                 </div>
             </div>
-        </div>
-
-        {/* Search Bar Overlay */}
-        <div className={`absolute top-0 left-0 right-0 p-4 bg-white/80 dark:bg-gray-900/80 shadow-md transition-transform duration-300 ${isSearchOpen ? 'translate-y-0' : '-translate-y-full'}`}>
-            <div className="relative w-full max-w-2xl mx-auto">
-                <SearchIcon className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2"/>
-                <input type="text" placeholder={t.search_placeholder} value={searchQuery} onChange={handleSearchChange} className="w-full h-12 pl-10 pr-10 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 dark:text-white" autoFocus />
-                <button onClick={() => { setIsSearchOpen(false); setSearchQuery(''); setSearchResults([]); setHighlightedPersonId(null); }} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600"><CloseIcon className="w-5 h-5"/></button>
-                {searchResults.length > 0 && (
-                <ul className="absolute left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md shadow-lg max-h-80 overflow-y-auto z-30">
-                    {searchResults.map(p => (
-                    <li key={p.id} onClick={() => { navigateTo(p.id); setHighlightedPersonId(p.id); setSearchQuery(''); setSearchResults([]); }} className="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200">{p.firstName} {p.lastName}</li>
-                    ))}
-                </ul>
-                )}
-            </div>
-        </div>
+            
+            {/* Search Bar Mobile/Desktop Overlay */}
+            {isSearchOpen && (
+                <div className="absolute inset-0 bg-white dark:bg-gray-900 z-30 flex items-center px-4 animate-fade-in">
+                    <SearchIcon className="w-6 h-6 text-gray-400 mr-3"/>
+                    <input 
+                        type="text" 
+                        value={searchQuery}
+                        onChange={handleSearchChange}
+                        placeholder={t.search_placeholder}
+                        className="flex-grow bg-transparent border-none outline-none text-lg text-gray-800 dark:text-gray-100 placeholder-gray-400"
+                        autoFocus
+                    />
+                    <button onClick={() => { setIsSearchOpen(false); setSearchQuery(''); setSearchResults([]); }} className="p-2 text-gray-500 dark:text-gray-400">
+                        <CloseIcon className="w-6 h-6"/>
+                    </button>
+                </div>
+            )}
+            
+            {/* Search Results Dropdown */}
+            {isSearchOpen && searchResults.length > 0 && (
+                <div className="absolute top-full left-0 w-full bg-white dark:bg-gray-800 shadow-xl border-t border-gray-200 dark:border-gray-700 max-h-[60vh] overflow-y-auto z-20">
+                    <ul>
+                        {searchResults.map(person => (
+                            <li key={person.id}>
+                                <button 
+                                    onClick={() => { 
+                                        navigateTo(person.id); 
+                                        setHighlightedPersonId(person.id); 
+                                        setIsSearchOpen(false); 
+                                        setSearchQuery('');
+                                    }}
+                                    className="w-full text-left px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-4 border-b border-gray-100 dark:border-gray-700 last:border-0"
+                                >
+                                    {person.imageUrl ? (
+                                        <img src={person.imageUrl} className="w-10 h-10 rounded-full object-cover"/>
+                                    ) : (
+                                        <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-500">
+                                            <SearchIcon className="w-5 h-5"/>
+                                        </div>
+                                    )}
+                                    <div>
+                                        <p className="font-bold text-gray-800 dark:text-gray-100">{person.firstName} {person.lastName}</p>
+                                        <p className="text-xs text-gray-500">{person.birthDate ? person.birthDate.split('-')[0] : '?'}</p>
+                                    </div>
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
       </header>
 
-      {/* Main Content */}
-      <main className="flex-grow flex flex-col relative overflow-hidden">
+      <main className="flex-grow flex flex-col relative z-0">
         {renderContent()}
-
-        {/* Floating Controls (Zoom/Center) - Only show in default/compact/timeline modes if needed (timeline has its own) */}
-        {(viewMode === 'default' || viewMode === 'compact') && (
-            <div className="fixed bottom-4 right-4 flex flex-col gap-2 z-10">
-                <button onClick={() => handleZoomBtn('in')} className={ZOOM_BTN_CLASS}>+</button>
-                <button onClick={() => handleZoomBtn('out')} className={ZOOM_BTN_CLASS}>-</button>
-                <button onClick={resetTransform} className={ZOOM_BTN_CLASS}><CenterIcon className="w-5 h-5"/></button>
-            </div>
-        )}
-        
-        {isReadOnly && (
-            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-yellow-100 border border-yellow-300 text-yellow-800 px-4 py-2 rounded-full shadow-lg">
-                <span className="font-medium text-sm">👁️ დამთვალიერებლის რეჟიმი</span>
-                <button onClick={() => { if(window.confirm("გამოსვლა?")) { setPeople({}); setRootIdStack([]); setIsReadOnly(false); setIsViewingTree(false); window.history.replaceState({}, '', window.location.pathname); } }} className="ml-2 hover:bg-yellow-200 rounded-full"><CloseIcon className="w-4 h-4" /></button>
-            </div>
-        )}
-
-        <BirthdayNotifier peopleWithBirthdays={peopleWithBirthdays} onNavigate={(id) => { navigateTo(id); setHighlightedPersonId(id); }} />
-        
-        {/* Real-time Notifications */}
-        <NotificationBanner language={language} />
-
-        {installPrompt && (
-          <div className="fixed bottom-20 sm:bottom-4 left-1/2 -translate-x-1/2 bg-white dark:bg-gray-800 p-3 rounded-lg shadow-2xl z-50 flex gap-4 border border-gray-200 dark:border-gray-700">
-            <p className="text-sm text-gray-700 dark:text-gray-300">დააინსტალირეთ აპლიკაცია.</p>
-            <button onClick={handleInstallClick} className="text-sm text-purple-600 font-bold">ინსტალაცია</button>
-            <button onClick={() => setInstallPrompt(null)} className="text-sm text-gray-500">დახურვა</button>
-          </div>
-        )}
       </main>
 
-      {/* Modals */}
-      {modalState.isOpen && modalState.context && (
-        <AddPersonModal 
-          isOpen={modalState.isOpen} onClose={handleCloseModal} onSubmit={handleFormSubmit} onDelete={handleCloseDetailsAndDelete}
-          context={modalState.context} anchorPerson={people[modalState.context.personId]}
-          anchorSpouse={people[modalState.context.personId]?.spouseId ? people[people[modalState.context.personId].spouseId!] : null}
-          personToEdit={modalState.context.action === 'edit' ? people[modalState.context.personId] : null}
-          anchorPersonExSpouses={people[modalState.context.personId]?.exSpouseIds?.map(id => people[id]).filter(Boolean)}
-          language={language}
-        />
-      )}
-      {detailsModalPersonId && (
-        <DetailsModal 
-          person={people[detailsModalPersonId]} people={people} onClose={() => setDetailsModalPersonId(null)}
-          onEdit={handleOpenEditModal} onDelete={handleCloseDetailsAndDelete}
-          onGoogleSearch={googleAI.openSearchForPerson}
-          onShowOnMap={(addr) => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}`, '_blank')}
-          onNavigate={(id) => { setDetailsModalPersonId(null); navigateTo(id); }} isReadOnly={isReadOnly}
-          language={language}
-          onGenerateBio={googleAI.generateBiography}
-          onSaveBio={handleSaveBio}
-          onUpdateGallery={handleGalleryUpdate}
-        />
-      )}
-      {isStatisticsModalOpen && <StatisticsModal isOpen={isStatisticsModalOpen} onClose={() => setIsStatisticsModalOpen(false)} stats={statistics} theme={theme} language={language} />} 
-      
-      {isRelationshipModalOpen && <RelationshipFinderModal isOpen={isRelationshipModalOpen} onClose={() => setIsRelationshipModalOpen(false)} people={people} language={language} />}
+      {/* Floating Elements */}
+      <NotificationBanner language={language} />
+      <BirthdayNotifier peopleWithBirthdays={peopleWithBirthdays} onNavigate={navigateTo} />
 
-      {isShareModalOpen && <ShareModal isOpen={isShareModalOpen} onClose={() => setIsShareModalOpen(false)} data={{ people, rootIdStack }} language={language} />}
-      {isPasswordPromptOpen && <PasswordPromptModal isOpen={isPasswordPromptOpen} onSubmit={handlePasswordSubmit} onClose={() => setIsPasswordPromptOpen(false)} error={decryptionError} isLoading={isDecrypting} language={language} />}
-      
-      <GoogleSearchPanel 
-          isOpen={googleAI.isOpen} onClose={() => googleAI.setIsOpen(false)} onSearch={() => googleAI.handleSearch()}
-          query={googleAI.query} setQuery={googleAI.setQuery} result={googleAI.result} sources={googleAI.sources} isLoading={googleAI.isLoading} error={googleAI.error}
-          language={language}
+      {/* Modals */}
+      <AddPersonModal 
+        isOpen={modalState.isOpen} 
+        onClose={handleCloseModal} 
+        onSubmit={handleFormSubmit}
+        onDelete={handleDeletePerson}
+        context={modalState.context}
+        language={language}
+        anchorPerson={modalState.context && modalState.context.personId ? people[modalState.context.personId] : null}
+        anchorSpouse={modalState.context?.action === 'add' && modalState.context.personId && people[modalState.context.personId]?.spouseId ? people[people[modalState.context.personId].spouseId!] : null}
+        personToEdit={modalState.context?.action === 'edit' ? people[modalState.context.personId] : null}
+        anchorPersonExSpouses={modalState.context?.action === 'add' && modalState.context.personId ? (people[modalState.context.personId].exSpouseIds || []).map(id => people[id]).filter(Boolean) : []}
       />
 
-      {/* Settings Hub Modal */}
-      {isSettingsModalOpen && (
-          <SettingsModal 
-            isOpen={isSettingsModalOpen} 
-            onClose={() => setIsSettingsModalOpen(false)}
-            language={language}
-            onLanguageChange={setLanguage}
-            theme={theme}
-            toggleTheme={toggleTheme}
-            currentUser={currentUser}
-            onLogout={() => { setCurrentUser(null); setIsViewingTree(false); }}
-            openImport={() => { setIsSettingsModalOpen(false); setIsImportModalOpen(true); }}
-            openExport={() => { setIsSettingsModalOpen(false); setIsExportModalOpen(true); }}
-            openFileManager={() => { setIsSettingsModalOpen(false); setIsFileManagerOpen(true); }}
-            treeStats={treeStats}
-          />
-      )}
+      <DetailsModal 
+        person={detailsModalPersonId ? people[detailsModalPersonId] : null}
+        people={people}
+        onClose={() => setDetailsModalPersonId(null)}
+        onEdit={handleOpenEditModal}
+        onDelete={handleCloseDetailsAndDelete}
+        onNavigate={(id) => { navigateTo(id); setDetailsModalPersonId(null); }}
+        onGoogleSearch={(person) => googleAI.openSearchForPerson(person)}
+        onShowOnMap={(addr) => { /* Implement map focus if needed */ }}
+        isReadOnly={isReadOnly}
+        language={language}
+        onGenerateBio={googleAI.generateBiography}
+        onSaveBio={handleSaveBio}
+        onUpdateGallery={handleGalleryUpdate}
+      />
 
-      {isImportModalOpen && (
-        <ImportModal 
-            isOpen={isImportModalOpen} 
-            onClose={() => setIsImportModalOpen(false)} 
-            onImportFromFile={handleImportJson} 
-            onMergeFromFile={handleMergeJson} 
-            onRestore={(d) => { setPeople(d.people); setRootIdStack(d.rootIdStack); setIsReadOnly(false); }} 
-            language={language}
-            onBack={() => { setIsImportModalOpen(false); setIsSettingsModalOpen(true); }} 
-        />
-      )}
-      {isExportModalOpen && (
-        <ExportModal 
-            isOpen={isExportModalOpen} 
-            onClose={() => setIsExportModalOpen(false)} 
-            onExportJson={handleExportJson} 
-            data={{ people, rootIdStack }} 
-            language={language} 
-            onBack={() => { setIsExportModalOpen(false); setIsSettingsModalOpen(true); }}
-        />
-      )}
-      {isFileManagerOpen && (
-        <FileManagerModal 
-            isOpen={isFileManagerOpen} 
-            onClose={() => setIsFileManagerOpen(false)} 
-            language={language} 
-            onBack={() => { setIsFileManagerOpen(false); setIsSettingsModalOpen(true); }}
-        />
-      )}
-      
-      {isNotificationSenderOpen && <NotificationSenderModal isOpen={isNotificationSenderOpen} onClose={() => setIsNotificationSenderOpen(false)} language={language} />}
-      
-      <input type="file" ref={fileInputRef} onChange={handleFileSelected} accept=".json" style={{ display: 'none' }} />
+      <StatisticsModal 
+        isOpen={isStatisticsModalOpen} 
+        onClose={() => setIsStatisticsModalOpen(false)} 
+        stats={statistics} 
+        theme={theme}
+        language={language}
+      />
+
+      <ShareModal 
+        isOpen={isShareModalOpen} 
+        onClose={() => setIsShareModalOpen(false)} 
+        data={{ people, rootIdStack }} 
+        language={language}
+      />
+
+      <PasswordPromptModal 
+        isOpen={isPasswordPromptOpen}
+        onClose={() => { /* Should probably not close if required, but for now allow close */ setIsPasswordPromptOpen(false); }}
+        onSubmit={handlePasswordSubmit}
+        error={decryptionError}
+        isLoading={isDecrypting}
+        language={language}
+      />
+
+      <GoogleSearchPanel 
+        isOpen={googleAI.isOpen}
+        onClose={() => googleAI.setIsOpen(false)}
+        onSearch={() => googleAI.handleSearch()}
+        query={googleAI.query}
+        setQuery={googleAI.setQuery}
+        result={googleAI.result}
+        sources={googleAI.sources}
+        isLoading={googleAI.isLoading}
+        error={googleAI.error}
+        language={language}
+      />
+
+      <ImportModal 
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onImportFromFile={handleImportJson}
+        onMergeFromFile={handleMergeJson}
+        onRestore={(data) => {
+            setPeople(data.people);
+            setRootIdStack(data.rootIdStack || ['root']);
+            setIsReadOnly(!!data.readOnly);
+        }}
+        language={language}
+      />
+
+      <ExportModal 
+        isOpen={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
+        onExportJson={handleExportJson}
+        data={{ people, rootIdStack }}
+        language={language}
+      />
+
+      <FileManagerModal 
+        isOpen={isFileManagerOpen}
+        onClose={() => setIsFileManagerOpen(false)}
+        language={language}
+      />
+
+      <NotificationSenderModal 
+        isOpen={isNotificationSenderOpen}
+        onClose={() => setIsNotificationSenderOpen(false)}
+        language={language}
+      />
+
+      <SettingsModal 
+        isOpen={isSettingsModalOpen}
+        onClose={() => setIsSettingsModalOpen(false)}
+        language={language}
+        onLanguageChange={setLanguage}
+        theme={theme}
+        toggleTheme={toggleTheme}
+        currentUser={currentUser}
+        onLogout={() => { setCurrentUser(null); setIsViewingTree(false); }}
+        openImport={() => { setIsSettingsModalOpen(false); setIsImportModalOpen(true); }}
+        openExport={() => { setIsSettingsModalOpen(false); setIsExportModalOpen(true); }}
+        openFileManager={() => { setIsSettingsModalOpen(false); setIsFileManagerOpen(true); }}
+        treeStats={treeStats}
+      />
+
+      <RelationshipFinderModal 
+        isOpen={isRelationshipModalOpen}
+        onClose={() => setIsRelationshipModalOpen(false)}
+        people={people}
+        language={language}
+      />
+
+      {/* Hidden File Input for Import */}
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        onChange={handleFileSelected} 
+        className="hidden" 
+        accept=".json" 
+      />
+
     </div>
   );
 }

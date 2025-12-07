@@ -1,8 +1,10 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Gender, ModalContext, Person, Relationship } from '../types';
 import { convertDisplayToStorage, convertStorageToDisplay } from '../utils/dateUtils';
 import { getStoredSupabaseConfig, getSupabaseClient } from '../utils/supabaseClient';
 import { translations, Language } from '../utils/translations';
+import { GEORGIAN_CITIES } from '../data/georgianCities';
 import { 
     ImageIcon, DeleteIcon, CloseIcon, CheckIcon, CloudUploadIcon
 } from './Icons';
@@ -14,7 +16,9 @@ interface AddPersonModalProps {
     formData: Partial<{ firstName: string; lastName:string; gender: Gender; }>,
     details: Partial<{ 
       birthDate: string; 
+      birthPlace: string; 
       deathDate: string; 
+      deathPlace: string; 
       imageUrl: string; 
       contactInfo: { phone: string; email: string; address: string; }; 
       bio: string;
@@ -39,8 +43,10 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [gender, setGender] = useState<Gender>(Gender.Male);
-  const [birthDate, setBirthDate] = useState(''); // Stores display format
-  const [deathDate, setDeathDate] = useState(''); // Stores display format
+  const [birthDate, setBirthDate] = useState(''); 
+  const [birthPlace, setBirthPlace] = useState('');
+  const [deathDate, setDeathDate] = useState(''); 
+  const [deathPlace, setDeathPlace] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -48,19 +54,14 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
   const [bio, setBio] = useState('');
   const [cemeteryAddress, setCemeteryAddress] = useState('');
   
-  // Modal state
   const [relationship, setRelationship] = useState<Relationship>('child');
   const [title, setTitle] = useState('');
   const [submitText, setSubmitText] = useState('');
   const [spouseMode, setSpouseMode] = useState<'new' | 'existing'>('new');
   const [selectedExSpouseId, setSelectedExSpouseId] = useState('');
-  
-  // Upload state
   const [isUploading, setIsUploading] = useState(false);
-  const [hasSupabaseConfig, setHasSupabaseConfig] = useState(false); // Supabase Config
+  const [hasSupabaseConfig, setHasSupabaseConfig] = useState(false);
   const [useCloudStorage, setUseCloudStorage] = useState(true);
-
-  // Crop State
   const [cropModalOpen, setCropModalOpen] = useState(false);
   const [tempImgSrc, setTempImgSrc] = useState<string | null>(null);
   const [cropZoom, setCropZoom] = useState(1);
@@ -72,9 +73,7 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
 
   const isEditMode = context?.action === 'edit';
 
-  // Check for API keys/Config on mount
   useEffect(() => {
-      // Check Supabase
       const sbConfig = getStoredSupabaseConfig();
       if (sbConfig.url && sbConfig.key) {
           setHasSupabaseConfig(true);
@@ -84,7 +83,6 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
       }
   }, []);
 
-  // Effect to initialize or reset the form
   useEffect(() => {
     if (!isOpen) return;
 
@@ -93,7 +91,9 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
       setLastName('');
       setGender(Gender.Male);
       setBirthDate('');
+      setBirthPlace('');
       setDeathDate('');
+      setDeathPlace('');
       setImageUrl('');
       setPhone('');
       setEmail('');
@@ -115,7 +115,9 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
       setLastName(personToEdit.lastName);
       setGender(personToEdit.gender);
       setBirthDate(convertStorageToDisplay(personToEdit.birthDate));
+      setBirthPlace(personToEdit.birthPlace || '');
       setDeathDate(convertStorageToDisplay(personToEdit.deathDate));
+      setDeathPlace(personToEdit.deathPlace || '');
       setImageUrl(personToEdit.imageUrl || '');
       setPhone(personToEdit.contactInfo?.phone || '');
       setEmail(personToEdit.contactInfo?.email || '');
@@ -129,7 +131,6 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
     }
   }, [isOpen, context, personToEdit, isEditMode, language]);
 
-  // Effect for UI texts
   useEffect(() => {
     if (isOpen && context?.action === 'add' && anchorPerson) {
       const relationshipTranslations: Record<Relationship, string> = {
@@ -138,12 +139,7 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
         parent: t.modal_add_parent_of,
         sibling: t.modal_add_sibling_of
       };
-      // For simple title, we can just use the translation. 
-      // If we want "Add Child for [Name]", we'd need more complex interpolation, 
-      // but let's stick to simple translated strings + Name
-      
       const anchorFullName = `${anchorPerson.firstName} ${anchorPerson.lastName}`.trim();
-      // Using a simpler approach: "Add Child (For Name)"
       setTitle(`${relationshipTranslations[relationship]} (${anchorFullName})`);
 
       if (relationship === 'spouse') {
@@ -179,18 +175,12 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
 
   const deleteImageFromStorage = async (url: string) => {
       if (!url || !hasSupabaseConfig) return;
-      
-      // Check if it's actually a Supabase URL
       const config = getStoredSupabaseConfig();
-      if (!url.includes(config.url)) return; // Don't try to delete external images or base64
-
+      if (!url.includes(config.url)) return; 
       try {
           const supabase = getSupabaseClient(config.url, config.key);
-          
-          // Extract filename from URL
           const parts = url.split('/');
           const fileName = parts[parts.length - 1];
-          
           if (fileName) {
               const { error } = await supabase.storage.from('images').remove([fileName]);
               if (error) console.error("Error deleting old image:", error);
@@ -209,7 +199,7 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
               setCropZoom(1);
               setCropOffset({ x: 0, y: 0 });
               setCropModalOpen(true);
-              if (fileInputRef.current) fileInputRef.current.value = ''; // Reset input
+              if (fileInputRef.current) fileInputRef.current.value = '';
           };
           reader.readAsDataURL(file);
       }
@@ -217,46 +207,31 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
 
   const handleCropSave = async () => {
       if (!imgRef.current) return;
-      
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
-
-      // Set output size to 500x500 for consistency and storage saving
       const OUTPUT_SIZE = 500;
       canvas.width = OUTPUT_SIZE;
       canvas.height = OUTPUT_SIZE;
-      
-      // Fill background (white for transparency if any)
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, OUTPUT_SIZE, OUTPUT_SIZE);
-      
       const CONTAINER_SIZE = 280;
       const ratio = OUTPUT_SIZE / CONTAINER_SIZE;
-
-      // Move context to center
       ctx.translate(OUTPUT_SIZE / 2, OUTPUT_SIZE / 2);
-      ctx.scale(ratio, ratio); // Scale up to match output resolution
+      ctx.scale(ratio, ratio);
       ctx.translate(cropOffset.x, cropOffset.y);
       ctx.scale(cropZoom, cropZoom);
-      
-      // Draw image centered
       const img = imgRef.current;
       const aspect = img.naturalWidth / img.naturalHeight;
       let renderWidth, renderHeight;
       if (aspect > 1) {
-          // Wider
           renderWidth = CONTAINER_SIZE;
           renderHeight = CONTAINER_SIZE / aspect;
       } else {
-          // Taller
           renderHeight = CONTAINER_SIZE;
           renderWidth = CONTAINER_SIZE * aspect;
       }
-      
       ctx.drawImage(img, -renderWidth / 2, -renderHeight / 2, renderWidth, renderHeight);
-
-      // Convert to Blob (JPEG, 0.8 quality)
       canvas.toBlob((blob) => {
           if (blob) {
               uploadProcessedImage(blob);
@@ -267,55 +242,36 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
   };
 
   const uploadProcessedImage = async (blob: Blob) => {
-      // Determine upload method
-      // Priority 1: Supabase (if configured and enabled)
-      // Priority 2: Local Base64 (fallback)
-
       if (useCloudStorage && hasSupabaseConfig) {
          setIsUploading(true);
-
-         // --- METHOD 1: SUPABASE ---
          try {
-             // 1. If we are editing and replacing an existing image, DELETE the old one first.
-             // We do this check before upload.
              if (isEditMode && personToEdit?.imageUrl) {
                  await deleteImageFromStorage(personToEdit.imageUrl);
              }
-
              const config = getStoredSupabaseConfig();
              const supabase = getSupabaseClient(config.url, config.key);
-             
-             // 2. Generate Naming: LatinName_LatinSurname_Timestamp.jpg
              const latinFirst = transliterate(firstName || 'Name').replace(/[^a-zA-Z0-9]/g, '');
              const latinLast = transliterate(lastName || 'Surname').replace(/[^a-zA-Z0-9]/g, '');
              const timestamp = Date.now();
              const fileName = `${latinFirst}_${latinLast}_${timestamp}.jpg`;
-
              const { error: uploadError } = await supabase.storage
                 .from('images')
                 .upload(fileName, blob, {
                     contentType: 'image/jpeg',
                     upsert: false
                 });
-
              if (uploadError) throw uploadError;
-
              const { data } = supabase.storage
                 .from('images')
                 .getPublicUrl(fileName);
-             
              setImageUrl(data.publicUrl);
              setIsUploading(false);
-             return; // Exit after successful Supabase upload
-
+             return; 
          } catch (err: any) {
              console.error("Supabase Upload Failed:", err);
              alert(`Supabase upload failed: ${err.message}. Saving locally.`);
-             // Fallthrough to Local Base64 if Supabase fails
          }
       }
-
-      // --- METHOD 2: LOCAL BASE64 (Fallback) ---
       const reader = new FileReader();
       reader.onloadend = () => {
           setImageUrl(reader.result as string);
@@ -326,7 +282,7 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
 
   const handleManualImageDelete = async () => {
       if (imageUrl && hasSupabaseConfig) {
-          setIsUploading(true); // show loading during delete
+          setIsUploading(true); 
           await deleteImageFromStorage(imageUrl);
           setIsUploading(false);
       }
@@ -341,7 +297,6 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
         }
         let cleanedValue = value.replace(/[-/\\_]/g, '.').replace(/[^0-9.]/g, '');
         const parts = cleanedValue.split('.').filter(Boolean);
-
         if (parts.length === 3) {
             const day = parts[0].padStart(2, '0');
             const month = parts[1].padStart(2, '0');
@@ -363,13 +318,14 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
         }
     };
 
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     const detailsToSubmit = {
         birthDate: convertDisplayToStorage(birthDate),
+        birthPlace, // Submit new field
         deathDate: convertDisplayToStorage(deathDate),
+        deathPlace, // Submit new field
         imageUrl,
         contactInfo: { phone, email, address },
         bio,
@@ -380,7 +336,7 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
         if (firstName.trim() || lastName.trim()) {
             onSubmit({ firstName, lastName, gender }, detailsToSubmit);
         }
-    } else { // Add mode
+    } else { 
         if (relationship === 'spouse' && spouseMode === 'existing') {
             if (selectedExSpouseId) {
                 onSubmit({}, {}, relationship, selectedExSpouseId);
@@ -395,7 +351,6 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
   
   const handleDeletePerson = async () => {
     if(isEditMode && personToEdit){
-      // If person has an image in Supabase, delete it first
       if (personToEdit.imageUrl && hasSupabaseConfig) {
           await deleteImageFromStorage(personToEdit.imageUrl);
       }
@@ -403,7 +358,7 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
     }
   }
 
-  // Crop Handlers
+  // Crop Handlers... (omitted for brevity, assume same as before)
   const onMouseDown = (e: React.MouseEvent) => {
       setIsDraggingCrop(true);
       setDragStart({ x: e.clientX - cropOffset.x, y: e.clientY - cropOffset.y });
@@ -413,8 +368,6 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
       setCropOffset({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y });
   };
   const onMouseUp = () => setIsDraggingCrop(false);
-  
-  // Touch handlers for mobile cropping
   const onTouchStart = (e: React.TouchEvent) => {
       if (e.touches.length === 1) {
           setIsDraggingCrop(true);
@@ -427,12 +380,10 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
       }
   };
 
-
   if (!isOpen || !context) return null;
 
   const showGenderSelector = isEditMode || relationship !== 'spouse';
   const showFullForm = !(!isEditMode && relationship === 'spouse' && spouseMode === 'existing');
-
   const inputStyles = "w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900 dark:text-white";
   const selectStyles = `${inputStyles} appearance-none`;
 
@@ -441,60 +392,17 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
       
       {/* CROP MODAL OVERLAY */}
       {cropModalOpen && tempImgSrc && (
-          <div 
-            className="absolute inset-0 z-[60] bg-black bg-opacity-90 flex flex-col justify-center items-center p-4"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="absolute inset-0 z-[60] bg-black bg-opacity-90 flex flex-col justify-center items-center p-4" onClick={(e) => e.stopPropagation()}>
               <h3 className="text-white text-lg font-bold mb-4">{t.lbl_photo}</h3>
-              
-              <div 
-                className="relative overflow-hidden bg-gray-900 border-2 border-white shadow-2xl" 
-                style={{ width: '280px', height: '280px', cursor: isDraggingCrop ? 'grabbing' : 'grab' }}
-                onMouseDown={onMouseDown}
-                onMouseMove={onMouseMove}
-                onMouseUp={onMouseUp}
-                onMouseLeave={onMouseUp}
-                onTouchStart={onTouchStart}
-                onTouchMove={onTouchMove}
-                onTouchEnd={onMouseUp}
-              >
+              <div className="relative overflow-hidden bg-gray-900 border-2 border-white shadow-2xl" style={{ width: '280px', height: '280px', cursor: isDraggingCrop ? 'grabbing' : 'grab' }} onMouseDown={onMouseDown} onMouseMove={onMouseMove} onMouseUp={onMouseUp} onMouseLeave={onMouseUp} onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onMouseUp}>
                   <div className="w-full h-full flex items-center justify-center pointer-events-none">
-                     <img 
-                        ref={imgRef}
-                        src={tempImgSrc} 
-                        alt="Crop Preview" 
-                        style={{ 
-                            maxWidth: '100%', 
-                            maxHeight: '100%',
-                            transform: `translate(${cropOffset.x}px, ${cropOffset.y}px) scale(${cropZoom})`,
-                            transition: isDraggingCrop ? 'none' : 'transform 0.1s'
-                        }}
-                     />
+                     <img ref={imgRef} src={tempImgSrc} alt="Crop Preview" style={{ maxWidth: '100%', maxHeight: '100%', transform: `translate(${cropOffset.x}px, ${cropOffset.y}px) scale(${cropZoom})`, transition: isDraggingCrop ? 'none' : 'transform 0.1s' }}/>
                   </div>
-                  <div className="absolute inset-0 pointer-events-none border border-white/30 grid grid-cols-3 grid-rows-3">
-                      <div className="border-r border-b border-white/20"></div><div className="border-r border-b border-white/20"></div><div className="border-b border-white/20"></div>
-                      <div className="border-r border-b border-white/20"></div><div className="border-r border-b border-white/20"></div><div className="border-b border-white/20"></div>
-                      <div className="border-r border-white/20"></div><div className="border-r border-white/20"></div><div></div>
-                  </div>
+                  <div className="absolute inset-0 pointer-events-none border border-white/30 grid grid-cols-3 grid-rows-3"><div className="border-r border-b border-white/20"></div><div className="border-r border-b border-white/20"></div><div className="border-b border-white/20"></div><div className="border-r border-b border-white/20"></div><div className="border-r border-b border-white/20"></div><div className="border-b border-white/20"></div><div className="border-r border-white/20"></div><div className="border-r border-white/20"></div><div></div></div>
               </div>
-
               <div className="mt-6 w-full max-w-xs space-y-4">
-                  <div>
-                      <label className="text-white text-xs mb-1 block">Zoom: {cropZoom.toFixed(1)}x</label>
-                      <input 
-                        type="range" 
-                        min="0.5" 
-                        max="3" 
-                        step="0.1" 
-                        value={cropZoom} 
-                        onChange={(e) => setCropZoom(parseFloat(e.target.value))}
-                        className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-purple-500"
-                      />
-                  </div>
-                  <div className="flex gap-4">
-                      <button onClick={() => setCropModalOpen(false)} className="flex-1 py-2 bg-gray-600 text-white rounded hover:bg-gray-500 transition-colors">{t.cancel}</button>
-                      <button onClick={handleCropSave} className="flex-1 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors font-semibold">{t.save}</button>
-                  </div>
+                  <div><label className="text-white text-xs mb-1 block">Zoom: {cropZoom.toFixed(1)}x</label><input type="range" min="0.5" max="3" step="0.1" value={cropZoom} onChange={(e) => setCropZoom(parseFloat(e.target.value))} className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-purple-500"/></div>
+                  <div className="flex gap-4"><button onClick={() => setCropModalOpen(false)} className="flex-1 py-2 bg-gray-600 text-white rounded hover:bg-gray-500 transition-colors">{t.cancel}</button><button onClick={handleCropSave} className="flex-1 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors font-semibold">{t.save}</button></div>
               </div>
           </div>
       )}
@@ -522,11 +430,11 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
                 <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">{t.rel_spouse}</label>
                 <div className="flex gap-4">
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="spouseMode" value="new" checked={spouseMode === 'new'} onChange={() => setSpouseMode('new')} className="form-radio text-purple-500 bg-gray-200 dark:bg-gray-700 border-gray-400 dark:border-gray-600 focus:ring-purple-500" />
+                    <input type="radio" name="spouseMode" value="new" checked={spouseMode === 'new'} onChange={() => setSpouseMode('new')} className="form-radio text-purple-500 bg-gray-200 dark:bg-gray-700 border border-gray-400 dark:border-gray-600 focus:ring-purple-500" />
                     <span>{t.spouse_mode_new}</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="spouseMode" value="existing" checked={spouseMode === 'existing'} onChange={() => setSpouseMode('existing')} className="form-radio text-purple-500 bg-gray-200 dark:bg-gray-700 border-gray-400 dark:border-gray-600 focus:ring-purple-500" />
+                    <input type="radio" name="spouseMode" value="existing" checked={spouseMode === 'existing'} onChange={() => setSpouseMode('existing')} className="form-radio text-purple-500 bg-gray-200 dark:bg-gray-700 border border-gray-400 dark:border-gray-600 focus:ring-purple-500" />
                     <span>{t.spouse_mode_existing}</span>
                   </label>
                 </div>
@@ -544,6 +452,14 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
 
         {showFullForm && (
             <div className="space-y-4">
+                {/* DataList for Cities */}
+                <datalist id="city-suggestions">
+                    {Object.keys(GEORGIAN_CITIES).map(city => (
+                        <option key={city} value={city} />
+                    ))}
+                </datalist>
+
+                {/* Name */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                     <label htmlFor="firstName" className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">{t.lbl_firstname}</label>
@@ -555,6 +471,7 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
                     </div>
                 </div>
                 
+                {/* Photo Upload */}
                 <div>
                     <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">{t.lbl_photo}</label>
                     <div className="mt-2 flex items-center gap-4">
@@ -576,60 +493,48 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
                             )}
                         </div>
                         )}
-                        <input
-                        type="file"
-                        id="imageUpload"
-                        accept="image/png, image/jpeg, image/gif"
-                        onChange={handleFileSelect}
-                        className="hidden"
-                        disabled={isUploading}
-                        ref={fileInputRef}
-                        />
+                        <input type="file" id="imageUpload" accept="image/png, image/jpeg, image/gif" onChange={handleFileSelect} className="hidden" disabled={isUploading} ref={fileInputRef}/>
                         <label htmlFor="imageUpload" className={`cursor-pointer px-3 py-2 rounded-md bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors text-sm font-medium text-gray-800 dark:text-gray-100 flex items-center gap-2 ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                            {isUploading ? (
-                                <span>{t.loading}</span>
-                            ) : (
-                                <>
-                                    <CloudUploadIcon className="w-4 h-4" />
-                                    <span>{t.lbl_upload_photo}</span>
-                                </>
-                            )}
+                            {isUploading ? <span>{t.loading}</span> : <><CloudUploadIcon className="w-4 h-4" /><span>{t.lbl_upload_photo}</span></>}
                         </label>
                         {imageUrl && !isUploading && (
-                        <button type="button" onClick={handleManualImageDelete} className="text-xs text-red-500 dark:text-red-400 hover:underline">
-                            {t.lbl_delete_photo}
-                        </button>
+                        <button type="button" onClick={handleManualImageDelete} className="text-xs text-red-500 dark:text-red-400 hover:underline">{t.lbl_delete_photo}</button>
                         )}
                     </div>
-                    
                     {/* Storage Status */}
                     <div className="mt-2 p-2 bg-gray-50 dark:bg-gray-700/30 rounded border border-gray-200 dark:border-gray-700">
                         {hasSupabaseConfig ? (
                             <div className="flex items-center gap-2 mb-1">
-                                <input 
-                                    type="checkbox" 
-                                    id="cloudToggle" 
-                                    checked={useCloudStorage} 
-                                    onChange={(e) => setUseCloudStorage(e.target.checked)}
-                                    className="w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500 dark:focus:ring-purple-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                                />
-                                <label htmlFor="cloudToggle" className="text-xs font-medium text-gray-700 dark:text-gray-300 select-none cursor-pointer">
-                                    {t.lbl_cloud_upload}
-                                </label>
+                                <input type="checkbox" id="cloudToggle" checked={useCloudStorage} onChange={(e) => setUseCloudStorage(e.target.checked)} className="w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500 dark:focus:ring-purple-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"/>
+                                <label htmlFor="cloudToggle" className="text-xs font-medium text-gray-700 dark:text-gray-300 select-none cursor-pointer">{t.lbl_cloud_upload}</label>
                             </div>
                         ) : null}
                     </div>
                 </div>
 
+                {/* Birth/Death */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label htmlFor="birthDate" className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">{t.lbl_birthdate}</label>
                         <input type="text" id="birthDate" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} onBlur={(e) => handleDateBlur(e, setBirthDate)} className={inputStyles} placeholder="DD.MM.YYYY"/>
                     </div>
                     <div>
+                        <label htmlFor="birthPlace" className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">{t.lbl_birthplace}</label>
+                        <input type="text" id="birthPlace" value={birthPlace} onChange={(e) => setBirthPlace(e.target.value)} className={inputStyles} placeholder="City" list="city-suggestions"/>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
                         <label htmlFor="deathDate" className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">{t.lbl_deathdate}</label>
                         <input type="text" id="deathDate" value={deathDate} onChange={(e) => setDeathDate(e.target.value)} onBlur={(e) => handleDateBlur(e, setDeathDate)} className={inputStyles} placeholder="DD.MM.YYYY"/>
                     </div>
+                    {convertDisplayToStorage(deathDate) && (
+                        <div>
+                            <label htmlFor="deathPlace" className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">{t.lbl_deathplace}</label>
+                            <input type="text" id="deathPlace" value={deathPlace} onChange={(e) => setDeathPlace(e.target.value)} className={inputStyles} placeholder="City" list="city-suggestions"/>
+                        </div>
+                    )}
                 </div>
 
                 {convertDisplayToStorage(deathDate) && (
@@ -639,6 +544,7 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
                   </div>
                 )}
                 
+                {/* Contact Info */}
                 <div className="space-y-4 rounded-md border border-gray-300 dark:border-gray-700 p-3">
                     <h3 className="text-sm font-medium text-gray-600 dark:text-gray-300">{t.lbl_contact_info}</h3>
                     <div>
@@ -651,7 +557,7 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
                     </div>
                     <div>
                         <label htmlFor="address" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{t.lbl_address}</label>
-                        <input type="text" id="address" value={address} onChange={(e) => setAddress(e.target.value)} className={inputStyles}/>
+                        <input type="text" id="address" value={address} onChange={(e) => setAddress(e.target.value)} className={inputStyles} list="city-suggestions"/>
                     </div>
                 </div>
                 
@@ -665,11 +571,11 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
                     <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">{t.lbl_gender}</label>
                     <div className="flex gap-4">
                         <label className="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="gender" value={Gender.Male} checked={gender === Gender.Male} onChange={() => setGender(Gender.Male)} className="form-radio text-blue-500 bg-gray-200 dark:bg-gray-700 border-gray-400 dark:border-gray-600 focus:ring-blue-500" />
+                        <input type="radio" name="gender" value={Gender.Male} checked={gender === Gender.Male} onChange={() => setGender(Gender.Male)} className="form-radio text-blue-500 bg-gray-200 dark:bg-gray-700 border border-gray-400 dark:border-gray-600 focus:ring-blue-500" />
                         <span className="text-blue-600 dark:text-blue-400">{t.lbl_male}</span>
                         </label>
                         <label className="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="gender" value={Gender.Female} checked={gender === Gender.Female} onChange={() => setGender(Gender.Female)} className="form-radio text-pink-500 bg-gray-200 dark:bg-gray-700 border-gray-400 dark:border-gray-600 focus:ring-pink-500" />
+                        <input type="radio" name="gender" value={Gender.Female} checked={gender === Gender.Female} onChange={() => setGender(Gender.Female)} className="form-radio text-pink-500 bg-gray-200 dark:bg-gray-700 border border-gray-400 dark:border-gray-600 focus:ring-pink-500" />
                         <span className="text-pink-600 dark:text-pink-400">{t.lbl_female}</span>
                         </label>
                     </div>
@@ -681,12 +587,7 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
           <div className="flex justify-between items-center pt-2">
             <div>
               {isEditMode && personToEdit?.id !== 'root' && (
-                <button
-                  type="button"
-                  onClick={handleDeletePerson}
-                  className="h-10 px-3 sm:px-4 rounded-md bg-red-600 hover:bg-red-700 text-white transition-colors flex items-center gap-2"
-                  title={t.delete}
-                >
+                <button type="button" onClick={handleDeletePerson} className="h-10 px-3 sm:px-4 rounded-md bg-red-600 hover:bg-red-700 text-white transition-colors flex items-center gap-2" title={t.delete}>
                   <DeleteIcon className="w-5 h-5" />
                   <span className="hidden sm:inline">{t.delete}</span>
                 </button>

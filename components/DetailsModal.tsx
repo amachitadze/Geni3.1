@@ -1,5 +1,3 @@
-
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Person, People } from '../types';
 import { formatDate, calculateAge } from '../utils/dateUtils';
@@ -9,8 +7,6 @@ import {
 } from './Icons';
 import { translations, Language } from '../utils/translations';
 import MediaGallery from './MediaGallery';
-
-// Just reusing CheckIcon for save visual
 import { CheckIcon } from './Icons';
 
 interface DetailsModalProps {
@@ -121,14 +117,8 @@ const DetailsModal: React.FC<DetailsModalProps> = ({
   );
 
   return (
-    <div
-      className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 transition-opacity p-4"
-      onClick={onClose}
-    >
-      <div
-        className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg border border-gray-300 dark:border-gray-700 max-h-[90vh] flex flex-col"
-        onClick={e => e.stopPropagation()}
-      >
+    <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 transition-opacity p-4" onClick={onClose}>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg border border-gray-300 dark:border-gray-700 max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
         <header className="p-6 pb-2 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
             <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
@@ -138,17 +128,9 @@ const DetailsModal: React.FC<DetailsModalProps> = ({
                     <p className={`capitalize font-semibold ${genderColor}`}>{person.gender === 'male' ? t.lbl_male : t.lbl_female}</p>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
-                    {/* Desktop Buttons */}
-                    <div className="hidden sm:flex items-center gap-2">
-                    {renderActionButtons()}
-                    </div>
-
-                    {/* Mobile Menu */}
+                    <div className="hidden sm:flex items-center gap-2">{renderActionButtons()}</div>
                     <div className="sm:hidden relative" ref={menuRef}>
-                        <button
-                            onClick={() => setIsMenuOpen(prev => !prev)}
-                            className="p-2 rounded-full text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"
-                        >
+                        <button onClick={() => setIsMenuOpen(prev => !prev)} className="p-2 rounded-full text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600">
                             <EllipsisVerticalIcon className="h-5 w-5" />
                         </button>
                         {isMenuOpen && (
@@ -157,32 +139,14 @@ const DetailsModal: React.FC<DetailsModalProps> = ({
                             </div>
                         )}
                     </div>
-
-                    <button
-                    onClick={onClose}
-                    className="p-2 rounded-full text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 hover:text-black dark:hover:text-white transition-colors"
-                    >
+                    <button onClick={onClose} className="p-2 rounded-full text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 hover:text-black dark:hover:text-white transition-colors">
                     <CloseIcon className="h-5 w-5" />
                     </button>
                 </div>
             </div>
-
-            {/* Tabs */}
             <div className="flex gap-4 mt-6">
-                <button 
-                    onClick={() => setActiveTab('info')}
-                    className={`pb-2 px-1 text-sm font-medium transition-colors border-b-2 flex items-center gap-2 ${activeTab === 'info' ? 'border-purple-600 text-purple-600 dark:text-purple-400' : 'border-transparent text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200'}`}
-                >
-                    <InfoIcon className="w-4 h-4" />
-                    {t.tab_info}
-                </button>
-                <button 
-                    onClick={() => setActiveTab('gallery')}
-                    className={`pb-2 px-1 text-sm font-medium transition-colors border-b-2 flex items-center gap-2 ${activeTab === 'gallery' ? 'border-purple-600 text-purple-600 dark:text-purple-400' : 'border-transparent text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200'}`}
-                >
-                    <PhotoIcon className="w-4 h-4" />
-                    {t.tab_gallery}
-                </button>
+                <button onClick={() => setActiveTab('info')} className={`pb-2 px-1 text-sm font-medium transition-colors border-b-2 flex items-center gap-2 ${activeTab === 'info' ? 'border-purple-600 text-purple-600 dark:text-purple-400' : 'border-transparent text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200'}`}><InfoIcon className="w-4 h-4" />{t.tab_info}</button>
+                <button onClick={() => setActiveTab('gallery')} className={`pb-2 px-1 text-sm font-medium transition-colors border-b-2 flex items-center gap-2 ${activeTab === 'gallery' ? 'border-purple-600 text-purple-600 dark:text-purple-400' : 'border-transparent text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200'}`}><PhotoIcon className="w-4 h-4" />{t.tab_gallery}</button>
             </div>
         </header>
 
@@ -203,12 +167,14 @@ const DetailsModal: React.FC<DetailsModalProps> = ({
                         {person.birthDate && (
                             <p>
                             <strong>{t.det_born}:</strong> {formatDate(person.birthDate)}
+                            {person.birthPlace && <span> {t.det_born_in} {person.birthPlace}</span>}
                             {!person.deathDate && age !== null && <span className="text-gray-500 dark:text-gray-400 ml-2">({age} {t.det_years})</span>}
                             </p>
                         )}
                         {person.deathDate && (
                             <p>
                                 <strong>{t.det_died}:</strong> {formatDate(person.deathDate)}
+                                {person.deathPlace && <span> {t.det_died_in} {person.deathPlace}</span>}
                                 {age !== null && <span className="text-gray-500 dark:text-gray-400 ml-2">({t.det_age_at_death} {age})</span>}
                             </p>
                         )}
@@ -222,22 +188,11 @@ const DetailsModal: React.FC<DetailsModalProps> = ({
                         <div className="flex items-center justify-between border-b border-gray-300 dark:border-gray-700 pb-1 mb-2">
                             <h3 className="font-semibold text-lg text-gray-800 dark:text-gray-100">{t.det_bio}</h3>
                             {!isReadOnly && onGenerateBio && (
-                                <button 
-                                    onClick={handleGenerateBio} 
-                                    disabled={isGeneratingBio}
-                                    className="text-xs flex items-center gap-1 px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-300 rounded hover:bg-purple-200 transition-colors disabled:opacity-50"
-                                >
-                                    {isGeneratingBio ? (
-                                        <span className="animate-pulse">{t.ai_bio_loading}</span>
-                                    ) : (
-                                        <>
-                                            <MagicWandIcon className="w-3 h-3" /> {t.btn_ai_bio}
-                                        </>
-                                    )}
+                                <button onClick={handleGenerateBio} disabled={isGeneratingBio} className="text-xs flex items-center gap-1 px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-300 rounded hover:bg-purple-200 transition-colors disabled:opacity-50">
+                                    {isGeneratingBio ? <span className="animate-pulse">{t.ai_bio_loading}</span> : <><MagicWandIcon className="w-3 h-3" /> {t.btn_ai_bio}</>}
                                 </button>
                             )}
                         </div>
-                        
                         {generatedBio && (
                             <div className="mb-3 p-3 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-md animate-fade-in-up">
                                 <p className="whitespace-pre-wrap text-sm italic">{generatedBio}</p>
@@ -249,12 +204,7 @@ const DetailsModal: React.FC<DetailsModalProps> = ({
                                 </div>
                             </div>
                         )}
-
-                        {person.bio ? (
-                            <p className="whitespace-pre-wrap">{person.bio}</p>
-                        ) : (
-                            !generatedBio && <p className="text-gray-400 italic text-sm">...</p>
-                        )}
+                        {person.bio ? <p className="whitespace-pre-wrap">{person.bio}</p> : !generatedBio && <p className="text-gray-400 italic text-sm">...</p>}
                     </div>
 
                     {person.deathDate && person.cemeteryAddress && (
@@ -263,14 +213,7 @@ const DetailsModal: React.FC<DetailsModalProps> = ({
                         <div className="flex items-start gap-3 mt-2">
                             <AddressIcon className="w-5 h-5 text-gray-500 dark:text-gray-400 flex-shrink-0 mt-1" />
                             {person.cemeteryAddress.startsWith('http') ? (
-                            <a 
-                                href={person.cemeteryAddress} 
-                                target="_blank" 
-                                rel="noopener noreferrer" 
-                                className="text-purple-600 dark:text-purple-400 hover:underline"
-                            >
-                                {person.cemeteryAddress}
-                            </a>
+                            <a href={person.cemeteryAddress} target="_blank" rel="noopener noreferrer" className="text-purple-600 dark:text-purple-400 hover:underline">{person.cemeteryAddress}</a>
                             ) : (
                             <p>{person.cemeteryAddress}</p>
                             )}
@@ -284,12 +227,7 @@ const DetailsModal: React.FC<DetailsModalProps> = ({
                             <ul className="list-disc list-inside space-y-1 mt-2 text-gray-700 dark:text-gray-300">
                                 {exSpouses.map(ex => (
                                     <li key={ex.id}>
-                                    <button 
-                                            onClick={() => onNavigate(ex.id)} 
-                                            className="text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 hover:underline focus:outline-none"
-                                        >
-                                            {ex.firstName} {ex.lastName}
-                                        </button>
+                                    <button onClick={() => onNavigate(ex.id)} className="text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 hover:underline focus:outline-none">{ex.firstName} {ex.lastName}</button>
                                     </li>
                                 ))}
                             </ul>
@@ -300,28 +238,12 @@ const DetailsModal: React.FC<DetailsModalProps> = ({
                         <div>
                         <h3 className="font-semibold text-lg text-gray-800 dark:text-gray-100 border-b border-gray-300 dark:border-gray-700 pb-1 mb-2">{t.det_contact}</h3>
                         <ul className="space-y-2 mt-2">
-                            {person.contactInfo?.phone && (
-                            <li className="flex items-center gap-3">
-                                <PhoneIcon className="w-5 h-5 text-gray-500 dark:text-gray-400 flex-shrink-0" /> 
-                                <span>{person.contactInfo.phone}</span>
-                            </li>
-                            )}
-                            {person.contactInfo?.email && (
-                            <li className="flex items-center gap-3">
-                                <EmailIcon className="w-5 h-5 text-gray-500 dark:text-gray-400 flex-shrink-0" /> 
-                                <span>{person.contactInfo.email}</span>
-                            </li>
-                            )}
+                            {person.contactInfo?.phone && <li className="flex items-center gap-3"><PhoneIcon className="w-5 h-5 text-gray-500 dark:text-gray-400 flex-shrink-0" /> <span>{person.contactInfo.phone}</span></li>}
+                            {person.contactInfo?.email && <li className="flex items-center gap-3"><EmailIcon className="w-5 h-5 text-gray-500 dark:text-gray-400 flex-shrink-0" /> <span>{person.contactInfo.email}</span></li>}
                             {person.contactInfo?.address && (
                                 <li className="flex items-start gap-3">
                                 <AddressIcon className="w-5 h-5 text-gray-500 dark:text-gray-400 flex-shrink-0 mt-1" /> 
-                                <button
-                                    onClick={() => onShowOnMap(person.contactInfo!.address!)}
-                                    className="text-left whitespace-pre-wrap text-purple-600 dark:text-purple-400 hover:underline focus:outline-none"
-                                    title="Map"
-                                >
-                                    {person.contactInfo.address}
-                                </button>
+                                <button onClick={() => onShowOnMap(person.contactInfo!.address!)} className="text-left whitespace-pre-wrap text-purple-600 dark:text-purple-400 hover:underline focus:outline-none" title="Map">{person.contactInfo.address}</button>
                                 </li>
                             )}
                         </ul>
@@ -329,14 +251,7 @@ const DetailsModal: React.FC<DetailsModalProps> = ({
                     )}
                 </div>
             ) : (
-                // GALLERY TAB
-                <MediaGallery 
-                    personId={person.id}
-                    gallery={person.gallery || []}
-                    onUpdate={(newGallery) => onUpdateGallery?.(person.id, newGallery)}
-                    readOnly={!!isReadOnly}
-                    language={language}
-                />
+                <MediaGallery personId={person.id} gallery={person.gallery || []} onUpdate={(newGallery) => onUpdateGallery?.(person.id, newGallery)} readOnly={!!isReadOnly} language={language}/>
             )}
         </div>
       </div>

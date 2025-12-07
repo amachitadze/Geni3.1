@@ -13,7 +13,9 @@ export interface Person {
   children: string[];
   parentIds: string[]; // Added to track parents
   birthDate?: string;
+  birthPlace?: string; // New field for migration map
   deathDate?: string;
+  deathPlace?: string; // New field for migration map
   imageUrl?: string;
   gallery?: string[]; // Array of image URLs for the media gallery
   contactInfo?: {
