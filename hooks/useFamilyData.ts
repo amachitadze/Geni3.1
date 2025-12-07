@@ -7,8 +7,8 @@ export const useFamilyData = (resetTransform: () => void) => {
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [isReadOnly, setIsReadOnly] = useState(false);
-  const [viewMode, setViewMode] = useState<'default' | 'compact' | 'list'>(() => {
-    const savedViewMode = localStorage.getItem('familyTreeViewMode') as 'default' | 'compact' | 'list' | null;
+  const [viewMode, setViewMode] = useState<'default' | 'compact' | 'list' | 'timeline' | 'map'>(() => {
+    const savedViewMode = localStorage.getItem('familyTreeViewMode') as any;
     if (savedViewMode) return savedViewMode;
     return window.innerWidth < 768 ? 'list' : 'default';
   });
@@ -151,7 +151,9 @@ export const useFamilyData = (resetTransform: () => void) => {
                 ...targetPerson,
                 ...formData,
                 birthDate: details.birthDate || undefined,
+                birthPlace: details.birthPlace || undefined,
                 deathDate: details.deathDate || undefined,
+                deathPlace: details.deathPlace || undefined,
                 imageUrl: details.imageUrl || undefined,
                 contactInfo: contactInfoToSave,
                 bio: details.bio || undefined,
@@ -161,7 +163,9 @@ export const useFamilyData = (resetTransform: () => void) => {
             const anchorPerson = updatedPeople[personId];
             const newPersonDetails = {
                 birthDate: details.birthDate || undefined,
+                birthPlace: details.birthPlace || undefined,
                 deathDate: details.deathDate || undefined,
+                deathPlace: details.deathPlace || undefined,
                 imageUrl: details.imageUrl || undefined,
                 contactInfo: contactInfoToSave,
                 bio: details.bio || undefined,
@@ -169,7 +173,12 @@ export const useFamilyData = (resetTransform: () => void) => {
             };
 
             const createNewPerson = (id: string) => ({ 
-                id, ...formData, children: [], parentIds: [], exSpouseIds: [], ...newPersonDetails 
+                id, 
+                ...formData, 
+                children: [], 
+                parentIds: [], 
+                exSpouseIds: [], 
+                ...newPersonDetails 
             } as Person);
 
             switch (relationship) {

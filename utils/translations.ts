@@ -167,7 +167,7 @@ export const translations = {
         // Map
         map_loading: "რუკის მონაცემების დამუშავება...",
         map_empty: "რუკაზე საჩვენებელი მონაცემები (მისამართები) არ მოიძებნა.",
-        map_legend: "ლეგენდა",
+        map_legend: "აღნიშვნები",
         map_birth: "დაბადება",
         map_residence: "საცხოვრებელი",
         map_death: "გარდაცვალება",

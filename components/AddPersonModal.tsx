@@ -323,9 +323,9 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
 
     const detailsToSubmit = {
         birthDate: convertDisplayToStorage(birthDate),
-        birthPlace, // Submit new field
+        birthPlace, 
         deathDate: convertDisplayToStorage(deathDate),
-        deathPlace, // Submit new field
+        deathPlace,
         imageUrl,
         contactInfo: { phone, email, address },
         bio,
@@ -358,7 +358,7 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
     }
   }
 
-  // Crop Handlers... (omitted for brevity, assume same as before)
+  // Crop Handlers
   const onMouseDown = (e: React.MouseEvent) => {
       setIsDraggingCrop(true);
       setDragStart({ x: e.clientX - cropOffset.x, y: e.clientY - cropOffset.y });
@@ -557,7 +557,7 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
                     </div>
                     <div>
                         <label htmlFor="address" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{t.lbl_address}</label>
-                        <input type="text" id="address" value={address} onChange={(e) => setAddress(e.target.value)} className={inputStyles} list="city-suggestions"/>
+                        <input type="text" id="address" value={address} onChange={(e) => setAddress(e.target.value)} className={inputStyles} />
                     </div>
                 </div>
                 
