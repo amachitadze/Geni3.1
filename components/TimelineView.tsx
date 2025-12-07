@@ -1,8 +1,9 @@
+
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { Person, People } from '../types';
 import { getYear } from '../utils/dateUtils';
 import { historicalEvents } from '../data/historicalEvents';
-import { DefaultAvatar } from './Icons';
+import { DefaultAvatar, CenterIcon } from './Icons';
 
 interface TimelineViewProps {
     people: People;
@@ -101,7 +102,6 @@ const TimelineView: React.FC<TimelineViewProps> = ({ people, onShowDetails, high
     const laneHeight = 60;
     const headerHeight = 40;
     const footerHeight = 100; // For events
-    const contentHeight = headerHeight + (lanes.length * laneHeight) + footerHeight;
 
     const handleZoom = (delta: number) => {
         setPixelsPerYear(prev => Math.max(2, Math.min(50, prev + delta)));
@@ -132,7 +132,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ people, onShowDetails, high
                 className="flex-grow overflow-auto relative cursor-grab active:cursor-grabbing"
                 style={{ scrollBehavior: 'smooth' }}
             >
-                <div style={{ width: `${totalWidth}px`, height: `${contentHeight}px`, minHeight: '100%', position: 'relative' }}>
+                <div style={{ width: `${totalWidth}px`, height: `${headerHeight + (lanes.length * laneHeight) + footerHeight}px`, position: 'relative' }}>
                     
                     {/* Year Grid Lines */}
                     {Array.from({ length: Math.ceil((maxYear - minYear) / 10) + 1 }).map((_, i) => {
