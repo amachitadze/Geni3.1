@@ -1,4 +1,5 @@
 
+
 export type Language = 'ka' | 'es';
 
 export const translations = {
@@ -53,6 +54,27 @@ export const translations = {
         menu_view_compact: "კომპაქტური",
         menu_view_list: "სია",
         
+        // Settings Modal
+        settings_title: "პარამეტრები",
+        set_tab_general: "ზოგადი",
+        set_tab_account: "ანგარიში",
+        set_tab_data: "მონაცემები",
+        set_tab_about: "ინფო",
+        set_theme: "ფერთა თემა",
+        set_theme_light: "ნათელი",
+        set_theme_dark: "მუქი",
+        set_language: "ენა",
+        set_user_name: "მომხმარებელი",
+        set_plan: "მიმდინარე გეგმა",
+        set_plan_free: "უფასო",
+        set_plan_upgrade: "განახლება",
+        set_data_desc: "მართეთ თქვენი გენეალოგიური ხის მონაცემები.",
+        set_tree_info: "ინფორმაცია ხის შესახებ",
+        set_stat_people: "სულ ადამიანი",
+        set_stat_updated: "ბოლო განახლება",
+        set_stat_root: "საწყისი პიროვნება",
+        set_logout: "გასვლა",
+
         // Header
         header_back: "უკან",
         search_placeholder: "მოძებნეთ პიროვნება...",
@@ -218,6 +240,28 @@ export const translations = {
         landing_copyright: "გენეალოგიური ხე. ყველა უფლება დაცულია.",
         landing_created_by: "შექმნილია",
         landing_by: "-ს მიერ",
+        
+        // Quick Start
+        quick_start_placeholder: "ჩაწერეთ თქვენი სახელი და გვარი",
+        quick_start_btn: "დაწყება",
+        
+        // How it Works
+        how_title: "როგორ მუშაობს?",
+        step_1_title: "შექმენი პროფილი",
+        step_1_desc: "დაიწყე საკუთარი თავით. შეიყვანე სახელი და გვარი სისტემაში.",
+        step_2_title: "დაამატე ნათესავები",
+        step_2_desc: "მიუთითე მშობლები, მეუღლე და შვილები. ხე ავტომატურად გაიზრდება.",
+        step_3_title: "გააზიარე & შეინახე",
+        step_3_desc: "დააგენერირე დაცული ბმული ან შეინახე მონაცემები PDF ფორმატში.",
+
+        // FAQ
+        faq_title: "ხშირად დასმული კითხვები",
+        faq_1_q: "არის თუ არა ჩემი მონაცემები დაცული?",
+        faq_1_a: "დიახ. მონაცემები ინახება ლოკალურად თქვენს ბრაუზერში. სერვერზე იგზავნება მხოლოდ მაშინ, როცა თავად ირჩევთ გაზიარებას ან ბექაპის შექმნას.",
+        faq_2_q: "შემიძლია თუ არა PDF-ის ბეჭდვა?",
+        faq_2_a: "დიახ, პრემიუმ პაკეტით შეგიძლიათ გადმოწეროთ ხე მაღალი ხარისხის PDF ფორმატში, რომელიც გამოსადეგია დასაბეჭდად.",
+        faq_3_q: "როგორ მუშაობს გაზიარება?",
+        faq_3_a: "თქვენ ქმნით დაშიფრულ ბმულს და პაროლს. ბმული არის ერთჯერადი და გახსნის შემდეგ ავტომატურად იშლება სერვერიდან უსაფრთხოებისთვის.",
 
         // Features
         feat_unlimited_title: "შეზღუდვების გარეშე",
@@ -256,7 +300,34 @@ export const translations = {
         initial_title: "კეთილი იყოს თქვენი მობრძანება!",
         initial_desc: "დაიწყეთ თქვენი ოჯახის ისტორიის შექმნა. აირჩიეთ ერთ-ერთი ქვემოთ მოცემული ვარიანტიდან.",
         initial_btn_create: "ხის შექმნის დაწყება",
-        initial_btn_import: "მონაცემების იმპორტი"
+        initial_btn_import: "მონაცემების იმპორტი",
+
+        // Testimonials
+        testim_title: "რას ამბობენ მომხმარებლები",
+        testim_1_name: "გიორგი ბერიძე",
+        testim_1_role: "ისტორიკოსი",
+        testim_1_text: "ეს პლატფორმა დამეხმარა 5 თაობის ისტორიის აღდგენაში. ინტერფეისი საოცრად მარტივია!",
+        testim_2_name: "ნინო წიკლაური",
+        testim_2_role: "დედა",
+        testim_2_text: "ჩემი შვილებისთვის ნამდვილი განძია. ერთად ვავსებთ და ვერთობით.",
+        testim_3_name: "დავით მაისურაძე",
+        testim_3_role: "გენეალოგი",
+        testim_3_text: "საუკეთესო ინსტრუმენტია მონაცემების ვიზუალიზაციისთვის. PDF ექსპორტი ძალიან გამოსადეგია.",
+
+        // Auth
+        auth_login: "შესვლა",
+        auth_register: "რეგისტრაცია",
+        auth_email: "ელ. ფოსტა",
+        auth_password: "პაროლი",
+        auth_confirm_password: "გაიმეორეთ პაროლი",
+        auth_name: "სრული სახელი",
+        auth_forgot: "დაგავიწყდათ პაროლი?",
+        auth_no_account: "არ გაქვთ ანგარიში?",
+        auth_have_account: "უკვე გაქვთ ანგარიში?",
+        auth_signup_link: "დარეგისტრირდით",
+        auth_login_link: "გაიარეთ ავტორიზაცია",
+        auth_or: "ან გააგრძელეთ",
+        auth_success: "წარმატება! გადამისამართება...",
     },
     es: {
         // Common
@@ -308,6 +379,27 @@ export const translations = {
         menu_view_default: "Estándar",
         menu_view_compact: "Compacta",
         menu_view_list: "Lista",
+
+        // Settings Modal
+        settings_title: "Configuración",
+        set_tab_general: "General",
+        set_tab_account: "Cuenta",
+        set_tab_data: "Datos",
+        set_tab_about: "Info",
+        set_theme: "Tema de color",
+        set_theme_light: "Claro",
+        set_theme_dark: "Oscuro",
+        set_language: "Idioma",
+        set_user_name: "Usuario",
+        set_plan: "Plan actual",
+        set_plan_free: "Gratis",
+        set_plan_upgrade: "Mejorar",
+        set_data_desc: "Gestiona los datos de tu árbol genealógico.",
+        set_tree_info: "Información del árbol",
+        set_stat_people: "Total personas",
+        set_stat_updated: "Última actualización",
+        set_stat_root: "Persona raíz",
+        set_logout: "Cerrar sesión",
         
         // Header
         header_back: "Atrás",
@@ -474,6 +566,28 @@ export const translations = {
         landing_copyright: "Árbol Genealógico. Todos los derechos reservados.",
         landing_created_by: "Creado por",
         landing_by: "",
+        
+        // Quick Start
+        quick_start_placeholder: "Introduce tu nombre completo",
+        quick_start_btn: "Empezar",
+        
+        // How it Works
+        how_title: "¿Cómo funciona?",
+        step_1_title: "Crear perfil",
+        step_1_desc: "Empieza por ti mismo. Introduce tu nombre y apellidos en el sistema.",
+        step_2_title: "Añadir parientes",
+        step_2_desc: "Añade padres, cónyuge e hijos. El árbol crecerá automáticamente.",
+        step_3_title: "Compartir y Guardar",
+        step_3_desc: "Genera un enlace seguro o guarda los datos en formato PDF.",
+        
+        // FAQ
+        faq_title: "Preguntas frecuentes",
+        faq_1_q: "¿Están seguros mis datos?",
+        faq_1_a: "Sí. Los datos se almacenan localmente en su navegador por defecto. Solo se envían al servidor cuando eliges compartir o crear una copia de seguridad.",
+        faq_2_q: "¿Puedo imprimir el árbol?",
+        faq_2_a: "Sí, el plan Premium permite exportar el árbol en formato PDF de alta calidad, útil para imprimir.",
+        faq_3_q: "¿Cómo funciona compartir?",
+        faq_3_a: "Creas un enlace encriptado y una contraseña. El enlace es de un solo uso y se elimina automáticamente del servidor tras abrirse por seguridad.",
 
         // Features
         feat_unlimited_title: "Sin límites",
@@ -512,6 +626,33 @@ export const translations = {
         initial_title: "¡Bienvenido!",
         initial_desc: "Comienza a construir tu historia familiar. Elige una de las siguientes opciones.",
         initial_btn_create: "Crear árbol",
-        initial_btn_import: "Importar datos"
+        initial_btn_import: "Importar datos",
+        
+        // Testimonials
+        testim_title: "Lo que dicen nuestros usuarios",
+        testim_1_name: "Giorgi Beridze",
+        testim_1_role: "Historiador",
+        testim_1_text: "Esta plataforma me ayudó a reconstruir 5 generaciones. ¡La interfaz es increíblemente simple!",
+        testim_2_name: "Nino Tsiklauri",
+        testim_2_role: "Madre",
+        testim_2_text: "Es un tesoro para mis hijos. Lo rellenamos juntos y nos divertimos mucho.",
+        testim_3_name: "David Maisuradze",
+        testim_3_role: "Genealogista",
+        testim_3_text: "La mejor herramienta para visualizar datos. La exportación a PDF es muy útil.",
+
+        // Auth
+        auth_login: "Iniciar sesión",
+        auth_register: "Registrarse",
+        auth_email: "Correo electrónico",
+        auth_password: "Contraseña",
+        auth_confirm_password: "Confirmar contraseña",
+        auth_name: "Nombre completo",
+        auth_forgot: "¿Olvidaste tu contraseña?",
+        auth_no_account: "¿No tienes cuenta?",
+        auth_have_account: "¿Ya tienes cuenta?",
+        auth_signup_link: "Regístrate",
+        auth_login_link: "Inicia sesión",
+        auth_or: "O continúa con",
+        auth_success: "¡Éxito! Redirigiendo...",
     }
 };

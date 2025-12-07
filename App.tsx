@@ -1,4 +1,5 @@
 
+
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Person, ModalState, Gender } from './types';
 import TreeNode from './components/TreeNode';
@@ -17,6 +18,7 @@ import InitialView from './components/InitialView';
 import FileManagerModal from './components/FileManagerModal';
 import NotificationSenderModal from './components/NotificationSenderModal';
 import NotificationBanner from './components/NotificationBanner';
+import SettingsModal from './components/SettingsModal';
 import { decryptData, base64ToBuffer } from './utils/crypto';
 import { formatTimestamp, calculateAge } from './utils/dateUtils';
 import { validatePeopleData, getFamilyUnitFromConnection } from './utils/treeUtils';
@@ -25,7 +27,7 @@ import {
     SearchIcon, BackIcon, HomeIcon, MenuIcon, ExportIcon, 
     CenterIcon, StatsIcon, CloseIcon, ShareIcon, JsonExportIcon, 
     JsonImportIcon, SunIcon, MoonIcon, ViewCompactIcon, ViewNormalIcon, 
-    ListBulletIcon, GlobeIcon, DocumentIcon, MessageIcon 
+    ListBulletIcon, GlobeIcon, DocumentIcon, MessageIcon, CogIcon
 } from './components/Icons';
 
 // Hooks
@@ -85,10 +87,14 @@ function App() {
   const [isNotificationSenderOpen, setIsNotificationSenderOpen] = useState(false);
   const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   
   // Language State
   const [language, setLanguage] = useState<Language>('ka');
   const t = translations[language]; // Translation Helper
+
+  // User State
+  const [currentUser, setCurrentUser] = useState<string | null>(null);
 
   // File Import Logic
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -242,6 +248,37 @@ function App() {
   }, []);
 
   // --- Handlers ---
+
+  const handleLandingPageEnter = (startName?: string) => {
+    if (startName && startName.trim()) {
+        const parts = startName.trim().split(' ');
+        const firstName = parts[0];
+        const lastName = parts.slice(1).join(' ');
+        
+        // If it was just a quick start (no login), we can optionally set the name as current user if we want
+        // But usually current user implies Auth.
+        // For now, let's assume if they passed Auth modal, startName is the user's name.
+        if (startName) setCurrentUser(startName);
+        
+        setPeople({ 
+            'root': { 
+                id: 'root', 
+                firstName: firstName, 
+                lastName: lastName, 
+                gender: Gender.Male, 
+                children: [], 
+                parentIds: [], 
+                exSpouseIds: [], 
+                birthDate: '', 
+                bio: 'დამფუძნებელი', 
+                imageUrl: `https://avatar.iran.liara.run/public/boy?username=${firstName}` 
+            } as Person 
+        });
+        setRootIdStack(['root']);
+        setIsReadOnly(false);
+    }
+    setIsViewingTree(true);
+  };
 
   const handleConnectionClick = useCallback((p1Id: string, p2Id: string, type: 'spouse' | 'parent-child') => {
     if (type === 'spouse') {
@@ -419,8 +456,14 @@ function App() {
       }
   }
 
+  const treeStats = {
+      totalPeople: statistics.totalPeople,
+      lastUpdated: lastUpdated,
+      rootName: rootPerson ? `${rootPerson.firstName} ${rootPerson.lastName}` : "N/A"
+  };
+
   if (isInitialLoad) return <div className="h-screen bg-white dark:bg-gray-900 flex items-center justify-center text-xl text-gray-800 dark:text-gray-200">იტვირთება...</div>;
-  if (!isViewingTree) return <LandingPage onEnter={() => setIsViewingTree(true)} language={language} onLanguageChange={setLanguage} />;
+  if (!isViewingTree) return <LandingPage onEnter={handleLandingPageEnter} language={language} onLanguageChange={setLanguage} />;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 flex flex-col">
@@ -478,26 +521,14 @@ function App() {
                                     <li><button onClick={() => { setIsStatisticsModalOpen(true); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}><StatsIcon className="w-5 h-5"/><span>{t.menu_stats}</span></button></li>
                                     {!isReadOnly && <li><button onClick={handleExportPdf} className={MENU_ITEM_CLASS}><ExportIcon className="w-5 h-5"/><span>{t.menu_export_pdf}</span></button></li>}
                                     
-                                    
-                                    {!isReadOnly && (
-                                        <>
-                                            <li><hr className="my-1 border-gray-200 dark:border-gray-700" /></li>
-                                            <li><div className={MENU_HEADER_CLASS}>{t.menu_data}</div></li>
-                                            <li><button onClick={() => { setIsFileManagerOpen(true); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}><DocumentIcon className="w-5 h-5"/><span>{t.menu_manage_data}</span></button></li>
-                                            <li><button onClick={() => { setIsImportModalOpen(true); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}><JsonImportIcon className="w-5 h-5"/><span>{t.menu_import}</span></button></li>
-                                            <li><button onClick={() => { setIsExportModalOpen(true); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}><JsonExportIcon className="w-5 h-5"/><span>{t.menu_export}</span></button></li>
-                                        </>
-                                    )}
-                                    
-                                    <li><hr className="my-1 border-gray-200 dark:border-gray-700" /></li>
-                                    <li><div className={MENU_HEADER_CLASS}>{t.menu_settings}</div></li>
-                                    <li><button onClick={toggleTheme} className={`${MENU_ITEM_CLASS} justify-between`}><span>{t.menu_theme}</span> {theme === 'dark' ? <SunIcon className="w-5 h-5 text-yellow-400"/> : <MoonIcon className="w-5 h-5 text-indigo-500"/>}</button></li>
-                                    
                                     <li><hr className="my-1 border-gray-200 dark:border-gray-700" /></li>
                                     <li><div className={MENU_HEADER_CLASS}>{t.menu_view}</div></li>
                                     <li><button onClick={() => setViewMode('default')} className={`${MENU_ITEM_CLASS} ${viewMode === 'default' ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400' : ''}`}><ViewNormalIcon className="w-5 h-5"/><span>{t.menu_view_default}</span></button></li>
                                     <li><button onClick={() => setViewMode('compact')} className={`${MENU_ITEM_CLASS} ${viewMode === 'compact' ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400' : ''}`}><ViewCompactIcon className="w-5 h-5"/><span>{t.menu_view_compact}</span></button></li>
                                     <li><button onClick={() => setViewMode('list')} className={`${MENU_ITEM_CLASS} ${viewMode === 'list' ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400' : ''}`}><ListBulletIcon className="w-5 h-5"/><span>{t.menu_view_list}</span></button></li>
+                                    
+                                    <li><hr className="my-1 border-gray-200 dark:border-gray-700" /></li>
+                                    <li><button onClick={() => { setIsSettingsModalOpen(true); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}><CogIcon className="w-5 h-5"/><span>{t.menu_settings}</span></button></li>
                                 </ul>
                                 <div className="px-4 py-2 text-xs text-center text-gray-400 border-t border-gray-200 dark:border-gray-700">
                                     <div className="mb-1">ბოლოს განახლდა: {formatTimestamp(lastUpdated)}</div>
@@ -618,9 +649,53 @@ function App() {
           language={language}
       />
 
-      {isImportModalOpen && <ImportModal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} onImportFromFile={handleImportJson} onMergeFromFile={handleMergeJson} onRestore={(d) => { setPeople(d.people); setRootIdStack(d.rootIdStack); setIsReadOnly(false); }} language={language} />}
-      {isExportModalOpen && <ExportModal isOpen={isExportModalOpen} onClose={() => setIsExportModalOpen(false)} onExportJson={handleExportJson} data={{ people, rootIdStack }} language={language} />}
-      {isFileManagerOpen && <FileManagerModal isOpen={isFileManagerOpen} onClose={() => setIsFileManagerOpen(false)} language={language} />}
+      {/* Settings Hub Modal */}
+      {isSettingsModalOpen && (
+          <SettingsModal 
+            isOpen={isSettingsModalOpen} 
+            onClose={() => setIsSettingsModalOpen(false)}
+            language={language}
+            onLanguageChange={setLanguage}
+            theme={theme}
+            toggleTheme={toggleTheme}
+            currentUser={currentUser}
+            onLogout={() => { setCurrentUser(null); setIsViewingTree(false); }}
+            openImport={() => { setIsSettingsModalOpen(false); setIsImportModalOpen(true); }}
+            openExport={() => { setIsSettingsModalOpen(false); setIsExportModalOpen(true); }}
+            openFileManager={() => { setIsSettingsModalOpen(false); setIsFileManagerOpen(true); }}
+            treeStats={treeStats}
+          />
+      )}
+
+      {isImportModalOpen && (
+        <ImportModal 
+            isOpen={isImportModalOpen} 
+            onClose={() => setIsImportModalOpen(false)} 
+            onImportFromFile={handleImportJson} 
+            onMergeFromFile={handleMergeJson} 
+            onRestore={(d) => { setPeople(d.people); setRootIdStack(d.rootIdStack); setIsReadOnly(false); }} 
+            language={language}
+            onBack={() => { setIsImportModalOpen(false); setIsSettingsModalOpen(true); }} 
+        />
+      )}
+      {isExportModalOpen && (
+        <ExportModal 
+            isOpen={isExportModalOpen} 
+            onClose={() => setIsExportModalOpen(false)} 
+            onExportJson={handleExportJson} 
+            data={{ people, rootIdStack }} 
+            language={language} 
+            onBack={() => { setIsExportModalOpen(false); setIsSettingsModalOpen(true); }}
+        />
+      )}
+      {isFileManagerOpen && (
+        <FileManagerModal 
+            isOpen={isFileManagerOpen} 
+            onClose={() => setIsFileManagerOpen(false)} 
+            language={language} 
+            onBack={() => { setIsFileManagerOpen(false); setIsSettingsModalOpen(true); }}
+        />
+      )}
       
       {isNotificationSenderOpen && <NotificationSenderModal isOpen={isNotificationSenderOpen} onClose={() => setIsNotificationSenderOpen(false)} language={language} />}
       

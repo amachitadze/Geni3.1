@@ -1,59 +1,38 @@
 
-import React from 'react';
+
+import React, { useState } from 'react';
 import { translations, Language } from '../utils/translations';
-import { CheckIcon, CloseIcon } from './Icons';
+import { CheckIcon, CloseIcon, StarIcon, InfiniteIcon, DevicePhoneMobileIcon, ChartBarIcon, LockClosedIcon, ShareIcon, CloudIcon, ChevronDownIcon, UserPlusIcon, UsersIcon, ArrowRightIcon } from './Icons';
+import AuthModal from './AuthModal';
 
 interface LandingPageProps {
-  onEnter: () => void;
+  onEnter: (startName?: string) => void;
   language: Language;
   onLanguageChange: (lang: Language) => void;
 }
 
-const ArrowRightIcon: React.FC<{ className?: string }> = ({ className }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className={className}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-    </svg>
-);
-
-const InfiniteIcon: React.FC<{ className?: string }> = ({ className }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15a4.5 4.5 0 004.5 4.5H18a3.75 3.75 0 001.332-7.257 3 3 0 00-3.758-3.848 5.25 5.25 0 00-10.233 2.33A4.502 4.502 0 002.25 15z" />
-        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /> {/* Stylized infinite-like cloud/network */}
-    </svg>
-);
-
-const DevicePhoneMobileIcon: React.FC<{ className?: string }> = ({ className }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" />
-    </svg>
-);
-
-const ChartBarIcon: React.FC<{ className?: string }> = ({ className }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-    </svg>
-);
-
-const LockClosedIcon: React.FC<{ className?: string }> = ({ className }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-    </svg>
-);
-
-const ShareIcon: React.FC<{ className?: string }> = ({ className }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.186 2.25 2.25 0 00-3.933 2.186z" />
-    </svg>
-);
-
-const CloudIcon: React.FC<{ className?: string }> = ({ className }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
-    </svg>
-);
-
 const LandingPage: React.FC<LandingPageProps> = ({ onEnter, language, onLanguageChange }) => {
     const t = translations[language];
+    const [startName, setStartName] = useState('');
+    const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
+    const [isAuthOpen, setIsAuthOpen] = useState(false);
+    const [pendingStartName, setPendingStartName] = useState<string | null>(null);
+
+    const handleQuickStart = (e: React.FormEvent) => {
+        e.preventDefault();
+        onEnter(startName);
+    };
+    
+    const handleAuthSuccess = (name?: string) => {
+        // If the user entered a name in quickstart but then went to login/register, 
+        // we might want to use that or the name from auth.
+        // For now, let's just enter.
+        onEnter(pendingStartName || name || startName);
+    };
+
+    const toggleFaq = (index: number) => {
+        setOpenFaqIndex(openFaqIndex === index ? null : index);
+    };
 
     const features = [
         {
@@ -88,6 +67,27 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnter, language, onLanguage
         }
     ];
 
+    const testimonials = [
+        {
+            name: t.testim_1_name,
+            role: t.testim_1_role,
+            text: t.testim_1_text,
+            avatar: "https://avatar.iran.liara.run/public/boy?username=Giorgi"
+        },
+        {
+            name: t.testim_2_name,
+            role: t.testim_2_role,
+            text: t.testim_2_text,
+            avatar: "https://avatar.iran.liara.run/public/girl?username=Nino"
+        },
+        {
+            name: t.testim_3_name,
+            role: t.testim_3_role,
+            text: t.testim_3_text,
+            avatar: "https://avatar.iran.liara.run/public/boy?username=David"
+        }
+    ];
+
     const plans = [
         {
             name: t.plan_free,
@@ -101,7 +101,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnter, language, onLanguage
                 { text: t.feat_export_pdf, included: false }
             ],
             buttonText: t.btn_start,
-            primary: false
+            primary: false,
+            action: () => onEnter(startName) // Free starts immediately
         },
         {
             name: t.plan_premium,
@@ -116,15 +117,25 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnter, language, onLanguage
             ],
             buttonText: t.btn_activate,
             primary: true,
-            badge: t.plan_recommended
+            badge: t.plan_recommended,
+            action: () => {
+                setPendingStartName(startName);
+                setIsAuthOpen(true);
+            }
         }
+    ];
+
+    const faqs = [
+        { q: t.faq_1_q, a: t.faq_1_a },
+        { q: t.faq_2_q, a: t.faq_2_a },
+        { q: t.faq_3_q, a: t.faq_3_a },
     ];
 
     return (
         <div className="bg-white dark:bg-gray-900 min-h-screen text-gray-800 dark:text-gray-200 font-sans selection:bg-purple-200 dark:selection:bg-purple-900">
             
             {/* Hero Section */}
-            <header className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
+            <header className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20 pb-10">
                 <div 
                     className="absolute inset-0 bg-cover bg-center"
                     style={{ 
@@ -132,48 +143,106 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnter, language, onLanguage
                         filter: "brightness(0.4) blur(2px)" 
                     }}
                 ></div>
-                <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-gray-900"></div>
+                <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-gray-900/50 to-gray-900"></div>
+                
+                {/* Animated Background Elements (CSS only for performance) */}
+                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                    <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-purple-600/20 rounded-full blur-3xl animate-pulse"></div>
+                    <div className="absolute bottom-1/3 right-1/3 w-64 h-64 bg-blue-600/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+                    <div className="absolute top-1/2 left-2/3 w-40 h-40 bg-pink-600/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
+                </div>
                 
                 <div className="relative z-10 container mx-auto px-6 text-center">
-                    <div className="inline-block mb-4 px-4 py-1.5 rounded-full bg-purple-600/30 border border-purple-500/50 backdrop-blur-md text-purple-200 text-sm font-medium tracking-wide animate-fade-in-up">
+                    <div className="inline-block mb-6 px-4 py-1.5 rounded-full bg-purple-600/30 border border-purple-500/50 backdrop-blur-md text-purple-200 text-sm font-medium tracking-wide animate-fade-in-up">
                         {t.landing_badge}
                     </div>
-                    <h1 className="text-5xl md:text-7xl lg:text-8xl font-black mb-6 text-white tracking-tight drop-shadow-2xl animate-fade-in-up delay-100">
+                    <h1 className="text-5xl md:text-7xl lg:text-8xl font-black mb-8 text-white tracking-tight drop-shadow-2xl animate-fade-in-up delay-100">
                         {t.landing_title_1}<br />
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-500 to-red-500">{t.landing_title_2}</span>{t.landing_title_3}
                     </h1>
-                    <p className="text-lg md:text-2xl mb-10 text-gray-300 max-w-3xl mx-auto leading-relaxed animate-fade-in-up delay-200">
+                    <p className="text-lg md:text-2xl mb-12 text-gray-300 max-w-3xl mx-auto leading-relaxed animate-fade-in-up delay-200">
                         {t.landing_desc}
                     </p>
-                    <div className="flex flex-col items-center justify-center gap-6 animate-fade-in-up delay-300">
-                        <button 
-                            onClick={onEnter}
-                            className="w-full sm:w-auto px-8 py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-2xl text-lg transition-all transform hover:scale-105 shadow-[0_0_20px_rgba(147,51,234,0.5)] flex items-center justify-center gap-2"
-                        >
-                            {t.landing_cta} <ArrowRightIcon className="w-5 h-5" />
-                        </button>
+                    
+                    {/* Quick Start Form */}
+                    <div className="w-full max-w-md mx-auto animate-fade-in-up delay-300 mb-10">
+                        <form onSubmit={handleQuickStart} className="relative group">
+                            <input 
+                                type="text" 
+                                value={startName}
+                                onChange={(e) => setStartName(e.target.value)}
+                                placeholder={t.quick_start_placeholder}
+                                className="w-full py-4 pl-6 pr-36 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all shadow-xl"
+                            />
+                            <button 
+                                type="submit"
+                                className="absolute right-2 top-2 bottom-2 px-6 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-full transition-all transform group-hover:scale-105 shadow-lg flex items-center gap-2"
+                            >
+                                {t.quick_start_btn} <ArrowRightIcon className="w-4 h-4" />
+                            </button>
+                        </form>
+                    </div>
 
-                        {/* Centered Language Switcher */}
-                        <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md rounded-full p-1 border border-white/20">
-                            <button 
-                                onClick={() => onLanguageChange('ka')} 
-                                className={`px-3 py-1 text-xs rounded-full transition-colors ${language === 'ka' ? 'bg-white text-gray-900 font-bold shadow-sm' : 'text-gray-300 hover:text-white hover:bg-white/10'}`}
-                            >
-                                ქართული
-                            </button>
-                            <button 
-                                onClick={() => onLanguageChange('es')} 
-                                className={`px-3 py-1 text-xs rounded-full transition-colors ${language === 'es' ? 'bg-white text-gray-900 font-bold shadow-sm' : 'text-gray-300 hover:text-white hover:bg-white/10'}`}
-                            >
-                                Español
-                            </button>
-                        </div>
+                    {/* Language Switcher */}
+                    <div className="flex items-center justify-center gap-2 bg-white/10 backdrop-blur-md rounded-full p-1 border border-white/20 w-fit mx-auto animate-fade-in-up delay-400">
+                        <button 
+                            onClick={() => onLanguageChange('ka')} 
+                            className={`px-4 py-1.5 text-xs rounded-full transition-colors ${language === 'ka' ? 'bg-white text-gray-900 font-bold shadow-sm' : 'text-gray-300 hover:text-white hover:bg-white/10'}`}
+                        >
+                            ქართული
+                        </button>
+                        <button 
+                            onClick={() => onLanguageChange('es')} 
+                            className={`px-4 py-1.5 text-xs rounded-full transition-colors ${language === 'es' ? 'bg-white text-gray-900 font-bold shadow-sm' : 'text-gray-300 hover:text-white hover:bg-white/10'}`}
+                        >
+                            Español
+                        </button>
                     </div>
                 </div>
             </header>
 
+            {/* How it Works Section */}
+            <section className="py-20 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800">
+                <div className="container mx-auto px-6">
+                    <div className="text-center mb-16">
+                        <h2 className="text-3xl md:text-5xl font-bold mb-4 text-gray-900 dark:text-white">{t.how_title}</h2>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-center relative">
+                        {/* Connecting Line (Desktop) */}
+                        <div className="hidden md:block absolute top-12 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-purple-200 dark:via-purple-800 to-transparent z-0"></div>
+
+                        {/* Step 1 */}
+                        <div className="relative z-10 flex flex-col items-center">
+                            <div className="w-24 h-24 rounded-full bg-white dark:bg-gray-800 border-4 border-purple-100 dark:border-purple-900 flex items-center justify-center mb-6 shadow-lg">
+                                <UserPlusIcon className="w-10 h-10 text-purple-600 dark:text-purple-400" />
+                            </div>
+                            <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">{t.step_1_title}</h3>
+                            <p className="text-gray-600 dark:text-gray-400">{t.step_1_desc}</p>
+                        </div>
+
+                        {/* Step 2 */}
+                        <div className="relative z-10 flex flex-col items-center">
+                            <div className="w-24 h-24 rounded-full bg-white dark:bg-gray-800 border-4 border-purple-100 dark:border-purple-900 flex items-center justify-center mb-6 shadow-lg">
+                                <UsersIcon className="w-10 h-10 text-pink-600 dark:text-pink-400" />
+                            </div>
+                            <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">{t.step_2_title}</h3>
+                            <p className="text-gray-600 dark:text-gray-400">{t.step_2_desc}</p>
+                        </div>
+
+                        {/* Step 3 */}
+                        <div className="relative z-10 flex flex-col items-center">
+                            <div className="w-24 h-24 rounded-full bg-white dark:bg-gray-800 border-4 border-purple-100 dark:border-purple-900 flex items-center justify-center mb-6 shadow-lg">
+                                <ShareIcon className="w-10 h-10 text-blue-600 dark:text-blue-400" />
+                            </div>
+                            <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">{t.step_3_title}</h3>
+                            <p className="text-gray-600 dark:text-gray-400">{t.step_3_desc}</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             {/* Features Grid */}
-            <section className="py-24 bg-gray-50 dark:bg-gray-900 relative">
+            <section className="py-24 bg-gray-50 dark:bg-gray-800/50 relative">
                 <div className="container mx-auto px-6">
                     <div className="text-center mb-16">
                         <h2 className="text-3xl md:text-5xl font-bold mb-4 text-gray-900 dark:text-white">{t.landing_features_title}</h2>
@@ -203,8 +272,39 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnter, language, onLanguage
                 </div>
             </section>
 
+             {/* Testimonials Section */}
+             <section className="py-24 bg-white dark:bg-gray-900">
+                <div className="container mx-auto px-6">
+                    <div className="text-center mb-16">
+                        <h2 className="text-3xl md:text-5xl font-bold mb-4 text-gray-900 dark:text-white">{t.testim_title}</h2>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        {testimonials.map((item, index) => (
+                            <div key={index} className="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 flex flex-col items-center text-center hover:shadow-lg transition-shadow">
+                                <img 
+                                    src={item.avatar} 
+                                    alt={item.name} 
+                                    className="w-16 h-16 rounded-full object-cover mb-4 border-2 border-purple-500"
+                                />
+                                <div className="flex gap-1 mb-3">
+                                    {[...Array(5)].map((_, i) => (
+                                        <StarIcon key={i} className="w-4 h-4 text-yellow-400" />
+                                    ))}
+                                </div>
+                                <p className="text-gray-600 dark:text-gray-300 mb-6 italic">"{item.text}"</p>
+                                <div>
+                                    <h4 className="font-bold text-gray-900 dark:text-white">{item.name}</h4>
+                                    <span className="text-sm text-purple-600 dark:text-purple-400 font-medium">{item.role}</span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
             {/* Pricing / Plans Section */}
-            <section className="py-24 bg-white dark:bg-gray-900 relative border-t border-gray-100 dark:border-gray-800">
+            <section className="py-24 bg-gray-50 dark:bg-gray-900 relative">
                 <div className="container mx-auto px-6">
                     <div className="text-center mb-16">
                         <h2 className="text-3xl md:text-5xl font-bold mb-4 text-gray-900 dark:text-white">{t.pricing_title}</h2>
@@ -220,7 +320,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnter, language, onLanguage
                                 className={`flex-1 flex flex-col p-8 rounded-3xl transition-all duration-300 relative ${
                                     plan.primary 
                                     ? 'bg-gradient-to-b from-gray-900 to-gray-800 text-white shadow-2xl scale-100 md:scale-105 z-10 border-2 border-purple-500/50' 
-                                    : 'bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700 hover:shadow-lg'
+                                    : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700 hover:shadow-lg'
                                 }`}
                             >
                                 {plan.badge && (
@@ -247,11 +347,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnter, language, onLanguage
                                 </ul>
 
                                 <button
-                                    onClick={onEnter}
+                                    onClick={plan.action}
                                     className={`w-full py-4 rounded-xl font-bold transition-all transform hover:scale-105 flex items-center justify-center gap-2 ${
                                         plan.primary
                                         ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-lg'
-                                        : 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-900 dark:text-white'
+                                        : 'bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white'
                                     }`}
                                 >
                                     {plan.buttonText}
@@ -262,8 +362,33 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnter, language, onLanguage
                 </div>
             </section>
 
+            {/* FAQ Section */}
+            <section className="py-20 bg-white dark:bg-gray-800/30">
+                <div className="container mx-auto px-6 max-w-3xl">
+                    <div className="text-center mb-12">
+                        <h2 className="text-3xl font-bold text-gray-900 dark:text-white">{t.faq_title}</h2>
+                    </div>
+                    <div className="space-y-4">
+                        {faqs.map((faq, index) => (
+                            <div key={index} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                                <button 
+                                    onClick={() => toggleFaq(index)}
+                                    className="w-full flex items-center justify-between p-6 text-left focus:outline-none"
+                                >
+                                    <span className="font-semibold text-lg text-gray-900 dark:text-white">{faq.q}</span>
+                                    <ChevronDownIcon className={`w-5 h-5 text-gray-500 transition-transform duration-300 ${openFaqIndex === index ? 'rotate-180' : ''}`} />
+                                </button>
+                                <div className={`px-6 pb-6 text-gray-600 dark:text-gray-400 transition-all duration-300 ${openFaqIndex === index ? 'block' : 'hidden'}`}>
+                                    {faq.a}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
             {/* Footer CTA */}
-            <section className="py-20 bg-gray-900 text-white relative overflow-hidden border-t border-gray-800">
+            <section className="py-20 bg-gray-900 text-white relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-purple-900/20 to-pink-900/20 pointer-events-none"></div>
                 <div className="container mx-auto px-6 text-center relative z-10">
                     <h2 className="text-3xl md:text-4xl font-bold mb-8">{t.landing_footer_cta_title}</h2>
@@ -271,7 +396,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnter, language, onLanguage
                         {t.landing_footer_cta_desc}
                     </p>
                     <button 
-                        onClick={onEnter}
+                        onClick={() => { setPendingStartName(startName); setIsAuthOpen(true); }}
                         className="inline-flex items-center justify-center px-8 py-3 border border-gray-600 hover:border-white rounded-full text-lg font-medium transition-colors hover:bg-white hover:text-gray-900"
                     >
                         {t.landing_open_tree}
@@ -279,25 +404,37 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnter, language, onLanguage
                 </div>
             </section>
 
-            <footer className="bg-gray-50 dark:bg-black py-8 border-t border-gray-200 dark:border-gray-800">
-                <div className="container mx-auto px-6 text-center text-gray-500 dark:text-gray-500 text-sm">
-                    <p className="flex items-center justify-center gap-1 flex-wrap">
+            <footer className="bg-black py-10 border-t border-gray-800">
+                <div className="container mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6 text-sm text-gray-500">
+                    <p className="flex items-center gap-1">
                         <span>&copy; {new Date().getFullYear()} {t.landing_copyright}</span>
-                        <span className="flex items-center gap-1">
-                            {t.landing_created_by}
-                            <a href="https://bit.ly/av-ma" target="_blank" rel="noopener noreferrer" className="inline-block transition-opacity hover:opacity-80">
-                                <img 
-                                    src="https://i.postimg.cc/c1T2NJgV/avma.png" 
-                                    alt="AvMa" 
-                                    className="h-3 w-auto" 
-                                    style={{ display: 'inline', verticalAlign: 'middle' }}
-                                />
-                            </a>
-                            {t.landing_by}
-                        </span>
+                    </p>
+                    
+                    <div className="flex gap-6">
+                        <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
+                        <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
+                        <a href="#" className="hover:text-white transition-colors">Contact</a>
+                    </div>
+
+                    <p className="flex items-center gap-1">
+                        {t.landing_created_by}
+                        <a href="https://bit.ly/av-ma" target="_blank" rel="noopener noreferrer" className="inline-block transition-opacity hover:opacity-80">
+                            <img 
+                                src="https://i.postimg.cc/c1T2NJgV/avma.png" 
+                                alt="AvMa" 
+                                className="h-3 w-auto ml-1" 
+                            />
+                        </a>
                     </p>
                 </div>
             </footer>
+
+            <AuthModal 
+                isOpen={isAuthOpen} 
+                onClose={() => setIsAuthOpen(false)} 
+                onLoginSuccess={handleAuthSuccess}
+                language={language}
+            />
         </div>
     );
 };

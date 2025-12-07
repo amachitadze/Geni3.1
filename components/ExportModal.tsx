@@ -1,6 +1,7 @@
 
+
 import React, { useState } from 'react';
-import { CloseIcon, JsonExportIcon, CloudUploadIcon, LockClosedIcon, CheckIcon } from './Icons';
+import { CloseIcon, JsonExportIcon, CloudUploadIcon, LockClosedIcon, CheckIcon, BackIcon } from './Icons';
 import { People } from '../types';
 import { getStoredSupabaseConfig, getSupabaseClient, getAdminPassword } from '../utils/supabaseClient';
 import { translations, Language } from '../utils/translations';
@@ -14,9 +15,10 @@ interface ExportModalProps {
       rootIdStack: string[];
   };
   language: Language;
+  onBack?: () => void;
 }
 
-const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, onExportJson, data, language }) => {
+const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, onExportJson, data, language, onBack }) => {
     const t = translations[language];
     const [view, setView] = useState<'menu' | 'auth'>('menu');
     const [password, setPassword] = useState('');
@@ -120,7 +122,14 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, onExportJson
         <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 transition-opacity p-4" onClick={onClose}>
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-lg border border-gray-300 dark:border-gray-700 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
                 <header className="flex items-start justify-between mb-4">
-                    <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">{t.exp_title}</h2>
+                    <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+                        {onBack && (
+                            <button onClick={onBack} className="p-1 -ml-1 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                <BackIcon className="w-6 h-6" />
+                            </button>
+                        )}
+                        {t.exp_title}
+                    </h2>
                     <button onClick={onClose} className="p-2 -mt-2 -mr-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" aria-label={t.close}>
                         <CloseIcon className="w-6 h-6" />
                     </button>

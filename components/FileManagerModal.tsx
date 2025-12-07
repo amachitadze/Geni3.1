@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { CloseIcon, DocumentIcon, DeleteIcon, LockClosedIcon, BackIcon } from './Icons';
 import { getStoredSupabaseConfig, getSupabaseClient, getAdminPassword } from '../utils/supabaseClient';
@@ -8,9 +9,10 @@ interface FileManagerModalProps {
   isOpen: boolean;
   onClose: () => void;
   language: Language;
+  onBack?: () => void;
 }
 
-const FileManagerModal: React.FC<FileManagerModalProps> = ({ isOpen, onClose, language }) => {
+const FileManagerModal: React.FC<FileManagerModalProps> = ({ isOpen, onClose, language, onBack }) => {
   const t = translations[language];
   const [storedFiles, setStoredFiles] = useState<any[]>([]);
   const [isLoadingFiles, setIsLoadingFiles] = useState(false);
@@ -114,6 +116,11 @@ const FileManagerModal: React.FC<FileManagerModalProps> = ({ isOpen, onClose, la
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-lg border border-gray-300 dark:border-gray-700 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <header className="flex items-start justify-between mb-4">
             <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+                {onBack && (
+                    <button onClick={onBack} className="p-1 -ml-1 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                        <BackIcon className="w-6 h-6" />
+                    </button>
+                )}
                 <DocumentIcon className="w-6 h-6 text-purple-600"/> {t.fm_title}
             </h3>
             <button onClick={onClose} className="p-2 -mt-2 -mr-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" aria-label={t.close}>
