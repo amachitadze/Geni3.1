@@ -498,7 +498,7 @@ function App() {
               // @ts-ignore
               return <TimelineView people={people} onShowDetails={setDetailsModalPersonId} highlightedPersonId={highlightedPersonId} />;
           case 'map':
-              return <MapPanel people={people} onShowDetails={setDetailsModalPersonId} language={language} />;
+              return <MapPanel people={people} onShowDetails={setDetailsModalPersonId} language={language} highlightedPersonId={highlightedPersonId} />;
           default:
               return (
                 <div ref={viewportRef} className="flex-grow flex flex-col relative overflow-hidden" {...handlers} onClick={() => setHighlightedPeople(null)} style={{cursor: isPanning ? 'grabbing' : 'grab', touchAction: 'none'}}>
@@ -633,7 +633,7 @@ function App() {
         {isSearchOpen && (
             <>
                 <div className="fixed inset-0 bg-black/20 z-40 backdrop-blur-[1px]" onClick={() => setIsSearchOpen(false)}></div>
-                <div className="absolute top-24 left-1/2 -translate-x-1/2 z-50 w-full max-w-lg px-4 animate-fade-in-up">
+                <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-lg px-4 animate-fade-in-up">
                     <div className="bg-white dark:bg-gray-800 rounded-full shadow-2xl flex items-center p-2 border border-gray-200 dark:border-gray-700 transition-colors">
                         <SearchIcon className="w-5 h-5 text-gray-400 ml-3 flex-shrink-0"/>
                         <input 
