@@ -48,7 +48,7 @@ declare const pako: any;
 // Style Constants
 const MENU_ITEM_CLASS = "w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors text-gray-700 dark:text-gray-200";
 const MENU_HEADER_CLASS = "px-4 py-1.5 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mt-1";
-const ZOOM_BTN_CLASS = "w-10 h-10 rounded-full bg-gray-700/50 text-white backdrop-blur-sm flex items-center justify-center text-xl hover:bg-gray-600/70 shadow-md transition-colors";
+const ZOOM_BTN_CLASS = "w-9 h-9 rounded-full bg-gray-700/80 text-white backdrop-blur-sm flex items-center justify-center shadow-lg hover:bg-gray-600 transition-all active:scale-95";
 
 function App() {
   // --- Hooks Initialization ---
@@ -509,25 +509,25 @@ function App() {
                         </div>
                     </div>
                     {/* Zoom Controls */}
-                    <div className="absolute bottom-6 right-6 z-10 flex flex-col gap-3">
+                    <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3 pointer-events-auto">
                         <button 
                             onClick={() => handleZoomBtn('in')} 
-                            className="w-12 h-12 rounded-full bg-gray-600/80 text-white backdrop-blur-sm shadow-xl flex items-center justify-center hover:bg-gray-500 transition-all active:scale-95"
+                            className={ZOOM_BTN_CLASS}
                             title={t.add} 
                         >
-                            <PlusIcon className="w-6 h-6" />
+                            <PlusIcon className="w-5 h-5" />
                         </button>
                         <button 
                             onClick={() => handleZoomBtn('out')} 
-                            className="w-12 h-12 rounded-full bg-gray-600/80 text-white backdrop-blur-sm shadow-xl flex items-center justify-center hover:bg-gray-500 transition-all active:scale-95"
+                            className={ZOOM_BTN_CLASS}
                         >
-                            <MinusIcon className="w-6 h-6" />
+                            <MinusIcon className="w-5 h-5" />
                         </button>
                         <button 
                             onClick={resetTransform} 
-                            className="w-12 h-12 rounded-full bg-gray-600/80 text-white backdrop-blur-sm shadow-xl flex items-center justify-center hover:bg-gray-500 transition-all active:scale-95"
+                            className={ZOOM_BTN_CLASS}
                         >
-                            <CenterIcon className="w-6 h-6" />
+                            <CenterIcon className="w-5 h-5" />
                         </button>
                     </div>
                 </div>
@@ -544,7 +544,7 @@ function App() {
       <header className={`p-4 z-20 bg-white/80 dark:bg-gray-900/80 sticky top-0 transition-all duration-300 ${isZoomingViaWheel ? '' : 'backdrop-blur-sm'} ${isHeaderCollapsed ? 'py-2' : 'sm:py-6'}`}>
         
         {/* Main Header Content */}
-        <div className={`w-full ${isSearchOpen ? 'hidden' : 'block'}`}>
+        <div className="w-full">
             <div className="flex items-center justify-between gap-4">
                 
                 {/* Left: Navigation Buttons */}
@@ -622,55 +622,65 @@ function App() {
             </div>
         </div>
             
-        {/* Search Bar Mobile/Desktop Overlay */}
+        {/* Floating Search Bar Overlay */}
         {isSearchOpen && (
-            <div className="absolute inset-0 bg-white dark:bg-gray-900 z-30 flex items-center px-4 animate-fade-in">
-                <SearchIcon className="w-6 h-6 text-gray-400 mr-3"/>
-                <input 
-                    type="text" 
-                    value={searchQuery}
-                    onChange={handleSearchChange}
-                    placeholder={t.search_placeholder}
-                    className="flex-grow bg-transparent border-none outline-none text-lg text-gray-800 dark:text-gray-100 placeholder-gray-400"
-                    autoFocus
-                />
-                <button onClick={() => { setIsSearchOpen(false); setSearchQuery(''); setSearchResults([]); }} className="p-2 text-gray-500 dark:text-gray-400">
-                    <CloseIcon className="w-6 h-6"/>
-                </button>
-            </div>
-        )}
-        
-        {/* Search Results Dropdown */}
-        {isSearchOpen && searchResults.length > 0 && (
-            <div className="absolute top-full left-0 w-full bg-white dark:bg-gray-800 shadow-xl border-t border-gray-200 dark:border-gray-700 max-h-[60vh] overflow-y-auto z-20">
-                <ul>
-                    {searchResults.map(person => (
-                        <li key={person.id}>
-                            <button 
-                                onClick={() => { 
-                                    navigateTo(person.id); 
-                                    setHighlightedPersonId(person.id); 
-                                    setIsSearchOpen(false); 
-                                    setSearchQuery('');
-                                }}
-                                className="w-full text-left px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-4 border-b border-gray-100 dark:border-gray-700 last:border-0"
-                            >
-                                {person.imageUrl ? (
-                                    <img src={person.imageUrl} className="w-10 h-10 rounded-full object-cover"/>
-                                ) : (
-                                    <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-500">
-                                        <SearchIcon className="w-5 h-5"/>
-                                    </div>
-                                )}
-                                <div>
-                                    <p className="font-bold text-gray-800 dark:text-gray-100">{person.firstName} {person.lastName}</p>
-                                    <p className="text-xs text-gray-500">{person.birthDate ? person.birthDate.split('-')[0] : '?'}</p>
-                                </div>
+            <>
+                <div className="fixed inset-0 bg-black/20 z-40 backdrop-blur-[1px]" onClick={() => setIsSearchOpen(false)}></div>
+                <div className="absolute top-24 left-1/2 -translate-x-1/2 z-50 w-full max-w-lg px-4 animate-fade-in-up">
+                    <div className="bg-white dark:bg-gray-800 rounded-full shadow-2xl flex items-center p-2 border border-gray-200 dark:border-gray-700 transition-colors">
+                        <SearchIcon className="w-5 h-5 text-gray-400 ml-3 flex-shrink-0"/>
+                        <input 
+                            autoFocus
+                            type="text" 
+                            value={searchQuery}
+                            onChange={handleSearchChange}
+                            placeholder={t.search_placeholder}
+                            className="flex-grow bg-transparent border-none outline-none text-base text-gray-800 dark:text-gray-100 placeholder-gray-400 px-4 py-2 min-w-0"
+                        />
+                        {searchQuery && (
+                            <button onClick={() => { setSearchQuery(''); setSearchResults([]); }} className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 transition-colors">
+                                <CloseIcon className="w-4 h-4"/>
                             </button>
-                        </li>
-                    ))}
-                </ul>
-            </div>
+                        )}
+                        <button onClick={() => setIsSearchOpen(false)} className="p-2 bg-gray-100 dark:bg-gray-700 rounded-full text-gray-500 hover:text-gray-800 dark:text-gray-300 transition-colors ml-2 flex-shrink-0">
+                            <CloseIcon className="w-5 h-5"/>
+                        </button>
+                    </div>
+                    
+                    {/* Results Dropdown */}
+                    {searchResults.length > 0 && (
+                        <div className="mt-2 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 max-h-[60vh] overflow-y-auto">
+                            <ul>
+                                {searchResults.map(person => (
+                                    <li key={person.id}>
+                                        <button 
+                                            onClick={() => { 
+                                                navigateTo(person.id); 
+                                                setHighlightedPersonId(person.id); 
+                                                setIsSearchOpen(false); 
+                                                setSearchQuery('');
+                                            }}
+                                            className="w-full text-left px-5 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-4 border-b border-gray-100 dark:border-gray-700 last:border-0 transition-colors"
+                                        >
+                                            {person.imageUrl ? (
+                                                <img src={person.imageUrl} className="w-10 h-10 rounded-full object-cover border border-gray-200 dark:border-gray-600"/>
+                                            ) : (
+                                                <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-500">
+                                                    <SearchIcon className="w-5 h-5"/>
+                                                </div>
+                                            )}
+                                            <div>
+                                                <p className="font-bold text-gray-800 dark:text-gray-100 text-sm">{person.firstName} {person.lastName}</p>
+                                                <p className="text-xs text-gray-500">{person.birthDate ? person.birthDate.split('-')[0] : '?'}</p>
+                                            </div>
+                                        </button>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+                </div>
+            </>
         )}
       </header>
 

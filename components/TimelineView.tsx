@@ -1,4 +1,5 @@
 
+
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { Person, People } from '../types';
 import { getYear } from '../utils/dateUtils';
@@ -66,6 +67,16 @@ const TimelineView: React.FC<TimelineViewProps> = ({ people, onShowDetails, high
         return { minYear: min - 10, maxYear: max + 10 };
     }, [sortedPeople]);
 
+    // Generate years array for header
+    const years = useMemo(() => {
+        const arr = [];
+        for (let i = 0; i <= Math.ceil((maxYear - minYear) / 10); i++) {
+            const year = Math.ceil(minYear / 10) * 10 + (i * 10);
+            if (year <= maxYear) arr.push({ year, left: (year - minYear) * pixelsPerYear });
+        }
+        return arr;
+    }, [minYear, maxYear, pixelsPerYear]);
+
     // Smart Lane Algorithm to prevent overlap
     const lanes = useMemo(() => {
         const calculatedLanes: Person[][] = [];
@@ -107,9 +118,16 @@ const TimelineView: React.FC<TimelineViewProps> = ({ people, onShowDetails, high
     // Total width calculation
     const totalWidth = (maxYear - minYear) * pixelsPerYear;
     const laneHeight = 60;
-    const headerHeight = 40;
-    const footerHeight = 100; // For events
-    const contentHeight = headerHeight + (lanes.length * laneHeight) + footerHeight;
+    
+    // Calculate precise event positions
+    const eventPositions = useMemo(() => {
+        return historicalEvents
+            .filter(e => e.year >= minYear && e.year <= maxYear)
+            .map(e => ({
+                ...e,
+                left: (e.year - minYear) * pixelsPerYear
+            }));
+    }, [minYear, maxYear, pixelsPerYear]);
 
     const handleZoom = (delta: number) => {
         setPixelsPerYear(prev => Math.max(2, Math.min(50, prev + delta)));
@@ -174,15 +192,15 @@ const TimelineView: React.FC<TimelineViewProps> = ({ people, onShowDetails, high
     return (
         <div className="relative flex flex-col h-full w-full bg-gray-100 dark:bg-gray-900 overflow-hidden">
             {/* Zoom Controls - Fixed relative to viewport container */}
-            <div className="absolute bottom-6 right-6 z-50 flex flex-col gap-3 pointer-events-auto">
-                <button onClick={() => handleZoom(2)} className="w-12 h-12 rounded-full bg-gray-600/80 text-white backdrop-blur-sm shadow-xl flex items-center justify-center hover:bg-gray-500 transition-all active:scale-95">
-                    <PlusIcon className="w-6 h-6" />
+            <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3 pointer-events-auto">
+                <button onClick={() => handleZoom(2)} className="w-9 h-9 rounded-full bg-gray-700/80 text-white backdrop-blur-sm shadow-xl flex items-center justify-center hover:bg-gray-600 transition-all active:scale-95">
+                    <PlusIcon className="w-5 h-5" />
                 </button>
-                <button onClick={() => handleZoom(-2)} className="w-12 h-12 rounded-full bg-gray-600/80 text-white backdrop-blur-sm shadow-xl flex items-center justify-center hover:bg-gray-500 transition-all active:scale-95">
-                    <MinusIcon className="w-6 h-6" />
+                <button onClick={() => handleZoom(-2)} className="w-9 h-9 rounded-full bg-gray-700/80 text-white backdrop-blur-sm shadow-xl flex items-center justify-center hover:bg-gray-600 transition-all active:scale-95">
+                    <MinusIcon className="w-5 h-5" />
                 </button>
-                <button onClick={handleReset} className="w-12 h-12 rounded-full bg-gray-600/80 text-white backdrop-blur-sm shadow-xl flex items-center justify-center hover:bg-gray-500 transition-all active:scale-95">
-                    <CenterIcon className="w-6 h-6" />
+                <button onClick={handleReset} className="w-9 h-9 rounded-full bg-gray-700/80 text-white backdrop-blur-sm shadow-xl flex items-center justify-center hover:bg-gray-600 transition-all active:scale-95">
+                    <CenterIcon className="w-5 h-5" />
                 </button>
             </div>
 
@@ -195,49 +213,31 @@ const TimelineView: React.FC<TimelineViewProps> = ({ people, onShowDetails, high
                 onMouseUp={handleMouseUp}
                 onMouseMove={handleMouseMove}
             >
-                {/* 
-                    minHeight: '100%' ensures the container fills the screen vertically even if content is small.
-                    height: contentHeight ensures the container grows if content is large (enabling scroll).
-                */}
-                <div style={{ width: `${totalWidth}px`, minHeight: '100%', height: `${contentHeight}px`, position: 'relative' }}>
+                <div style={{ width: `${totalWidth}px`, minHeight: '100%', position: 'relative', display: 'flex', flexDirection: 'column' }}>
                     
-                    {/* Year Grid Lines - Using inset-0 to fill the container */}
-                    <div className="absolute inset-0 pointer-events-none">
-                        {Array.from({ length: Math.ceil((maxYear - minYear) / 10) + 1 }).map((_, i) => {
-                            const year = Math.ceil(minYear / 10) * 10 + (i * 10);
-                            if (year > maxYear) return null;
-                            const left = (year - minYear) * pixelsPerYear;
-                            
-                            return (
-                                <div key={year} style={{ position: 'absolute', left, top: 0, bottom: 0, borderLeft: '1px dashed rgba(156, 163, 175, 0.2)' }}>
-                                    <span className="absolute top-2 left-1 text-xs text-gray-400 font-mono select-none">{year}</span>
+                    {/* Sticky Header (Years) */}
+                    <div className="sticky top-0 z-40 h-10 w-full flex items-end pb-2 pointer-events-none bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 shadow-sm">
+                        <div className="absolute w-full h-full">
+                            {years.map((y) => (
+                                <div key={y.year} style={{ position: 'absolute', left: y.left + 4 }} className="text-xs text-gray-600 dark:text-gray-300 font-mono font-bold select-none px-1.5 py-0.5 rounded">
+                                    {y.year}
                                 </div>
-                            );
-                        })}
+                            ))}
+                        </div>
                     </div>
 
-                    {/* Historical Events */}
-                    <div className="absolute inset-0 pointer-events-none">
-                        {historicalEvents.map((event, idx) => {
-                            if (event.year < minYear || event.year > maxYear) return null;
-                            const left = (event.year - minYear) * pixelsPerYear;
-                            return (
-                                <div key={idx} style={{ position: 'absolute', left, top: 0, bottom: 0, borderLeft: '2px solid rgba(255, 99, 71, 0.3)' }}>
-                                    <div className="absolute bottom-4 left-1 w-40">
-                                        <span className={`text-[10px] uppercase font-bold tracking-wider px-1 py-0.5 rounded select-none ${event.category === 'geo' ? 'text-red-600 bg-red-100/80' : 'text-blue-600 bg-blue-100/80'}`}>
-                                            {event.year}
-                                        </span>
-                                        <p className="text-[10px] text-gray-600 dark:text-gray-400 mt-1 leading-tight font-medium bg-white/50 dark:bg-black/50 p-1 rounded backdrop-blur-sm inline-block select-none">
-                                            {event.label}
-                                        </p>
-                                    </div>
-                                </div>
-                            );
-                        })}
+                    {/* Background Grid Layer (Absolute inset-0 but below content) */}
+                    <div className="absolute inset-0 pointer-events-none z-0 mt-10 mb-20">
+                        {years.map((y) => (
+                            <div key={y.year} style={{ position: 'absolute', left: y.left, top: 0, bottom: 0, borderLeft: '1px dashed rgba(156, 163, 175, 0.2)' }} />
+                        ))}
+                        {eventPositions.map((e, idx) => (
+                            <div key={idx} style={{ position: 'absolute', left: e.left, top: 0, bottom: 0, borderLeft: '2px solid rgba(255, 99, 71, 0.3)' }} />
+                        ))}
                     </div>
 
-                    {/* People Bars */}
-                    <div style={{ position: 'absolute', top: headerHeight, left: 0, right: 0 }}>
+                    {/* Content (People Lanes) */}
+                    <div className="flex-grow relative z-10 py-8" style={{ height: `${lanes.length * laneHeight + 60}px` }}>
                         {lanes.map((lane, laneIndex) => (
                             <div key={laneIndex} style={{ height: laneHeight, position: 'relative' }}>
                                 {lane.map(person => {
@@ -257,7 +257,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ people, onShowDetails, high
                                             key={person.id}
                                             data-person-id={person.id}
                                             onClick={(e) => { e.stopPropagation(); onShowDetails(person.id); }}
-                                            className={`absolute rounded-full shadow-sm flex items-center px-2 cursor-pointer transition-all hover:brightness-110 hover:z-10 group overflow-hidden border ${isHighlighted ? 'ring-2 ring-yellow-400 z-20' : ''}`}
+                                            className={`absolute rounded-full shadow-sm flex items-center px-2 cursor-pointer transition-all hover:brightness-110 hover:z-20 group overflow-hidden border ${isHighlighted ? 'ring-2 ring-yellow-400 z-20' : ''}`}
                                             style={{
                                                 left,
                                                 width,
@@ -292,6 +292,27 @@ const TimelineView: React.FC<TimelineViewProps> = ({ people, onShowDetails, high
                             </div>
                         ))}
                     </div>
+
+                    {/* Sticky Footer (Events) */}
+                    <div className="sticky bottom-0 z-40 h-20 w-full pointer-events-none flex items-start pt-2 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-t border-gray-200 dark:border-gray-800 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+                        <div className="absolute w-full h-full overflow-hidden">
+                            {eventPositions.map((event, idx) => (
+                                <div key={idx} style={{ position: 'absolute', left: event.left + 4, top: 4, width: '12rem' }}>
+                                    <div className={`p-2 rounded-lg backdrop-blur-md shadow-sm border ${event.category === 'geo' ? 'bg-red-50/50 dark:bg-red-900/30 border-red-200 dark:border-red-800' : 'bg-blue-50/50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800'}`}>
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className={`text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded select-none ${event.category === 'geo' ? 'text-red-700 bg-red-100 dark:bg-red-900/50 dark:text-red-300' : 'text-blue-700 bg-blue-100 dark:bg-blue-900/50 dark:text-blue-300'}`}>
+                                                {event.year}
+                                            </span>
+                                        </div>
+                                        <p className="text-[10px] text-gray-700 dark:text-gray-300 leading-tight font-medium select-none truncate">
+                                            {event.label}
+                                        </p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>

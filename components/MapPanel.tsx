@@ -17,6 +17,8 @@ interface MapPanelProps {
 const MapPanel: React.FC<MapPanelProps> = ({ people, onShowDetails, language }) => {
     const mapContainerRef = useRef<HTMLDivElement>(null);
     const mapInstanceRef = useRef<any>(null);
+    // Ref to store markers mapped by person ID for quick access
+    const personMarkersRef = useRef<Record<string, any[]>>({});
     const [markersAdded, setMarkersAdded] = useState(0);
     const [selectedCity, setSelectedCity] = useState('');
     const t = translations[language];
@@ -61,6 +63,32 @@ const MapPanel: React.FC<MapPanelProps> = ({ people, onShowDetails, language }) 
         const coords = GEORGIAN_CITIES[city];
         if (coords && mapInstanceRef.current) {
             mapInstanceRef.current.setView([coords.lat, coords.lng], 12);
+        }
+    };
+
+    // Handler to focus map on a person from the list
+    const handlePersonListClick = (personId: string) => {
+        const markers = personMarkersRef.current[personId];
+        
+        if (markers && markers.length > 0 && mapInstanceRef.current) {
+            const map = mapInstanceRef.current;
+            
+            // Create a feature group to calculate bounds for all markers of this person
+            const group = L.featureGroup(markers);
+            
+            // Fly to the bounds
+            map.fitBounds(group.getBounds(), { 
+                padding: [100, 100], 
+                maxZoom: 15,
+                animate: true,
+                duration: 1
+            });
+
+            // Open the popup of the first marker (usually birth or residence)
+            // Timeout ensures zoom finishes or starts before popup opens
+            setTimeout(() => {
+                markers[0].openPopup();
+            }, 300);
         }
     };
 
@@ -114,6 +142,9 @@ const MapPanel: React.FC<MapPanelProps> = ({ people, onShowDetails, language }) 
 
         let count = 0;
         const bounds = L.latLngBounds([]);
+        
+        // Reset marker refs
+        personMarkersRef.current = {};
 
         // Process locations locally and synchronously
         addressesToMap.forEach(locData => {
@@ -150,12 +181,12 @@ const MapPanel: React.FC<MapPanelProps> = ({ people, onShowDetails, language }) 
 
                 const marker = L.marker([lat, lng], { icon })
                     .bindPopup(`
-                        <div class="text-center">
-                            <strong class="block text-sm">${locData.person.firstName} ${locData.person.lastName}</strong>
-                            <span class="text-xs uppercase font-bold text-gray-500">${t[`map_${locData.type}`]}</span><br/>
-                            <span class="text-xs">${locData.address}</span><br/>
+                        <div class="text-center min-w-[150px]">
+                            <strong class="block text-sm text-gray-900">${locData.person.firstName} ${locData.person.lastName}</strong>
+                            <span class="text-xs uppercase font-bold text-gray-500 mb-1 block">${t[`map_${locData.type}`]}</span>
+                            <span class="text-xs text-gray-600 block mb-2">${locData.address}</span>
                             <button onclick="window.dispatchEvent(new CustomEvent('openPersonDetails', { detail: '${locData.person.id}' }))" 
-                                class="mt-2 text-xs bg-purple-600 text-white px-2 py-1 rounded">
+                                class="inline-flex items-center justify-center bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium px-3 py-1.5 rounded transition-colors w-full">
                                 Info
                             </button>
                         </div>
@@ -164,6 +195,12 @@ const MapPanel: React.FC<MapPanelProps> = ({ people, onShowDetails, language }) 
                 markers.addLayer(marker);
                 bounds.extend([lat, lng]);
                 count++;
+
+                // Store marker reference
+                if (!personMarkersRef.current[locData.person.id]) {
+                    personMarkersRef.current[locData.person.id] = [];
+                }
+                personMarkersRef.current[locData.person.id].push(marker);
             }
         });
 
@@ -255,7 +292,7 @@ const MapPanel: React.FC<MapPanelProps> = ({ people, onShowDetails, language }) 
                             {peopleInSelectedCity.map((group, idx) => (
                                 <li key={`${group.person.id}-${idx}`}>
                                     <button 
-                                        onClick={() => onShowDetails(group.person.id)}
+                                        onClick={() => handlePersonListClick(group.person.id)}
                                         className="w-full text-left px-4 py-3 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors flex items-start gap-3 group"
                                     >
                                         <div className="mt-1 flex gap-1 flex-wrap max-w-[40px]">
@@ -296,22 +333,20 @@ const MapPanel: React.FC<MapPanelProps> = ({ people, onShowDetails, language }) 
                 )}
             </div>
 
-            {/* Legend (Bottom Left) */}
-            <div className="absolute bottom-6 left-6 z-[1000] bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm p-4 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 text-xs pointer-events-none">
-                <h4 className="font-bold mb-3 text-gray-800 dark:text-gray-100 uppercase tracking-wide border-b border-gray-200 dark:border-gray-700 pb-2">{t.map_legend}</h4>
-                <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-green-500 border border-white shadow-sm"></div>
-                        <span className="text-gray-600 dark:text-gray-300 font-medium">{t.map_birth}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-blue-500 border border-white shadow-sm"></div>
-                        <span className="text-gray-600 dark:text-gray-300 font-medium">{t.map_residence}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-red-500 border border-white shadow-sm"></div>
-                        <span className="text-gray-600 dark:text-gray-300 font-medium">{t.map_death}</span>
-                    </div>
+            {/* Legend (Bottom Center - Horizontal) */}
+            <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-[1000] bg-white/95 dark:bg-gray-800/95 backdrop-blur-md px-6 py-3 rounded-full shadow-lg border border-gray-200 dark:border-gray-700 pointer-events-none flex flex-row items-center gap-6">
+                <h4 className="font-bold text-gray-800 dark:text-gray-100 uppercase tracking-wide text-[10px] hidden sm:block border-r border-gray-300 dark:border-gray-600 pr-4 mr-1 h-4 leading-4">{t.map_legend}</h4>
+                <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-green-500 border border-white shadow-sm"></div>
+                    <span className="text-gray-600 dark:text-gray-300 font-medium text-xs whitespace-nowrap">{t.map_birth}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-blue-500 border border-white shadow-sm"></div>
+                    <span className="text-gray-600 dark:text-gray-300 font-medium text-xs whitespace-nowrap">{t.map_residence}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-red-500 border border-white shadow-sm"></div>
+                    <span className="text-gray-600 dark:text-gray-300 font-medium text-xs whitespace-nowrap">{t.map_death}</span>
                 </div>
             </div>
 
