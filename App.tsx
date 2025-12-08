@@ -1,4 +1,5 @@
 
+
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Person, ModalState, Gender } from './types';
 import TreeNode from './components/TreeNode';
@@ -29,7 +30,8 @@ import {
     SearchIcon, BackIcon, HomeIcon, MenuIcon, ExportIcon, 
     CenterIcon, StatsIcon, CloseIcon, ShareIcon, JsonExportIcon, 
     JsonImportIcon, SunIcon, MoonIcon, ViewCompactIcon, ViewNormalIcon, 
-    ListBulletIcon, GlobeIcon, DocumentIcon, MessageIcon, CogIcon, CalculatorIcon, ClockIcon, MapIcon
+    ListBulletIcon, GlobeIcon, DocumentIcon, MessageIcon, CogIcon, CalculatorIcon, ClockIcon, MapIcon,
+    PlusIcon, MinusIcon
 } from './components/Icons';
 
 // Hooks
@@ -505,6 +507,28 @@ function App() {
                                 language={language}
                             />
                         </div>
+                    </div>
+                    {/* Zoom Controls */}
+                    <div className="absolute bottom-6 right-6 z-10 flex flex-col gap-3">
+                        <button 
+                            onClick={() => handleZoomBtn('in')} 
+                            className="w-12 h-12 rounded-full bg-gray-600/80 text-white backdrop-blur-sm shadow-xl flex items-center justify-center hover:bg-gray-500 transition-all active:scale-95"
+                            title={t.add} 
+                        >
+                            <PlusIcon className="w-6 h-6" />
+                        </button>
+                        <button 
+                            onClick={() => handleZoomBtn('out')} 
+                            className="w-12 h-12 rounded-full bg-gray-600/80 text-white backdrop-blur-sm shadow-xl flex items-center justify-center hover:bg-gray-500 transition-all active:scale-95"
+                        >
+                            <MinusIcon className="w-6 h-6" />
+                        </button>
+                        <button 
+                            onClick={resetTransform} 
+                            className="w-12 h-12 rounded-full bg-gray-600/80 text-white backdrop-blur-sm shadow-xl flex items-center justify-center hover:bg-gray-500 transition-all active:scale-95"
+                        >
+                            <CenterIcon className="w-6 h-6" />
+                        </button>
                     </div>
                 </div>
               );

@@ -1,8 +1,9 @@
+
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { Person, People } from '../types';
 import { getYear } from '../utils/dateUtils';
 import { historicalEvents } from '../data/historicalEvents';
-import { DefaultAvatar } from './Icons';
+import { DefaultAvatar, PlusIcon, MinusIcon, CenterIcon } from './Icons';
 
 interface TimelineViewProps {
     people: People;
@@ -114,6 +115,14 @@ const TimelineView: React.FC<TimelineViewProps> = ({ people, onShowDetails, high
         setPixelsPerYear(prev => Math.max(2, Math.min(50, prev + delta)));
     };
 
+    const handleReset = () => {
+        setPixelsPerYear(10);
+        if (containerRef.current) {
+             const centerPos = (totalWidth / 2) - (containerRef.current.clientWidth / 2);
+             containerRef.current.scrollTo({ left: centerPos, behavior: 'smooth' });
+        }
+    };
+
     // Scroll to center on mount
     useEffect(() => {
         if (containerRef.current) {
@@ -165,9 +174,16 @@ const TimelineView: React.FC<TimelineViewProps> = ({ people, onShowDetails, high
     return (
         <div className="relative flex flex-col h-full w-full bg-gray-100 dark:bg-gray-900 overflow-hidden">
             {/* Zoom Controls - Fixed relative to viewport container */}
-            <div className="absolute bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-auto">
-                <button onClick={() => handleZoom(2)} className="w-12 h-12 rounded-full bg-white dark:bg-gray-800 text-gray-800 dark:text-white shadow-xl border border-gray-200 dark:border-gray-700 flex items-center justify-center text-2xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">+</button>
-                <button onClick={() => handleZoom(-2)} className="w-12 h-12 rounded-full bg-white dark:bg-gray-800 text-gray-800 dark:text-white shadow-xl border border-gray-200 dark:border-gray-700 flex items-center justify-center text-2xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">-</button>
+            <div className="absolute bottom-6 right-6 z-50 flex flex-col gap-3 pointer-events-auto">
+                <button onClick={() => handleZoom(2)} className="w-12 h-12 rounded-full bg-gray-600/80 text-white backdrop-blur-sm shadow-xl flex items-center justify-center hover:bg-gray-500 transition-all active:scale-95">
+                    <PlusIcon className="w-6 h-6" />
+                </button>
+                <button onClick={() => handleZoom(-2)} className="w-12 h-12 rounded-full bg-gray-600/80 text-white backdrop-blur-sm shadow-xl flex items-center justify-center hover:bg-gray-500 transition-all active:scale-95">
+                    <MinusIcon className="w-6 h-6" />
+                </button>
+                <button onClick={handleReset} className="w-12 h-12 rounded-full bg-gray-600/80 text-white backdrop-blur-sm shadow-xl flex items-center justify-center hover:bg-gray-500 transition-all active:scale-95">
+                    <CenterIcon className="w-6 h-6" />
+                </button>
             </div>
 
             {/* Timeline Scroll Area */}
