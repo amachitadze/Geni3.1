@@ -12,7 +12,7 @@ interface TimelineViewProps {
 }
 
 const TimelineView: React.FC<TimelineViewProps> = ({ people, onShowDetails, highlightedPersonId }) => {
-    const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
     const headerRef = useRef<HTMLDivElement>(null);
     const footerRef = useRef<HTMLDivElement>(null);
     
@@ -121,10 +121,8 @@ const TimelineView: React.FC<TimelineViewProps> = ({ people, onShowDetails, high
     // Total width calculation
     const totalWidth = (maxYear - minYear) * pixelsPerYear;
     const laneHeight = 60;
-    const headerHeight = 80; // Space visually reserved at top (but transparent)
-    const footerHeight = 160; // Space visually reserved at bottom (but transparent)
-    const containerPaddingTop = 80; // Actual padding for the scroll container
-    const containerPaddingBottom = 160;
+    const headerHeight = 60; // Space reserved at top
+    const footerHeight = 160; // Space reserved at bottom
     
     // Calculate precise event positions
     const eventPositions = useMemo(() => {
@@ -142,16 +140,16 @@ const TimelineView: React.FC<TimelineViewProps> = ({ people, onShowDetails, high
 
     const handleReset = () => {
         setPixelsPerYear(10);
-        if (scrollContainerRef.current) {
-             const centerPos = (totalWidth / 2) - (scrollContainerRef.current.clientWidth / 2);
-             scrollContainerRef.current.scrollTo({ left: centerPos, behavior: 'smooth' });
+        if (containerRef.current) {
+             const centerPos = (totalWidth / 2) - (containerRef.current.clientWidth / 2);
+             containerRef.current.scrollTo({ left: centerPos, behavior: 'smooth' });
         }
     };
 
     // Scroll Sync Handler
     const syncScroll = () => {
-        if (scrollContainerRef.current) {
-            const left = scrollContainerRef.current.scrollLeft;
+        if (containerRef.current) {
+            const left = containerRef.current.scrollLeft;
             if (headerRef.current) {
                 headerRef.current.style.transform = `translateX(-${left}px)`;
             }
@@ -164,9 +162,9 @@ const TimelineView: React.FC<TimelineViewProps> = ({ people, onShowDetails, high
     useEffect(() => {
         // Initial sync
         syncScroll();
-        if (scrollContainerRef.current) {
+        if (containerRef.current) {
             // Scroll to center initially
-            scrollContainerRef.current.scrollLeft = (totalWidth / 2) - (scrollContainerRef.current.clientWidth / 2);
+            containerRef.current.scrollLeft = (totalWidth / 2) - (containerRef.current.clientWidth / 2);
         }
     }, [totalWidth]);
 
@@ -174,7 +172,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ people, onShowDetails, high
     const handleMouseDown = (e: React.MouseEvent) => {
         if ((e.target as HTMLElement).closest('[data-person-id], button, .historical-event-card')) return;
         
-        const slider = scrollContainerRef.current;
+        const slider = containerRef.current;
         if(!slider) return;
 
         setIsDown(true);
@@ -193,7 +191,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ people, onShowDetails, high
     const handleMouseMove = (e: React.MouseEvent) => {
         if (!isDown) return;
         e.preventDefault();
-        const slider = scrollContainerRef.current;
+        const slider = containerRef.current;
         if(!slider) return;
 
         const x = e.pageX - slider.offsetLeft;
@@ -212,19 +210,47 @@ const TimelineView: React.FC<TimelineViewProps> = ({ people, onShowDetails, high
     return (
         <div className="relative h-full w-full bg-gray-100 dark:bg-gray-900 overflow-hidden flex flex-col" onClick={handleContainerClick}>
             
-            {/* LAYER 1: SCROLLABLE CONTENT (Grid Lines & People) */}
+            {/* Zoom Controls */}
+            <div className="absolute bottom-6 right-6 z-50 flex flex-col gap-3 pointer-events-auto">
+                <button onClick={() => handleZoom(2)} className="w-9 h-9 rounded-full bg-gray-700/80 text-white backdrop-blur-sm shadow-xl flex items-center justify-center hover:bg-gray-600 transition-all active:scale-95">
+                    <PlusIcon className="w-5 h-5" />
+                </button>
+                <button onClick={() => handleZoom(-2)} className="w-9 h-9 rounded-full bg-gray-700/80 text-white backdrop-blur-sm shadow-xl flex items-center justify-center hover:bg-gray-600 transition-all active:scale-95">
+                    <MinusIcon className="w-5 h-5" />
+                </button>
+                <button onClick={handleReset} className="w-9 h-9 rounded-full bg-gray-700/80 text-white backdrop-blur-sm shadow-xl flex items-center justify-center hover:bg-gray-600 transition-all active:scale-95">
+                    <CenterIcon className="w-5 h-5" />
+                </button>
+            </div>
+
+            {/* FIXED HEADER (Years) - Synced via transform */}
+            <div className="absolute top-0 left-0 right-0 h-14 z-30 pointer-events-none overflow-hidden select-none">
+                <div ref={headerRef} className="absolute top-0 left-0 h-full will-change-transform">
+                    {years.map((y) => (
+                        <div 
+                            key={y.year} 
+                            style={{ position: 'absolute', left: y.left + 4, top: 12 }} 
+                            className="text-xs text-gray-700 dark:text-gray-300 font-mono font-bold px-2 py-0.5 rounded-full bg-white/40 dark:bg-gray-800/40 backdrop-blur-sm border border-white/20 dark:border-white/10"
+                        >
+                            {y.year}
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* MAIN SCROLL AREA (Grid + People) */}
             <div 
-                ref={scrollContainerRef}
-                className={`absolute inset-0 overflow-x-auto overflow-y-auto z-10 ${isDown ? 'cursor-grabbing' : 'cursor-grab'}`}
+                ref={containerRef}
+                className={`flex-grow w-full overflow-x-auto overflow-y-auto relative z-10 ${isDown ? 'cursor-grabbing' : 'cursor-grab'}`}
                 onScroll={syncScroll}
                 onMouseDown={handleMouseDown}
                 onMouseLeave={handleMouseLeave}
                 onMouseUp={handleMouseUp}
                 onMouseMove={handleMouseMove}
             >
-                <div style={{ width: `${totalWidth}px`, height: '100%', minHeight: `${lanes.length * laneHeight + containerPaddingTop + containerPaddingBottom}px`, paddingTop: containerPaddingTop, paddingBottom: containerPaddingBottom, position: 'relative' }}>
+                <div style={{ width: `${totalWidth}px`, height: '100%', minHeight: `${lanes.length * laneHeight + headerHeight + footerHeight}px`, paddingTop: headerHeight, paddingBottom: footerHeight, position: 'relative' }}>
                     
-                    {/* Background Grid Lines (Rendered here to move with scroll) */}
+                    {/* Background Grid Lines */}
                     <div className="absolute top-0 bottom-0 left-0 right-0 pointer-events-none z-0">
                         {years.map((y) => (
                             <div key={y.year} style={{ position: 'absolute', left: y.left, top: 0, bottom: 0, borderLeft: '1px dashed rgba(156, 163, 175, 0.15)' }} />
@@ -288,23 +314,8 @@ const TimelineView: React.FC<TimelineViewProps> = ({ people, onShowDetails, high
                 </div>
             </div>
 
-            {/* LAYER 2: FIXED HEADER (Years) - Synced via transform, pointer-events-none */}
-            <div className="absolute top-0 left-0 right-0 h-16 z-30 pointer-events-none overflow-hidden select-none bg-gradient-to-b from-gray-100/90 to-transparent dark:from-gray-900/90">
-                <div ref={headerRef} className="absolute top-0 left-0 h-full will-change-transform">
-                    {years.map((y) => (
-                        <div 
-                            key={y.year} 
-                            style={{ position: 'absolute', left: y.left + 4, top: 12 }} 
-                            className="text-xs text-gray-700 dark:text-gray-300 font-mono font-bold px-2 py-0.5 rounded-full bg-white/40 dark:bg-gray-800/40 backdrop-blur-sm border border-white/20 dark:border-white/10"
-                        >
-                            {y.year}
-                        </div>
-                    ))}
-                </div>
-            </div>
-
-            {/* LAYER 3: FIXED FOOTER (Historical Events) - Synced via transform, pointer-events-none */}
-            <div className="absolute bottom-0 left-0 right-0 h-32 z-30 pointer-events-none overflow-hidden select-none bg-gradient-to-t from-gray-100/90 to-transparent dark:from-gray-900/90">
+            {/* FIXED FOOTER (Historical Events) - Synced via transform */}
+            <div className="absolute bottom-0 left-0 right-0 h-32 z-30 pointer-events-none overflow-hidden select-none">
                 <div ref={footerRef} className="absolute top-0 left-0 h-full w-full will-change-transform">
                     {eventPositions.map((event, idx) => {
                         const isActive = activeEventIndex === idx;
@@ -336,20 +347,6 @@ const TimelineView: React.FC<TimelineViewProps> = ({ people, onShowDetails, high
                     })}
                 </div>
             </div>
-
-            {/* LAYER 4: ZOOM CONTROLS (Fixed Absolute to Viewport Container) */}
-            <div className="absolute bottom-8 right-8 z-[60] flex flex-col gap-3 pointer-events-auto">
-                <button onClick={() => handleZoom(2)} className="w-9 h-9 rounded-full bg-gray-700/80 text-white backdrop-blur-sm shadow-xl flex items-center justify-center hover:bg-gray-600 transition-all active:scale-95">
-                    <PlusIcon className="w-5 h-5" />
-                </button>
-                <button onClick={() => handleZoom(-2)} className="w-9 h-9 rounded-full bg-gray-700/80 text-white backdrop-blur-sm shadow-xl flex items-center justify-center hover:bg-gray-600 transition-all active:scale-95">
-                    <MinusIcon className="w-5 h-5" />
-                </button>
-                <button onClick={handleReset} className="w-9 h-9 rounded-full bg-gray-700/80 text-white backdrop-blur-sm shadow-xl flex items-center justify-center hover:bg-gray-600 transition-all active:scale-95">
-                    <CenterIcon className="w-5 h-5" />
-                </button>
-            </div>
-
         </div>
     );
 };
