@@ -140,6 +140,12 @@ export const translations = {
         spouse_mode_new: "ახალი პიროვნება",
         spouse_mode_existing: "არსებულის არჩევა",
         lbl_select_ex_spouse: "აირჩიეთ ყოფილი მეუღლე",
+        
+        // Placeholders
+        ph_phone: "+995 577 11 22 33",
+        ph_email: "email@mail.com",
+        ph_address: "ბაღდათი, წითელხევი",
+        ph_city: "ქალაქი",
 
         // Details Modal
         det_born: "დაიბადა",
@@ -502,6 +508,12 @@ export const translations = {
         spouse_mode_new: "Nueva persona",
         spouse_mode_existing: "Seleccionar existente",
         lbl_select_ex_spouse: "Seleccionar ex-cónyuge",
+        
+        // Placeholders
+        ph_phone: "+34 612 34 56 78",
+        ph_email: "email@mail.com",
+        ph_address: "Madrid, España",
+        ph_city: "Ciudad",
 
         // Details Modal
         det_born: "Nacido",

@@ -520,7 +520,7 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
                     </div>
                     <div>
                         <label htmlFor="birthPlace" className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">{t.lbl_birthplace}</label>
-                        <input type="text" id="birthPlace" value={birthPlace} onChange={(e) => setBirthPlace(e.target.value)} className={inputStyles} placeholder="City" list="city-suggestions"/>
+                        <input type="text" id="birthPlace" value={birthPlace} onChange={(e) => setBirthPlace(e.target.value)} className={inputStyles} placeholder={t.ph_city} list="city-suggestions"/>
                     </div>
                 </div>
 
@@ -532,7 +532,7 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
                     {convertDisplayToStorage(deathDate) && (
                         <div>
                             <label htmlFor="deathPlace" className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">{t.lbl_deathplace}</label>
-                            <input type="text" id="deathPlace" value={deathPlace} onChange={(e) => setDeathPlace(e.target.value)} className={inputStyles} placeholder="City" list="city-suggestions"/>
+                            <input type="text" id="deathPlace" value={deathPlace} onChange={(e) => setDeathPlace(e.target.value)} className={inputStyles} placeholder={t.ph_city} list="city-suggestions"/>
                         </div>
                     )}
                 </div>
@@ -549,15 +549,15 @@ const AddPersonModal: React.FC<AddPersonModalProps> = ({ isOpen, onClose, onSubm
                     <h3 className="text-sm font-medium text-gray-600 dark:text-gray-300">{t.lbl_contact_info}</h3>
                     <div>
                         <label htmlFor="phone" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{t.lbl_phone}</label>
-                        <input type="tel" id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} className={inputStyles}/>
+                        <input type="tel" id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} className={inputStyles} placeholder={t.ph_phone}/>
                     </div>
                     <div>
                         <label htmlFor="email" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{t.lbl_email}</label>
-                        <input type="email" id="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputStyles}/>
+                        <input type="email" id="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputStyles} placeholder={t.ph_email}/>
                     </div>
                     <div>
                         <label htmlFor="address" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{t.lbl_address}</label>
-                        <input type="text" id="address" value={address} onChange={(e) => setAddress(e.target.value)} className={inputStyles} />
+                        <input type="text" id="address" value={address} onChange={(e) => setAddress(e.target.value)} className={inputStyles} placeholder={t.ph_address}/>
                     </div>
                 </div>
                 

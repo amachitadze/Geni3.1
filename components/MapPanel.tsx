@@ -97,7 +97,7 @@ const MapPanel: React.FC<MapPanelProps> = ({ people, onShowDetails, language, hi
             // Open popup for all markers (using autoClose: false in creation)
             setTimeout(() => {
                 markers.forEach((m: any) => m.openPopup());
-            }, 500);
+            }, 1000);
         }
     };
 
@@ -147,72 +147,118 @@ const MapPanel: React.FC<MapPanelProps> = ({ people, onShowDetails, language, hi
 
         const map = mapInstanceRef.current;
         const markers = L.layerGroup().addTo(map);
-        // Lines layer group removed based on request
-
+        
         let count = 0;
         const bounds = L.latLngBounds([]);
         
         // Reset marker refs
         personMarkersRef.current = {};
 
-        // Process locations locally and synchronously
+        // --- GROUPING LOGIC START ---
+        // We group markers by "PersonID + Location" to combine events (e.g. Birth + Residence) into one marker
+        const uniqueMarkerGroups = new Map<string, {
+            lat: number,
+            lng: number,
+            person: Person,
+            types: ('birth' | 'residence' | 'death')[],
+            address: string
+        }>();
+
         addressesToMap.forEach(locData => {
             const coords = getLocalCoordinates(locData.address);
-            
             if (coords) {
-                // Create Custom Marker Icon based on type
-                let color = 'blue';
-                if (locData.type === 'birth') color = 'green';
-                if (locData.type === 'death') color = 'red';
-
-                const iconHtml = `
-                    <div style="
-                        background-color: ${color};
-                        width: 12px;
-                        height: 12px;
-                        border-radius: 50%;
-                        border: 2px solid white;
-                        box-shadow: 0 0 4px rgba(0,0,0,0.5);
-                    "></div>
-                `;
-
-                const icon = L.divIcon({
-                    className: 'custom-div-icon',
-                    html: iconHtml,
-                    iconSize: [12, 12],
-                    iconAnchor: [6, 6]
-                });
-
-                // Add random jitter to separate markers at exact same location
-                // Increased range to prevent visual overlap of popups
-                const jitterLat = (Math.random() - 0.5) * 0.01;
-                const jitterLng = (Math.random() - 0.5) * 0.01;
-                const lat = coords.lat + jitterLat;
-                const lng = coords.lng + jitterLng;
-
-                const marker = L.marker([lat, lng], { icon })
-                    .bindPopup(`
-                        <div class="text-center min-w-[150px]">
-                            <strong class="block text-sm text-gray-900">${locData.person.firstName} ${locData.person.lastName}</strong>
-                            <span class="text-xs uppercase font-bold text-gray-500 mb-1 block">${t[`map_${locData.type}`]}</span>
-                            <span class="text-xs text-gray-600 block mb-2">${locData.address}</span>
-                            <button onclick="window.dispatchEvent(new CustomEvent('openPersonDetails', { detail: '${locData.person.id}' }))" 
-                                class="inline-flex items-center justify-center bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium px-3 py-1.5 rounded transition-colors w-full">
-                                დეტალები
-                            </button>
-                        </div>
-                    `, { autoClose: false, closeOnClick: false }); // Key change: allow multiple open
+                // Key combines person ID and precise coordinates to identify unique marker spots per person
+                const key = `${locData.person.id}_${coords.lat}_${coords.lng}`;
                 
-                markers.addLayer(marker);
-                bounds.extend([lat, lng]);
-                count++;
-
-                // Store marker reference
-                if (!personMarkersRef.current[locData.person.id]) {
-                    personMarkersRef.current[locData.person.id] = [];
+                if (!uniqueMarkerGroups.has(key)) {
+                    uniqueMarkerGroups.set(key, {
+                        lat: coords.lat,
+                        lng: coords.lng,
+                        person: locData.person,
+                        types: [locData.type],
+                        address: locData.address
+                    });
+                } else {
+                    const entry = uniqueMarkerGroups.get(key);
+                    if (entry && !entry.types.includes(locData.type)) {
+                        entry.types.push(locData.type);
+                    }
                 }
-                personMarkersRef.current[locData.person.id].push(marker);
             }
+        });
+        // --- GROUPING LOGIC END ---
+
+        // Process grouped locations
+        uniqueMarkerGroups.forEach((group) => {
+            // Determine marker color based on priority: Death > Birth > Residence
+            let color = 'blue';
+            if (group.types.includes('death')) color = 'red';
+            else if (group.types.includes('birth')) color = 'green';
+
+            const iconHtml = `
+                <div style="
+                    background-color: ${color};
+                    width: 12px;
+                    height: 12px;
+                    border-radius: 50%;
+                    border: 2px solid white;
+                    box-shadow: 0 0 4px rgba(0,0,0,0.5);
+                "></div>
+            `;
+
+            const icon = L.divIcon({
+                className: 'custom-div-icon',
+                html: iconHtml,
+                iconSize: [12, 12],
+                iconAnchor: [6, 6]
+            });
+
+            // Add random jitter to separate markers at exact same location (for DIFFERENT people)
+            // Note: Since we grouped by Person+Location, markers for the same person at the same spot are already merged.
+            // This jitter is only to separate different people in the same city.
+            const jitterLat = (Math.random() - 0.5) * 0.01;
+            const jitterLng = (Math.random() - 0.5) * 0.01;
+            const lat = group.lat + jitterLat;
+            const lng = group.lng + jitterLng;
+
+            // Sort types for display: Birth -> Residence -> Death
+            const typePriority = { 'birth': 1, 'residence': 2, 'death': 3 };
+            const sortedTypes = group.types.sort((a, b) => typePriority[a] - typePriority[b]);
+
+            // Generate Badges HTML
+            const badgesHtml = sortedTypes.map(type => {
+                let badgeColor = 'bg-gray-200 text-gray-700';
+                if(type === 'birth') badgeColor = 'bg-green-100 text-green-800';
+                if(type === 'residence') badgeColor = 'bg-blue-100 text-blue-800';
+                if(type === 'death') badgeColor = 'bg-red-100 text-red-800';
+                
+                return `<span class="${badgeColor} px-2 py-0.5 rounded text-[10px] uppercase font-bold mr-1 mb-1 inline-block">${t[`map_${type}`]}</span>`;
+            }).join('');
+
+            const marker = L.marker([lat, lng], { icon })
+                .bindPopup(`
+                    <div class="text-center min-w-[160px]">
+                        <strong class="block text-sm text-gray-900 mb-1">${group.person.firstName} ${group.person.lastName}</strong>
+                        <div class="flex flex-wrap justify-center mb-1">
+                            ${badgesHtml}
+                        </div>
+                        <span class="text-xs text-gray-600 block mb-2">${group.address}</span>
+                        <button onclick="window.dispatchEvent(new CustomEvent('openPersonDetails', { detail: '${group.person.id}' }))" 
+                            class="inline-flex items-center justify-center bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium px-3 py-1.5 rounded transition-colors w-full">
+                            დეტალები
+                        </button>
+                    </div>
+                `, { autoClose: false, closeOnClick: false }); 
+            
+            markers.addLayer(marker);
+            bounds.extend([lat, lng]);
+            count++;
+
+            // Store marker reference
+            if (!personMarkersRef.current[group.person.id]) {
+                personMarkersRef.current[group.person.id] = [];
+            }
+            personMarkersRef.current[group.person.id].push(marker);
         });
 
         if (count > 0 && map && !selectedCity && !highlightedPersonId) {
