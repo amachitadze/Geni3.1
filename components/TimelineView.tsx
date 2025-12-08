@@ -1,5 +1,4 @@
 
-
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { Person, People } from '../types';
 import { getYear } from '../utils/dateUtils';
@@ -22,6 +21,9 @@ const TimelineView: React.FC<TimelineViewProps> = ({ people, onShowDetails, high
     const [startY, setStartY] = useState(0);
     const [scrollLeft, setScrollLeft] = useState(0);
     const [scrollTop, setScrollTop] = useState(0);
+
+    // Event Z-Index State
+    const [activeEventIndex, setActiveEventIndex] = useState<number | null>(null);
     
     // Sort people by birth year
     const sortedPeople = useMemo(() => {
@@ -118,7 +120,6 @@ const TimelineView: React.FC<TimelineViewProps> = ({ people, onShowDetails, high
     // Total width calculation
     const totalWidth = (maxYear - minYear) * pixelsPerYear;
     const laneHeight = 60;
-    const contentHeight = Math.max(lanes.length * laneHeight + 60, 400); // Ensure minimal height
     
     // Calculate precise event positions
     const eventPositions = useMemo(() => {
@@ -152,7 +153,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ people, onShowDetails, high
     // --- Drag & Pan Handlers ---
     const handleMouseDown = (e: React.MouseEvent) => {
         // Prevent drag if clicking on a person card or button
-        if ((e.target as HTMLElement).closest('[data-person-id], button')) return;
+        if ((e.target as HTMLElement).closest('[data-person-id], button, .historical-event-card')) return;
         
         const slider = containerRef.current;
         if(!slider) return;
@@ -186,12 +187,17 @@ const TimelineView: React.FC<TimelineViewProps> = ({ people, onShowDetails, high
         slider.scrollTop = scrollTop - walkY;
     };
 
+    // Close event active state when clicking elsewhere
+    const handleContainerClick = () => {
+        if (activeEventIndex !== null) setActiveEventIndex(null);
+    };
+
     if (sortedPeople.length === 0) {
         return <div className="flex items-center justify-center h-full text-gray-500">ინფორმაციის საჩვენებლად საჭიროა დაბადების თარიღების შეყვანა.</div>;
     }
 
     return (
-        <div className="relative flex flex-col h-full w-full bg-gray-100 dark:bg-gray-900 overflow-hidden">
+        <div className="relative flex flex-col h-full w-full bg-gray-100 dark:bg-gray-900 overflow-hidden" onClick={handleContainerClick}>
             {/* Zoom Controls - Fixed relative to viewport container */}
             <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3 pointer-events-auto">
                 <button onClick={() => handleZoom(2)} className="w-9 h-9 rounded-full bg-gray-700/80 text-white backdrop-blur-sm shadow-xl flex items-center justify-center hover:bg-gray-600 transition-all active:scale-95">
@@ -214,6 +220,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ people, onShowDetails, high
                 onMouseUp={handleMouseUp}
                 onMouseMove={handleMouseMove}
             >
+                {/* Main Content Wrapper - Flex column to push footer down */}
                 <div style={{ width: `${totalWidth}px`, minHeight: '100%', position: 'relative', display: 'flex', flexDirection: 'column' }}>
                     
                     {/* Sticky Header (Years) */}
@@ -227,8 +234,8 @@ const TimelineView: React.FC<TimelineViewProps> = ({ people, onShowDetails, high
                         </div>
                     </div>
 
-                    {/* Background Grid Layer (Absolute inset-0, spanned full height) */}
-                    <div className="absolute inset-0 pointer-events-none z-0">
+                    {/* Background Grid Layer (Absolute inset-0) */}
+                    <div className="absolute top-0 bottom-0 left-0 right-0 pointer-events-none z-0">
                         {years.map((y) => (
                             <div key={y.year} style={{ position: 'absolute', left: y.left, top: 0, bottom: 0, borderLeft: '1px dashed rgba(156, 163, 175, 0.15)' }} />
                         ))}
@@ -259,7 +266,9 @@ const TimelineView: React.FC<TimelineViewProps> = ({ people, onShowDetails, high
                                             key={person.id}
                                             data-person-id={person.id}
                                             onClick={(e) => { e.stopPropagation(); onShowDetails(person.id); }}
-                                            className={`absolute rounded-full shadow-sm flex items-center px-2 cursor-pointer transition-all hover:scale-[1.02] hover:z-30 group overflow-hidden border ${isHighlighted ? 'ring-4 ring-yellow-400 z-20' : ''} ${isDeceased ? 'grayscale-[80%] opacity-80' : ''}`}
+                                            className={`absolute rounded-full shadow-sm flex items-center px-2 cursor-pointer transition-all hover:scale-[1.02] hover:z-30 group overflow-hidden border 
+                                                ${isHighlighted ? 'ring-4 ring-yellow-400 z-20' : ''} 
+                                                ${isDeceased ? 'grayscale' : ''}`}
                                             style={{
                                                 left,
                                                 width,
@@ -296,23 +305,36 @@ const TimelineView: React.FC<TimelineViewProps> = ({ people, onShowDetails, high
                     </div>
 
                     {/* Sticky Footer (Events) */}
-                    <div className="sticky bottom-0 z-40 h-24 w-full pointer-events-none flex items-start pt-2 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-t border-gray-200 dark:border-gray-800 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] flex-shrink-0">
+                    <div className="sticky bottom-0 z-40 h-32 w-full pointer-events-none flex items-start pt-4 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-t border-gray-200 dark:border-gray-800 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] flex-shrink-0">
                         <div className="absolute w-full h-full overflow-hidden">
-                            {eventPositions.map((event, idx) => (
-                                <div key={idx} style={{ position: 'absolute', left: event.left + 4, top: 8, width: '14rem' }}>
-                                    <div className={`p-2.5 rounded-xl backdrop-blur-md shadow-md border pointer-events-auto hover:scale-105 transition-transform ${event.category === 'geo' ? 'bg-red-50/80 dark:bg-red-900/40 border-red-200 dark:border-red-800' : 'bg-blue-50/80 dark:bg-blue-900/40 border-blue-200 dark:border-blue-800'}`}>
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <span className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded select-none ${event.category === 'geo' ? 'text-red-700 bg-red-100 dark:bg-red-900/50 dark:text-red-300' : 'text-blue-700 bg-blue-100 dark:bg-blue-900/50 dark:text-blue-300'}`}>
-                                                {event.year}
-                                            </span>
-                                            {event.category === 'geo' && <span className="text-[10px] text-red-500">🇬🇪</span>}
+                            {eventPositions.map((event, idx) => {
+                                const isActive = activeEventIndex === idx;
+                                return (
+                                    <div 
+                                        key={idx} 
+                                        style={{ position: 'absolute', left: event.left + 4, top: 12, width: '14rem' }}
+                                        className={`transition-all duration-300 ${isActive ? 'z-50' : 'z-10'}`}
+                                    >
+                                        <div 
+                                            onClick={(e) => { e.stopPropagation(); setActiveEventIndex(idx); }}
+                                            className={`historical-event-card p-2.5 rounded-xl backdrop-blur-md shadow-md border pointer-events-auto cursor-pointer transition-all duration-200
+                                                ${isActive ? 'scale-110 shadow-xl ring-2 ring-offset-2 ring-purple-500 dark:ring-offset-gray-900' : 'hover:scale-105 hover:shadow-lg opacity-90 hover:opacity-100'}
+                                                ${event.category === 'geo' ? 'bg-red-50/90 dark:bg-red-900/60 border-red-200 dark:border-red-800' : 'bg-blue-50/90 dark:bg-blue-900/60 border-blue-200 dark:border-blue-800'}
+                                            `}
+                                        >
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <span className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded select-none ${event.category === 'geo' ? 'text-red-700 bg-red-100 dark:bg-red-900/50 dark:text-red-300' : 'text-blue-700 bg-blue-100 dark:bg-blue-900/50 dark:text-blue-300'}`}>
+                                                    {event.year}
+                                                </span>
+                                                {event.category === 'geo' && <span className="text-[10px] text-red-500">🇬🇪</span>}
+                                            </div>
+                                            <p className="text-xs text-gray-800 dark:text-gray-200 leading-snug font-semibold select-none">
+                                                {event.label}
+                                            </p>
                                         </div>
-                                        <p className="text-xs text-gray-800 dark:text-gray-200 leading-snug font-semibold select-none">
-                                            {event.label}
-                                        </p>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </div>
 
