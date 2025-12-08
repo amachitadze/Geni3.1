@@ -118,6 +118,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ people, onShowDetails, high
     // Total width calculation
     const totalWidth = (maxYear - minYear) * pixelsPerYear;
     const laneHeight = 60;
+    const contentHeight = Math.max(lanes.length * laneHeight + 60, 400); // Ensure minimal height
     
     // Calculate precise event positions
     const eventPositions = useMemo(() => {
@@ -216,28 +217,28 @@ const TimelineView: React.FC<TimelineViewProps> = ({ people, onShowDetails, high
                 <div style={{ width: `${totalWidth}px`, minHeight: '100%', position: 'relative', display: 'flex', flexDirection: 'column' }}>
                     
                     {/* Sticky Header (Years) */}
-                    <div className="sticky top-0 z-40 h-10 w-full flex items-end pb-2 pointer-events-none bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 shadow-sm">
+                    <div className="sticky top-0 z-40 h-12 w-full flex items-end pb-2 pointer-events-none bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 shadow-sm flex-shrink-0">
                         <div className="absolute w-full h-full">
                             {years.map((y) => (
-                                <div key={y.year} style={{ position: 'absolute', left: y.left + 4 }} className="text-xs text-gray-600 dark:text-gray-300 font-mono font-bold select-none px-1.5 py-0.5 rounded">
+                                <div key={y.year} style={{ position: 'absolute', left: y.left + 4 }} className="text-xs text-gray-600 dark:text-gray-300 font-mono font-bold select-none px-1.5 py-0.5 rounded border-l border-gray-300 dark:border-gray-700 h-6">
                                     {y.year}
                                 </div>
                             ))}
                         </div>
                     </div>
 
-                    {/* Background Grid Layer (Absolute inset-0 but below content) */}
-                    <div className="absolute inset-0 pointer-events-none z-0 mt-10 mb-20">
+                    {/* Background Grid Layer (Absolute inset-0, spanned full height) */}
+                    <div className="absolute inset-0 pointer-events-none z-0">
                         {years.map((y) => (
-                            <div key={y.year} style={{ position: 'absolute', left: y.left, top: 0, bottom: 0, borderLeft: '1px dashed rgba(156, 163, 175, 0.2)' }} />
+                            <div key={y.year} style={{ position: 'absolute', left: y.left, top: 0, bottom: 0, borderLeft: '1px dashed rgba(156, 163, 175, 0.15)' }} />
                         ))}
                         {eventPositions.map((e, idx) => (
-                            <div key={idx} style={{ position: 'absolute', left: e.left, top: 0, bottom: 0, borderLeft: '2px solid rgba(255, 99, 71, 0.3)' }} />
+                            <div key={idx} style={{ position: 'absolute', left: e.left, top: 0, bottom: 0, borderLeft: '2px solid rgba(255, 99, 71, 0.15)' }} />
                         ))}
                     </div>
 
-                    {/* Content (People Lanes) */}
-                    <div className="flex-grow relative z-10 py-8" style={{ height: `${lanes.length * laneHeight + 60}px` }}>
+                    {/* Content (People Lanes) - Flex Grow to push footer down */}
+                    <div className="flex-grow relative z-10 py-8" style={{ minHeight: `${lanes.length * laneHeight}px` }}>
                         {lanes.map((lane, laneIndex) => (
                             <div key={laneIndex} style={{ height: laneHeight, position: 'relative' }}>
                                 {lane.map(person => {
@@ -251,13 +252,14 @@ const TimelineView: React.FC<TimelineViewProps> = ({ people, onShowDetails, high
                                     const width = Math.max(pixelsPerYear, (death - birth) * pixelsPerYear); // At least 1 year width
                                     
                                     const isHighlighted = highlightedPersonId === person.id;
+                                    const isDeceased = !!person.deathDate;
                                     
                                     return (
                                         <div
                                             key={person.id}
                                             data-person-id={person.id}
                                             onClick={(e) => { e.stopPropagation(); onShowDetails(person.id); }}
-                                            className={`absolute rounded-full shadow-sm flex items-center px-2 cursor-pointer transition-all hover:brightness-110 hover:z-20 group overflow-hidden border ${isHighlighted ? 'ring-2 ring-yellow-400 z-20' : ''}`}
+                                            className={`absolute rounded-full shadow-sm flex items-center px-2 cursor-pointer transition-all hover:scale-[1.02] hover:z-30 group overflow-hidden border ${isHighlighted ? 'ring-4 ring-yellow-400 z-20' : ''} ${isDeceased ? 'grayscale-[80%] opacity-80' : ''}`}
                                             style={{
                                                 left,
                                                 width,
@@ -270,21 +272,21 @@ const TimelineView: React.FC<TimelineViewProps> = ({ people, onShowDetails, high
                                         >
                                             {/* Avatar (only if width allows) */}
                                             {width > 40 && (
-                                                <div className="flex-shrink-0 mr-2 w-6 h-6 rounded-full overflow-hidden border border-white/50">
+                                                <div className="flex-shrink-0 mr-2 w-7 h-7 rounded-full overflow-hidden border border-white/50 bg-white/20">
                                                     {person.imageUrl ? (
                                                         <img src={person.imageUrl} className="w-full h-full object-cover select-none" alt="" draggable="false" />
                                                     ) : (
-                                                        <DefaultAvatar className="w-full h-full bg-white/20 text-white" />
+                                                        <DefaultAvatar className="w-full h-full text-white" />
                                                     )}
                                                 </div>
                                             )}
                                             
-                                            <span className={`text-white text-xs font-semibold whitespace-nowrap overflow-hidden text-ellipsis select-none ${width < 30 ? 'hidden' : ''}`}>
+                                            <span className={`text-white text-xs font-bold whitespace-nowrap overflow-hidden text-ellipsis select-none drop-shadow-md ${width < 30 ? 'hidden' : ''}`}>
                                                 {person.firstName} {person.lastName}
                                             </span>
 
                                             {!person.deathDate && (
-                                                <div className="absolute right-0 top-0 bottom-0 w-4 bg-gradient-to-r from-transparent to-white/30" />
+                                                <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-r from-transparent to-white/40" />
                                             )}
                                         </div>
                                     );
@@ -294,17 +296,18 @@ const TimelineView: React.FC<TimelineViewProps> = ({ people, onShowDetails, high
                     </div>
 
                     {/* Sticky Footer (Events) */}
-                    <div className="sticky bottom-0 z-40 h-20 w-full pointer-events-none flex items-start pt-2 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-t border-gray-200 dark:border-gray-800 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+                    <div className="sticky bottom-0 z-40 h-24 w-full pointer-events-none flex items-start pt-2 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-t border-gray-200 dark:border-gray-800 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] flex-shrink-0">
                         <div className="absolute w-full h-full overflow-hidden">
                             {eventPositions.map((event, idx) => (
-                                <div key={idx} style={{ position: 'absolute', left: event.left + 4, top: 4, width: '12rem' }}>
-                                    <div className={`p-2 rounded-lg backdrop-blur-md shadow-sm border ${event.category === 'geo' ? 'bg-red-50/50 dark:bg-red-900/30 border-red-200 dark:border-red-800' : 'bg-blue-50/50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800'}`}>
+                                <div key={idx} style={{ position: 'absolute', left: event.left + 4, top: 8, width: '14rem' }}>
+                                    <div className={`p-2.5 rounded-xl backdrop-blur-md shadow-md border pointer-events-auto hover:scale-105 transition-transform ${event.category === 'geo' ? 'bg-red-50/80 dark:bg-red-900/40 border-red-200 dark:border-red-800' : 'bg-blue-50/80 dark:bg-blue-900/40 border-blue-200 dark:border-blue-800'}`}>
                                         <div className="flex items-center gap-2 mb-1">
-                                            <span className={`text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded select-none ${event.category === 'geo' ? 'text-red-700 bg-red-100 dark:bg-red-900/50 dark:text-red-300' : 'text-blue-700 bg-blue-100 dark:bg-blue-900/50 dark:text-blue-300'}`}>
+                                            <span className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded select-none ${event.category === 'geo' ? 'text-red-700 bg-red-100 dark:bg-red-900/50 dark:text-red-300' : 'text-blue-700 bg-blue-100 dark:bg-blue-900/50 dark:text-blue-300'}`}>
                                                 {event.year}
                                             </span>
+                                            {event.category === 'geo' && <span className="text-[10px] text-red-500">🇬🇪</span>}
                                         </div>
-                                        <p className="text-[10px] text-gray-700 dark:text-gray-300 leading-tight font-medium select-none truncate">
+                                        <p className="text-xs text-gray-800 dark:text-gray-200 leading-snug font-semibold select-none">
                                             {event.label}
                                         </p>
                                     </div>
