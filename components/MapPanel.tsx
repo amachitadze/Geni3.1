@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { Person, People } from '../types';
 import { GlobeIcon, CloseIcon } from './Icons';
@@ -334,19 +333,19 @@ const MapPanel: React.FC<MapPanelProps> = ({ people, onShowDetails, language }) 
             </div>
 
             {/* Legend (Bottom Center - Horizontal) */}
-            <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-[1000] bg-white/95 dark:bg-gray-800/95 backdrop-blur-md px-6 py-3 rounded-full shadow-lg border border-gray-200 dark:border-gray-700 pointer-events-none flex flex-row items-center gap-6">
+            <div className="absolute bottom-6 sm:bottom-8 left-1/2 transform -translate-x-1/2 z-[1000] bg-white/95 dark:bg-gray-800/95 backdrop-blur-md px-3 py-2 sm:px-6 sm:py-3 rounded-full shadow-lg border border-gray-200 dark:border-gray-700 pointer-events-none flex flex-row items-center gap-3 sm:gap-6">
                 <h4 className="font-bold text-gray-800 dark:text-gray-100 uppercase tracking-wide text-[10px] hidden sm:block border-r border-gray-300 dark:border-gray-600 pr-4 mr-1 h-4 leading-4">{t.map_legend}</h4>
-                <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-green-500 border border-white shadow-sm"></div>
-                    <span className="text-gray-600 dark:text-gray-300 font-medium text-xs whitespace-nowrap">{t.map_birth}</span>
+                <div className="flex items-center gap-1 sm:gap-2">
+                    <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-green-500 border border-white shadow-sm"></div>
+                    <span className="text-gray-600 dark:text-gray-300 font-medium text-[10px] sm:text-xs whitespace-nowrap">{t.map_birth}</span>
                 </div>
-                <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-blue-500 border border-white shadow-sm"></div>
-                    <span className="text-gray-600 dark:text-gray-300 font-medium text-xs whitespace-nowrap">{t.map_residence}</span>
+                <div className="flex items-center gap-1 sm:gap-2">
+                    <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-blue-500 border border-white shadow-sm"></div>
+                    <span className="text-gray-600 dark:text-gray-300 font-medium text-[10px] sm:text-xs whitespace-nowrap">{t.map_residence}</span>
                 </div>
-                <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-red-500 border border-white shadow-sm"></div>
-                    <span className="text-gray-600 dark:text-gray-300 font-medium text-xs whitespace-nowrap">{t.map_death}</span>
+                <div className="flex items-center gap-1 sm:gap-2">
+                    <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-red-500 border border-white shadow-sm"></div>
+                    <span className="text-gray-600 dark:text-gray-300 font-medium text-[10px] sm:text-xs whitespace-nowrap">{t.map_death}</span>
                 </div>
             </div>
 

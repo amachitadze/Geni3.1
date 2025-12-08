@@ -1,5 +1,3 @@
-
-
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Person, ModalState, Gender } from './types';
 import TreeNode from './components/TreeNode';
@@ -31,7 +29,7 @@ import {
     CenterIcon, StatsIcon, CloseIcon, ShareIcon, JsonExportIcon, 
     JsonImportIcon, SunIcon, MoonIcon, ViewCompactIcon, ViewNormalIcon, 
     ListBulletIcon, GlobeIcon, DocumentIcon, MessageIcon, CogIcon, CalculatorIcon, ClockIcon, MapIcon,
-    PlusIcon, MinusIcon
+    PlusIcon, MinusIcon, CakeIcon
 } from './components/Icons';
 
 // Hooks
@@ -93,6 +91,7 @@ function App() {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isRelationshipModalOpen, setIsRelationshipModalOpen] = useState(false);
+  const [isBirthdayModalOpen, setIsBirthdayModalOpen] = useState(false);
   
   // Language State
   const [language, setLanguage] = useState<Language>('ka');
@@ -241,6 +240,13 @@ function App() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [menuRef]);
+
+  // Handle Birthday Modal Event (from BirthdayNotifier button)
+  useEffect(() => {
+      const toggleHandler = () => setIsBirthdayModalOpen(prev => !prev);
+      window.addEventListener('toggleBirthdayModal', toggleHandler);
+      return () => window.removeEventListener('toggleBirthdayModal', toggleHandler);
+  }, []);
 
   // PWA Prompt
   useEffect(() => {
@@ -601,6 +607,7 @@ function App() {
                                     
                                     <li><div className={MENU_HEADER_CLASS}>{t.menu_analysis}</div></li>
                                     <li><button onClick={() => { setIsStatisticsModalOpen(true); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}><StatsIcon className="w-5 h-5"/><span>{t.menu_stats}</span></button></li>
+                                    <li><button onClick={() => { setIsBirthdayModalOpen(true); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}><CakeIcon className="w-5 h-5"/><span>{t.menu_birthdays}</span></button></li>
                                     <li><button onClick={() => { setIsRelationshipModalOpen(true); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}><CalculatorIcon className="w-5 h-5"/><span>{t.menu_find_rel}</span></button></li>
                                     {!isReadOnly && <li><button onClick={handleExportPdf} className={MENU_ITEM_CLASS}><ExportIcon className="w-5 h-5"/><span>{t.menu_export_pdf}</span></button></li>}
                                     
@@ -690,7 +697,13 @@ function App() {
 
       {/* Floating Elements */}
       <NotificationBanner language={language} />
-      <BirthdayNotifier peopleWithBirthdays={peopleWithBirthdays} onNavigate={navigateTo} />
+      <BirthdayNotifier 
+        peopleWithBirthdays={peopleWithBirthdays} 
+        onNavigate={navigateTo} 
+        isOpen={isBirthdayModalOpen}
+        onClose={() => setIsBirthdayModalOpen(false)}
+        isFloatingButtonVisible={viewMode !== 'map'}
+      />
 
       {/* Modals */}
       <AddPersonModal 
