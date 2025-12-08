@@ -23,7 +23,6 @@ export const GEORGIAN_CITIES: Record<string, { lat: number; lng: number }> = {
     "ზესტაფონი": { lat: 42.11, lng: 43.04 },
     "ზუგდიდი": { lat: 42.51, lng: 41.87 },
     "თბილისი (დედაქალაქი)": { lat: 41.69, lng: 44.8 },
-    "თბილისი": { lat: 41.69, lng: 44.8 },
     "თეთრიწყარო": { lat: 41.54, lng: 44.46 },
     "თელავი": { lat: 41.92, lng: 45.47 },
     "თერჯოლა": { lat: 42.18, lng: 42.97 },
