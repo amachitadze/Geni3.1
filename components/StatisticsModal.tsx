@@ -1,3 +1,4 @@
+
 import React from 'react';
 import DoughnutChart from './charts/DoughnutChart';
 import BarChart from './charts/BarChart';
@@ -38,8 +39,8 @@ const StatisticsModal: React.FC<StatisticsModalProps> = ({ isOpen, onClose, stat
     const hasAdditionalStats = stats.oldestLivingPerson || stats.youngestLivingPerson || stats.averageLifespan > 0 || stats.mostCommonAddress;
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 transition-opacity p-4" onClick={onClose}>
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-4xl border border-gray-300 dark:border-gray-700 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 transition-opacity p-0 sm:p-4" onClick={onClose}>
+            <div className="bg-white dark:bg-gray-800 sm:rounded-lg shadow-xl p-4 sm:p-6 w-full max-w-4xl border-none sm:border border-gray-300 dark:border-gray-700 h-full sm:h-auto sm:max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
                 <header className="flex items-start justify-between mb-6">
                     <div>
                         <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-600">{t.stats_title}</h2>

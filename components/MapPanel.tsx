@@ -81,7 +81,7 @@ const MapPanel: React.FC<MapPanelProps> = ({ people, onShowDetails, language, hi
             const map = mapInstanceRef.current;
             
             // Close all other popups first
-            Object.values(personMarkersRef.current).forEach(ms => ms.forEach((m: any) => m.closePopup()));
+            Object.values(personMarkersRef.current).forEach((ms: any[]) => ms.forEach((m: any) => m.closePopup()));
 
             // Create a feature group to calculate bounds for all markers of this person
             const group = L.featureGroup(markers);
@@ -287,7 +287,7 @@ const MapPanel: React.FC<MapPanelProps> = ({ people, onShowDetails, language, hi
     useEffect(() => {
         if (highlightedPersonId && mapInstanceRef.current) {
             // 1. Close ALL currently open popups first to avoid clutter
-            Object.values(personMarkersRef.current).forEach(markers => {
+            Object.values(personMarkersRef.current).forEach((markers: any[]) => {
                 markers.forEach((m: any) => m.closePopup());
             });
 
@@ -450,3 +450,4 @@ const MapPanel: React.FC<MapPanelProps> = ({ people, onShowDetails, language, hi
 };
 
 export default MapPanel;
+    

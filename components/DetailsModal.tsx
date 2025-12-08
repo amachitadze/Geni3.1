@@ -1,9 +1,10 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Person, People } from '../types';
 import { formatDate, calculateAge } from '../utils/dateUtils';
 import { 
     EditIcon, DeleteIcon, PhoneIcon, EmailIcon, AddressIcon, 
-    GlobeIcon, EllipsisVerticalIcon, CloseIcon, MagicWandIcon, InfoIcon, PhotoIcon
+    GoogleIcon, EllipsisVerticalIcon, CloseIcon, MagicWandIcon, InfoIcon, PhotoIcon
 } from './Icons';
 import { translations, Language } from '../utils/translations';
 import MediaGallery from './MediaGallery';
@@ -81,11 +82,11 @@ const DetailsModal: React.FC<DetailsModalProps> = ({
     <React.Fragment>
       <button
         onClick={() => onGoogleSearch(person)}
-        className={isMenu ? "w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3" : "p-2 rounded-full text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 hover:text-black dark:hover:text-white transition-colors"}
+        className={isMenu ? "w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3" : "p-2 rounded-full text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 border border-gray-200 dark:border-gray-600 hover:text-black dark:hover:text-white transition-colors shadow-sm"}
         title={t.btn_google_search}
         aria-label={t.btn_google_search}
       >
-        <GlobeIcon className="h-5 w-5" />
+        <GoogleIcon className="h-5 w-5" />
         {isMenu && <span>{t.btn_google_search}</span>}
       </button>
 

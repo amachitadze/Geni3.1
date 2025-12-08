@@ -29,9 +29,28 @@ export const useGoogleGenAI = () => {
       }
       const ai = new GoogleGenAI({ apiKey });
 
+      const isExactMatch = q.includes('"');
+      
+      // Strict instruction for language mirroring and search behavior
+      const prompt = `
+      You are a helpful search assistant.
+      
+      CORE INSTRUCTION: You MUST reply in the SAME LANGUAGE as the user's query. 
+      - If the query is in Georgian (e.g., "დავით აღმაშენებელი"), your summary MUST be in Georgian.
+      - If the query is in English, your summary MUST be in English.
+      - Do not translate the results into English if the user asked in Georgian.
+      
+      SEARCH TASK:
+      ${isExactMatch 
+        ? `The user provided an EXACT PHRASE in quotes: ${q}. You must search for this exact specific string. Provide a detailed summary based ONLY on results that match this specific context. Do not generalize.` 
+        : `Search for information about: ${q}. Provide a comprehensive and accurate summary of the search results.`}
+      
+      Provide biographical details, dates, and key facts found in the search results.
+      `;
+
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash",
-        contents: q,
+        contents: prompt,
         config: {
           tools: [{ googleSearch: {} }],
         },

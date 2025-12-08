@@ -37,7 +37,7 @@ export const translations = {
         menu_share: "გაზიარება",
         menu_search: "ძიება",
         menu_search_person: "პიროვნების ძიება",
-        menu_search_history: "ისტორიული ძიება (Google)",
+        menu_search_history: "Google-ის ძიება",
         menu_birthdays: "იუბილარები",
         menu_analysis: "ანალიზი",
         menu_stats: "სტატისტიკა",
@@ -230,11 +230,11 @@ export const translations = {
         fm_config_missing: "Supabase კონფიგურაცია არ მოიძებნა.",
         
         // Google Search Panel
-        search_history_title: "ისტორიული ძიება",
-        search_placeholder_example: "მაგ: ბრძოლა დიდგორში...",
-        search_searching: "ინფორმაციის მოძიება...",
-        search_sources: "წყაროები",
-        search_empty_desc: "მოიძიეთ ინფორმაცია თქვენს წინაპრებთან დაკავშირებულ ისტორიულ მოვლენებზე, ადგილებსა და პიროვნებებზე.",
+        search_history_title: "Google-ის ძიება",
+        search_placeholder_example: "მაგ: ქართლის ცხოვრება...",
+        search_searching: "გადადიხართ Google-ზე...",
+        search_sources: "შედეგები",
+        search_empty_desc: "ჩაწერეთ საძიებო სიტყვა და დააჭირეთ ღილაკს Google-ში მოსაძებნად.",
         
         // Notification Sender
         msg_title_send: "შეტყობინების გაგზავნა",
@@ -405,7 +405,7 @@ export const translations = {
         menu_share: "Compartir",
         menu_search: "Búsqueda",
         menu_search_person: "Buscar persona",
-        menu_search_history: "Búsqueda histórica (Google)",
+        menu_search_history: "Búsqueda Google",
         menu_birthdays: "Cumpleaños",
         menu_analysis: "Análisis",
         menu_stats: "Estadísticas",
@@ -598,11 +598,11 @@ export const translations = {
         fm_config_missing: "Falta la configuración de Supabase.",
 
         // Google Search Panel
-        search_history_title: "Búsqueda histórica",
+        search_history_title: "Búsqueda Google",
         search_placeholder_example: "Ej: Batalla de Didgori...",
-        search_searching: "Buscando información...",
+        search_searching: "Yendo a Google...",
         search_sources: "Fuentes",
-        search_empty_desc: "Busca información sobre eventos históricos, lugares y personas relacionadas con tus antepasados.",
+        search_empty_desc: "Escribe una palabra y pulsa buscar para ir a Google.",
 
         // Notification Sender
         msg_title_send: "Enviar mensaje",

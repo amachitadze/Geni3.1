@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Person, ModalState, Gender } from './types';
 import TreeNode from './components/TreeNode';
@@ -11,25 +12,23 @@ import { ShareModal } from './components/ShareModal';
 import PasswordPromptModal from './components/PasswordPromptModal';
 import BirthdayNotifier from './components/BirthdayNotifier';
 import GoogleSearchPanel from './components/GoogleSearchPanel';
-import ImportModal from './components/ImportModal';
-import ExportModal from './components/ExportModal';
 import LandingPage from './components/LandingPage';
 import InitialView from './components/InitialView';
-import FileManagerModal from './components/FileManagerModal';
 import NotificationSenderModal from './components/NotificationSenderModal';
 import NotificationBanner from './components/NotificationBanner';
 import SettingsModal from './components/SettingsModal';
 import RelationshipFinderModal from './components/RelationshipFinderModal';
+import AuthModal from './components/AuthModal';
 import { decryptData, base64ToBuffer } from './utils/crypto';
 import { formatTimestamp, calculateAge } from './utils/dateUtils';
 import { validatePeopleData, getFamilyUnitFromConnection } from './utils/treeUtils';
 import { translations, Language } from './utils/translations';
 import { 
     SearchIcon, BackIcon, HomeIcon, MenuIcon, ExportIcon, 
-    CenterIcon, StatsIcon, CloseIcon, ShareIcon, JsonExportIcon, 
-    JsonImportIcon, SunIcon, MoonIcon, ViewCompactIcon, ViewNormalIcon, 
-    ListBulletIcon, GlobeIcon, DocumentIcon, MessageIcon, CogIcon, CalculatorIcon, ClockIcon, MapIcon,
-    PlusIcon, MinusIcon, CakeIcon
+    CenterIcon, StatsIcon, CloseIcon, ShareIcon, 
+    ViewCompactIcon, ViewNormalIcon, 
+    ListBulletIcon, GlobeIcon, MessageIcon, CogIcon, CalculatorIcon, ClockIcon, MapIcon,
+    PlusIcon, MinusIcon, CakeIcon, GoogleIcon
 } from './components/Icons';
 
 // Hooks
@@ -83,15 +82,14 @@ function App() {
   // UI Toggles
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isStatisticsModalOpen, setIsStatisticsModalOpen] = useState(false);
-  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
-  const [isFileManagerOpen, setIsFileManagerOpen] = useState(false);
   const [isNotificationSenderOpen, setIsNotificationSenderOpen] = useState(false);
   const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isRelationshipModalOpen, setIsRelationshipModalOpen] = useState(false);
   const [isBirthdayModalOpen, setIsBirthdayModalOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [startSettingsTab, setStartSettingsTab] = useState<'general' | 'account' | 'data' | 'about'>('general');
   
   // Language State
   const [language, setLanguage] = useState<Language>('ka');
@@ -99,10 +97,6 @@ function App() {
 
   // User State
   const [currentUser, setCurrentUser] = useState<string | null>(null);
-
-  // File Import Logic
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [fileAction, setFileAction] = useState<'import' | 'merge' | null>(null);
   
   const [isDecrypting, setIsDecrypting] = useState(false);
   const [installPrompt, setInstallPrompt] = useState<any>(null);
@@ -411,39 +405,10 @@ function App() {
     } catch { alert("მონაცემების ექსპორტი ვერ მოხერხდა."); }
   };
 
-  // File Import Logic
-  const handleImportJson = () => { if (!isReadOnly) { setFileAction('import'); fileInputRef.current?.click(); } };
-  const handleMergeJson = () => { if (!isReadOnly) { setFileAction('merge'); fileInputRef.current?.click(); } };
-
-  const handleFileSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0];
-      if (!file || !fileAction) return;
-
-      if (!window.confirm(fileAction === 'import' ? "ყურადღება: ფაილის იმპორტი წაშლის მიმდინარე ხეს." : "ახალი ინფორმაცია დაემატება არსებულს.")) {
-          setFileAction(null); return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = (e) => {
-          try {
-              const importedData = JSON.parse(e.target?.result as string);
-              const { isValid, error } = validatePeopleData(importedData);
-              if (!isValid) throw new Error(error || "არასწორი ფაილი");
-
-              if (fileAction === 'import') {
-                setPeople(importedData.people);
-                setRootIdStack(importedData.rootIdStack);
-                setIsReadOnly(false);
-                alert("წარმატებით იმპორტირდა.");
-              } else {
-                 // Simple merge logic: overwrite existing keys
-                 setPeople(prev => ({ ...prev, ...importedData.people }));
-                 alert("წარმატებით შეერწყა.");
-              }
-          } catch (error: any) { alert(`შეცდომა: ${error.message}`); } 
-          finally { setFileAction(null); if(event.target) event.target.value = ''; }
-      };
-      reader.readAsText(file);
+  const handleDataRestore = (data: any) => {
+      setPeople(data.people);
+      setRootIdStack(data.rootIdStack || ['root']);
+      setIsReadOnly(!!data.readOnly);
   };
   
   const handleStartCreating = () => {
@@ -452,10 +417,20 @@ function App() {
     setIsReadOnly(false);
   };
 
-  const handleInstallClick = async () => {
-      if (!installPrompt) return;
-      installPrompt.prompt();
-      setInstallPrompt(null);
+  const openSettingsAt = (tab: 'general' | 'account' | 'data' | 'about') => {
+      setStartSettingsTab(tab);
+      setIsSettingsModalOpen(true);
+      setIsMenuOpen(false);
+  };
+
+  const handleLoginSuccess = (name?: string) => {
+      setCurrentUser(name || "User");
+      setIsAuthModalOpen(false);
+  };
+
+  const handleGoogleWebSearch = () => {
+      if (!googleAI.query.trim()) return;
+      googleAI.handleSearch(googleAI.query);
   };
 
   // --- Render Props ---
@@ -488,7 +463,7 @@ function App() {
 
   const renderContent = () => {
       if (Object.keys(people).length === 0 || !people[rootId]) {
-          return <InitialView onStartCreating={handleStartCreating} onImport={() => setIsImportModalOpen(true)} language={language} />;
+          return <InitialView onStartCreating={handleStartCreating} onImport={() => openSettingsAt('data')} language={language} />;
       }
 
       switch (viewMode) {
@@ -573,7 +548,7 @@ function App() {
                     {/* Desktop Search Buttons */}
                     <div className="hidden sm:flex items-center gap-2">
                         <button onClick={() => setIsSearchOpen(true)} className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200" title={t.menu_search}><SearchIcon className="w-6 h-6"/></button>
-                        <button onClick={() => googleAI.setIsOpen(true)} className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200" title="Google AI"><GlobeIcon className="w-6 h-6"/></button>
+                        <button onClick={() => googleAI.setIsOpen(true)} className="w-10 h-10 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm border border-gray-200 dark:border-gray-700 transition-colors" title="Google Search"><GoogleIcon className="w-6 h-6"/></button>
                     </div>
                     
                     {/* Menu Dropdown */}
@@ -600,7 +575,7 @@ function App() {
                                     </li>
                                     <li className="sm:hidden">
                                         <button onClick={() => { googleAI.setIsOpen(true); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}>
-                                            <GlobeIcon className="w-5 h-5"/><span>{t.menu_search_history}</span>
+                                            <GoogleIcon className="w-5 h-5"/><span>{t.menu_search_history}</span>
                                         </button>
                                     </li>
                                     <li className="sm:hidden"><hr className="my-1 border-gray-200 dark:border-gray-700" /></li>
@@ -620,7 +595,7 @@ function App() {
                                     <li><button onClick={() => setViewMode('map' as any)} className={`${MENU_ITEM_CLASS} ${viewMode === 'map' as any ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400' : ''}`}><MapIcon className="w-5 h-5"/><span>{t.menu_view_map}</span></button></li>
                                     
                                     <li><hr className="my-1 border-gray-200 dark:border-gray-700" /></li>
-                                    <li><button onClick={() => { setIsSettingsModalOpen(true); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}><CogIcon className="w-5 h-5"/><span>{t.menu_settings}</span></button></li>
+                                    <li><button onClick={() => openSettingsAt('general')} className={MENU_ITEM_CLASS}><CogIcon className="w-5 h-5"/><span>{t.menu_settings}</span></button></li>
                                 </ul>
                             </div>
                         )}
@@ -762,40 +737,13 @@ function App() {
       <GoogleSearchPanel 
         isOpen={googleAI.isOpen}
         onClose={() => googleAI.setIsOpen(false)}
-        onSearch={() => googleAI.handleSearch()}
+        onSearch={handleGoogleWebSearch}
         query={googleAI.query}
         setQuery={googleAI.setQuery}
         result={googleAI.result}
         sources={googleAI.sources}
         isLoading={googleAI.isLoading}
         error={googleAI.error}
-        language={language}
-      />
-
-      <ImportModal 
-        isOpen={isImportModalOpen}
-        onClose={() => setIsImportModalOpen(false)}
-        onImportFromFile={handleImportJson}
-        onMergeFromFile={handleMergeJson}
-        onRestore={(data) => {
-            setPeople(data.people);
-            setRootIdStack(data.rootIdStack || ['root']);
-            setIsReadOnly(!!data.readOnly);
-        }}
-        language={language}
-      />
-
-      <ExportModal 
-        isOpen={isExportModalOpen}
-        onClose={() => setIsExportModalOpen(false)}
-        onExportJson={handleExportJson}
-        data={{ people, rootIdStack }}
-        language={language}
-      />
-
-      <FileManagerModal 
-        isOpen={isFileManagerOpen}
-        onClose={() => setIsFileManagerOpen(false)}
         language={language}
       />
 
@@ -814,10 +762,12 @@ function App() {
         toggleTheme={toggleTheme}
         currentUser={currentUser}
         onLogout={() => { setCurrentUser(null); setIsViewingTree(false); }}
-        openImport={() => { setIsSettingsModalOpen(false); setIsImportModalOpen(true); }}
-        openExport={() => { setIsSettingsModalOpen(false); setIsExportModalOpen(true); }}
-        openFileManager={() => { setIsSettingsModalOpen(false); setIsFileManagerOpen(true); }}
+        onLogin={() => setIsAuthModalOpen(true)}
         treeStats={treeStats}
+        initialTab={startSettingsTab}
+        onRestore={handleDataRestore}
+        onExportJson={handleExportJson}
+        currentData={{ people, rootIdStack }}
       />
 
       <RelationshipFinderModal 
@@ -827,13 +777,11 @@ function App() {
         language={language}
       />
 
-      {/* Hidden File Input for Import */}
-      <input 
-        type="file" 
-        ref={fileInputRef} 
-        onChange={handleFileSelected} 
-        className="hidden" 
-        accept=".json" 
+      <AuthModal 
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onLoginSuccess={handleLoginSuccess}
+        language={language}
       />
 
     </div>
