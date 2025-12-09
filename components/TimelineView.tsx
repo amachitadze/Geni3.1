@@ -211,7 +211,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ people, onShowDetails, high
         <div className="relative h-full w-full bg-gray-100 dark:bg-gray-900 overflow-hidden flex flex-col" onClick={handleContainerClick}>
             
             {/* Zoom Controls */}
-            <div className="absolute bottom-6 right-6 z-50 flex flex-col gap-3 pointer-events-auto">
+            <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3 pointer-events-auto">
                 <button onClick={() => handleZoom(2)} className="w-9 h-9 rounded-full bg-gray-700/80 text-white backdrop-blur-sm shadow-xl flex items-center justify-center hover:bg-gray-600 transition-all active:scale-95">
                     <PlusIcon className="w-5 h-5" />
                 </button>
@@ -224,7 +224,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ people, onShowDetails, high
             </div>
 
             {/* FIXED HEADER (Years) - Synced via transform */}
-            <div className="absolute top-0 left-0 right-0 h-14 z-30 pointer-events-none overflow-hidden select-none">
+            <div className="fixed top-[72px] sm:top-[96px] left-0 right-0 h-14 z-30 pointer-events-none overflow-hidden select-none">
                 <div ref={headerRef} className="absolute top-0 left-0 h-full will-change-transform">
                     {years.map((y) => (
                         <div 
@@ -315,7 +315,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ people, onShowDetails, high
             </div>
 
             {/* FIXED FOOTER (Historical Events) - Synced via transform */}
-            <div className="absolute bottom-0 left-0 right-0 h-32 z-30 pointer-events-none overflow-hidden select-none">
+            <div className="fixed bottom-0 left-0 right-0 h-32 z-30 pointer-events-none overflow-hidden select-none">
                 <div ref={footerRef} className="absolute top-0 left-0 h-full w-full will-change-transform">
                     {eventPositions.map((event, idx) => {
                         const isActive = activeEventIndex === idx;
