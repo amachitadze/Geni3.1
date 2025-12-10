@@ -346,7 +346,7 @@ const MapPanel: React.FC<MapPanelProps> = ({ people, onShowDetails, language, hi
                         value={selectedCity}
                         className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md text-sm text-gray-800 dark:text-gray-200 outline-none focus:ring-2 focus:ring-purple-500 cursor-pointer appearance-none pr-8 font-medium"
                     >
-                        <option value="">{t.search_placeholder || "ქალაქის არჩევა..."}</option>
+                        <option value="">{t.select_city}</option>
                         {Object.keys(GEORGIAN_CITIES).sort().map(city => (
                             <option key={city} value={city}>{city}</option>
                         ))}
@@ -450,4 +450,3 @@ const MapPanel: React.FC<MapPanelProps> = ({ people, onShowDetails, language, hi
 };
 
 export default MapPanel;
-    

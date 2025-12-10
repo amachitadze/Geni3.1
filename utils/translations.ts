@@ -18,10 +18,11 @@ export const translations = {
         or: "ან",
         yes: "დიახ",
         no: "არა",
+        select_city: "აირჩიე ქალაქი",
         
         // Tree Header & Connectors
-        tree_default_title: "გენეალოგიური ხე",
-        tree_title_suffix: "ების გენეალოგიური ხე", 
+        tree_default_title: "სანათესაო ხე",
+        tree_title_suffix: "ების სანათესაო ხე", 
         tree_title_prefix: "", 
         conn_spouse: "მეუღლე",
         conn_parents: "მშობლები",
@@ -273,7 +274,7 @@ export const translations = {
         btn_open_tree: "ხის გახსნა",
 
         // Landing Page
-        landing_badge: "ანალოგი არ აქვს",
+        landing_badge: "ვერსია 3.7",
         landing_title_1: "თქვენი ისტორია,",
         landing_title_2: "უსასრულო",
         landing_title_3: " და დაცული.",
@@ -393,6 +394,7 @@ export const translations = {
         or: "o",
         yes: "Sí",
         no: "No",
+        select_city: "Seleccionar ciudad",
 
         // Tree Header & Connectors
         tree_default_title: "Árbol Genealógico",
