@@ -224,7 +224,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ people, onShowDetails, high
             </div>
 
             {/* FIXED HEADER (Years) - Synced via transform */}
-            <div className="fixed top-[72px] sm:top-[96px] left-0 right-0 h-14 z-30 pointer-events-none overflow-hidden select-none">
+            <div className="fixed top-[72px] sm:top-[96px] left-0 right-0 h-14 z-30 pointer-events-none overflow-hidden select-none bg-white/40 dark:bg-gray-900/40 backdrop-blur-sm border-b border-gray-200/50 dark:border-gray-700/50 transition-colors duration-300">
                 <div ref={headerRef} className="absolute top-0 left-0 h-full will-change-transform">
                     {years.map((y) => (
                         <div 
@@ -315,7 +315,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ people, onShowDetails, high
             </div>
 
             {/* FIXED FOOTER (Historical Events) - Synced via transform */}
-            <div className="fixed bottom-0 left-0 right-0 h-32 z-30 pointer-events-none overflow-hidden select-none">
+            <div className="fixed bottom-0 left-0 right-0 h-32 z-30 pointer-events-none overflow-hidden select-none bg-white/40 dark:bg-gray-900/40 backdrop-blur-sm border-t border-gray-200/50 dark:border-gray-700/50 transition-colors duration-300">
                 <div ref={footerRef} className="absolute top-0 left-0 h-full w-full will-change-transform">
                     {eventPositions.map((event, idx) => {
                         const isActive = activeEventIndex === idx;
