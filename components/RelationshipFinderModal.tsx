@@ -38,16 +38,16 @@ const RelationshipFinderModal: React.FC<RelationshipFinderModalProps> = ({ isOpe
       const p2 = people[id2];
       if (!p1 || !p2) return '';
 
-      if (p1.spouseId === id2) return 'Spouse';
-      if (p1.children.includes(id2)) return 'Parent';
-      if (p1.parentIds.includes(id2)) return 'Child';
-      if (p1.exSpouseIds?.includes(id2)) return 'Ex-Spouse';
+      if (p1.spouseId === id2) return t.rel_type_spouse;
+      if (p1.children.includes(id2)) return t.rel_type_parent;
+      if (p1.parentIds.includes(id2)) return t.rel_type_child;
+      if (p1.exSpouseIds?.includes(id2)) return t.rel_type_ex_spouse;
       
       // Sibling check (share at least one parent)
       const commonParent = p1.parentIds.find(pid => p2.parentIds.includes(pid));
-      if (commonParent) return 'Sibling';
+      if (commonParent) return t.rel_type_sibling;
 
-      return 'Relative';
+      return t.rel_type_relative;
   };
 
   return (

@@ -1,3 +1,4 @@
+
 export type Language = 'ka' | 'es';
 
 export const translations = {
@@ -189,6 +190,13 @@ export const translations = {
         rel_path: "კავშირის გზა",
         rel_not_found: "კავშირი ვერ მოიძებნა.",
         rel_same_person: "გთხოვთ აირჩიოთ სხვადასხვა პიროვნება.",
+        // Relationships types for calculator
+        rel_type_spouse: "მეუღლე",
+        rel_type_parent: "მშობელი",
+        rel_type_child: "შვილი",
+        rel_type_ex_spouse: "ყოფილი მეუღლე",
+        rel_type_sibling: "და/ძმა",
+        rel_type_relative: "ნათესავი",
 
         // Share Modal
         share_title: "ხის გაზიარება",
@@ -547,7 +555,7 @@ export const translations = {
         map_residence: "Residencia",
         map_death: "Defunción",
 
-        // ... (rest of translation keys) ...
+        // Relationship Finder
         rel_finder_title: "Calculadora de Relaciones",
         rel_finder_desc: "Selecciona dos personas del árbol para ver cómo están relacionadas.",
         rel_select_person_1: "Persona 1",
@@ -557,6 +565,13 @@ export const translations = {
         rel_path: "Ruta de conexión",
         rel_not_found: "Relación no encontrada.",
         rel_same_person: "Por favor, selecciona personas diferentes.",
+        // Relationships types for calculator
+        rel_type_spouse: "Cónyuge",
+        rel_type_parent: "Padre/Madre",
+        rel_type_child: "Hijo/a",
+        rel_type_ex_spouse: "Ex-cónyuge",
+        rel_type_sibling: "Hermano/a",
+        rel_type_relative: "Pariente",
 
         // Share Modal
         share_title: "Compartir árbol",
