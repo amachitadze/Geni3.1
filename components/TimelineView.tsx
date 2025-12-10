@@ -9,9 +9,10 @@ interface TimelineViewProps {
     people: People;
     onShowDetails: (id: string) => void;
     highlightedPersonId?: string | null;
+    isHeaderCollapsed: boolean;
 }
 
-const TimelineView: React.FC<TimelineViewProps> = ({ people, onShowDetails, highlightedPersonId }) => {
+const TimelineView: React.FC<TimelineViewProps> = ({ people, onShowDetails, highlightedPersonId, isHeaderCollapsed }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const headerRef = useRef<HTMLDivElement>(null);
     const footerRef = useRef<HTMLDivElement>(null);
@@ -224,7 +225,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ people, onShowDetails, high
             </div>
 
             {/* FIXED HEADER (Years) - Synced via transform */}
-            <div className="fixed top-[72px] sm:top-[96px] left-0 right-0 h-14 z-30 pointer-events-none overflow-hidden select-none bg-white/40 dark:bg-gray-900/40 backdrop-blur-sm border-b border-gray-200/50 dark:border-gray-700/50 transition-colors duration-300">
+            <div className={`fixed left-0 right-0 h-14 z-30 pointer-events-none overflow-hidden select-none bg-white/40 dark:bg-gray-900/40 backdrop-blur-sm border-b border-gray-200/50 dark:border-gray-700/50 transition-all duration-300 ease-in-out ${isHeaderCollapsed ? 'top-[52px] sm:top-[60px]' : 'top-[72px] sm:top-[96px]'}`}>
                 <div ref={headerRef} className="absolute top-0 left-0 h-full will-change-transform">
                     {years.map((y) => (
                         <div 

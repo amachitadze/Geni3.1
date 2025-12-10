@@ -470,8 +470,8 @@ function App() {
           case 'list':
               return <TreeViewList rootId={rootId} people={people} onNavigate={(id) => { navigateTo(id); setHighlightedPersonId(id); }} onShowDetails={setDetailsModalPersonId} highlightedPersonId={highlightedPersonId} language={language} />;
           case 'timeline':
-              // @ts-ignore
-              return <TimelineView people={people} onShowDetails={setDetailsModalPersonId} highlightedPersonId={highlightedPersonId} />;
+              // Pass header state to timeline view
+              return <TimelineView people={people} onShowDetails={setDetailsModalPersonId} highlightedPersonId={highlightedPersonId} isHeaderCollapsed={isHeaderCollapsed} />;
           case 'map':
               return <MapPanel people={people} onShowDetails={setDetailsModalPersonId} language={language} highlightedPersonId={highlightedPersonId} />;
           default:
