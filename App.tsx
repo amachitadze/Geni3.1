@@ -91,6 +91,9 @@ function App() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [startSettingsTab, setStartSettingsTab] = useState<'general' | 'account' | 'data' | 'about'>('general');
   
+  // App Metadata State
+  const [appMetadata, setAppMetadata] = useState<{name: string, version: string, build: string} | null>(null);
+
   // Language State
   const [language, setLanguage] = useState<Language>('ka');
   const t = translations[language]; // Translation Helper
@@ -214,15 +217,24 @@ function App() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
   
+  // Fetch Metadata
+  useEffect(() => {
+      fetch('/metadata.json')
+        .then(res => res.json())
+        .then(data => setAppMetadata(data))
+        .catch(err => console.error("Failed to load metadata", err));
+  }, []);
+
   // Document Title
   useEffect(() => {
       const rootPerson = people['root'];
+      const appName = appMetadata?.name || 'Geni';
       if(rootPerson?.lastName){
-        document.title = `${rootPerson.lastName} - Geni`;
+        document.title = `${rootPerson.lastName} - ${appName}`;
       } else {
-        document.title = 'Geni';
+        document.title = appName;
       }
-  }, [people]);
+  }, [people, appMetadata]);
 
   // Click Outside Menu
   useEffect(() => {
@@ -768,6 +780,7 @@ function App() {
         onRestore={handleDataRestore}
         onExportJson={handleExportJson}
         currentData={{ people, rootIdStack }}
+        appMetadata={appMetadata}
       />
 
       <RelationshipFinderModal 

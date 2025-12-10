@@ -31,12 +31,13 @@ interface SettingsModalProps {
   onRestore: (data: any) => void;
   onExportJson: () => void;
   currentData: { people: any; rootIdStack: string[] };
+  appMetadata?: { name: string; version: string; build: string } | null;
 }
 
 const SettingsModal: React.FC<SettingsModalProps> = ({ 
     isOpen, onClose, language, onLanguageChange, theme, toggleTheme,
     currentUser, onLogout, onLogin, treeStats, initialTab = 'general',
-    onRestore, onExportJson, currentData
+    onRestore, onExportJson, currentData, appMetadata
 }) => {
   const t = translations[language];
   const [activeTab, setActiveTab] = useState<'general' | 'account' | 'data' | 'about'>(initialTab);
@@ -59,9 +60,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   const [cloudFiles, setCloudFiles] = useState<any[]>([]);
   const [supabaseConfig, setSupabaseConfig] = useState({ url: '', key: '' });
 
-  // Metadata State
-  const [appMetadata, setAppMetadata] = useState<{version: string, build: string} | null>(null);
-
   useEffect(() => {
       if (isOpen) {
           setActiveTab(initialTab);
@@ -69,12 +67,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
           setOpStatus(null);
           const config = getStoredSupabaseConfig();
           setSupabaseConfig(config);
-
-          // Fetch metadata dynamically
-          fetch('/metadata.json')
-            .then(res => res.json())
-            .then(data => setAppMetadata(data))
-            .catch(err => console.error('Failed to load metadata:', err));
       }
   }, [isOpen, initialTab]);
 
