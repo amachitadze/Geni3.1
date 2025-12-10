@@ -121,8 +121,8 @@ const TimelineView: React.FC<TimelineViewProps> = ({ people, onShowDetails, high
     // Total width calculation
     const totalWidth = (maxYear - minYear) * pixelsPerYear;
     const laneHeight = 60;
-    // Header height is now handled by sticky positioning, removed from padding calculation
-    const footerHeight = 160; 
+    const headerHeight = 60; // Space reserved at top
+    const footerHeight = 160; // Space reserved at bottom
     
     // Calculate precise event positions
     const eventPositions = useMemo(() => {
@@ -223,9 +223,8 @@ const TimelineView: React.FC<TimelineViewProps> = ({ people, onShowDetails, high
                 </button>
             </div>
 
-            {/* STICKY HEADER (Years) - Uses sticky to naturally follow parent scroll but stick under App Header */}
-            {/* top-[56px] matches the approximate collapsed height of the App Header */}
-            <div className="sticky top-[56px] sm:top-[88px] left-0 right-0 h-14 z-30 pointer-events-none overflow-hidden select-none bg-white/40 dark:bg-gray-900/40 backdrop-blur-sm border-b border-gray-200/50 dark:border-gray-700/50 transition-colors duration-300">
+            {/* FIXED HEADER (Years) - Synced via transform */}
+            <div className="fixed top-[72px] sm:top-[96px] left-0 right-0 h-14 z-30 pointer-events-none overflow-hidden select-none bg-white/40 dark:bg-gray-900/40 backdrop-blur-sm border-b border-gray-200/50 dark:border-gray-700/50 transition-colors duration-300">
                 <div ref={headerRef} className="absolute top-0 left-0 h-full will-change-transform">
                     {years.map((y) => (
                         <div 
@@ -249,7 +248,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({ people, onShowDetails, high
                 onMouseUp={handleMouseUp}
                 onMouseMove={handleMouseMove}
             >
-                <div style={{ width: `${totalWidth}px`, height: '100%', minHeight: `${lanes.length * laneHeight + footerHeight}px`, paddingBottom: footerHeight, position: 'relative' }}>
+                <div style={{ width: `${totalWidth}px`, height: '100%', minHeight: `${lanes.length * laneHeight + headerHeight + footerHeight}px`, paddingTop: headerHeight, paddingBottom: footerHeight, position: 'relative' }}>
                     
                     {/* Background Grid Lines */}
                     <div className="absolute top-0 bottom-0 left-0 right-0 pointer-events-none z-0">
