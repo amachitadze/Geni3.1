@@ -1,8 +1,7 @@
 
-
 import React, { useState } from 'react';
 import { translations, Language } from '../utils/translations';
-import { CheckIcon, CloseIcon, StarIcon, InfiniteIcon, DevicePhoneMobileIcon, ChartBarIcon, LockClosedIcon, ShareIcon, CloudIcon, ChevronDownIcon, UserPlusIcon, UsersIcon, ArrowRightIcon } from './Icons';
+import { CheckIcon, CloseIcon, StarIcon, InfiniteIcon, ChartBarIcon, LockClosedIcon, ShareIcon, ChevronDownIcon, UserPlusIcon, UsersIcon, ArrowRightIcon, MapIcon, ClockIcon } from './Icons';
 import AuthModal from './AuthModal';
 
 interface LandingPageProps {
@@ -56,14 +55,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnter, language, onLanguage
             description: t.feat_stats_desc
         },
         {
-            icon: <CloudIcon className="w-8 h-8 text-red-500" />,
-            title: t.feat_import_title,
-            description: t.feat_import_desc
+            icon: <MapIcon className="w-8 h-8 text-red-500" />,
+            title: t.feat_map_title,
+            description: t.feat_map_desc
         },
         {
-            icon: <DevicePhoneMobileIcon className="w-8 h-8 text-indigo-500" />,
-            title: t.feat_mobile_title,
-            description: t.feat_mobile_desc
+            icon: <ClockIcon className="w-8 h-8 text-indigo-500" />,
+            title: t.feat_timeline_title,
+            description: t.feat_timeline_desc
         }
     ];
 
@@ -94,10 +93,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnter, language, onLanguage
             features: [
                 { text: t.feat_members_limit, included: true },
                 { text: t.feat_stats_basic, included: true },
-                { text: t.feat_messages, included: false },
                 { text: t.feat_storage_local, included: true },
                 { text: t.feat_share, included: true },
                 { text: t.feat_import_export, included: true },
+                { text: t.feat_premium_timeline, included: false },
+                { text: t.feat_premium_map, included: false },
+                { text: t.feat_messages, included: false },
                 { text: t.feat_export_pdf, included: false }
             ],
             buttonText: t.btn_start,
@@ -109,10 +110,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnter, language, onLanguage
             features: [
                 { text: t.feat_members_unlimited, included: true },
                 { text: t.feat_stats_full, included: true },
-                { text: t.feat_messages, included: true },
                 { text: t.feat_storage_cloud, included: true },
                 { text: t.feat_share, included: true },
                 { text: t.feat_import_export, included: true },
+                { text: t.feat_premium_timeline, included: true },
+                { text: t.feat_premium_map, included: true },
+                { text: t.feat_messages, included: true },
                 { text: t.feat_export_pdf, included: true }
             ],
             buttonText: t.btn_activate,

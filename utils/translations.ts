@@ -21,8 +21,8 @@ export const translations = {
         select_city: "აირჩიე ქალაქი",
         
         // Tree Header & Connectors
-        tree_default_title: "სანათესაო ხე",
-        tree_title_suffix: "ების სანათესაო ხე", 
+        tree_default_title: "გენეალოგიური ხე",
+        tree_title_suffix: "ების გენეალოგიური ხე", 
         tree_title_prefix: "", 
         conn_spouse: "მეუღლე",
         conn_parents: "მშობლები",
@@ -274,7 +274,7 @@ export const translations = {
         btn_open_tree: "ხის გახსნა",
 
         // Landing Page
-        landing_badge: "ვერსია 3.7",
+        landing_badge: "უანალოგო",
         landing_title_1: "თქვენი ისტორია,",
         landing_title_2: "უსასრულო",
         landing_title_3: " და დაცული.",
@@ -289,28 +289,6 @@ export const translations = {
         landing_created_by: "შექმნილია",
         landing_by: "-ს მიერ",
         
-        // Quick Start
-        quick_start_placeholder: "ჩაწერეთ თქვენი სახელი და გვარი",
-        quick_start_btn: "დაწყება",
-        
-        // How it Works
-        how_title: "როგორ მუშაობს?",
-        step_1_title: "შექმენი პროფილი",
-        step_1_desc: "დაიწყე საკუთარი თავით. შეიყვანე სახელი და გვარი სისტემაში.",
-        step_2_title: "დაამატე ნათესავები",
-        step_2_desc: "მიუთითე მშობლები, მეუღლე და შვილები. ხე ავტომატურად გაიზრდება.",
-        step_3_title: "გააზიარე & შეინახე",
-        step_3_desc: "დააგენერირე დაცული ბმული ან შეინახე მონაცემები PDF ფორმატში.",
-
-        // FAQ
-        faq_title: "ხშირად დასმული კითხვები",
-        faq_1_q: "არის თუ არა ჩემი მონაცემები დაცული?",
-        faq_1_a: "დიახ. მონაცემები ინახება ლოკალურად თქვენს ბრაუზერში. სერვერზე იგზავნება მხოლოდ მაშინ, როცა თავად ირჩევთ გაზიარებას ან ბექაპის შექმნას.",
-        faq_2_q: "შემიძლია თუ არა PDF-ის ბეჭდვა?",
-        faq_2_a: "დიახ, პრემიუმ პაკეტით შეგიძლიათ გადმოწეროთ ხე მაღალი ხარისხის PDF ფორმატში, რომელიც გამოსადეგია დასაბეჭდად.",
-        faq_3_q: "როგორ მუშაობს გაზიარება?",
-        faq_3_a: "თქვენ ქმნით დაშიფრულ ბმულს და პაროლს. ბმული არის ერთჯერადი და გახსნის შემდეგ ავტომატურად იშლება სერვერიდან უსაფრთხოებისთვის.",
-
         // Features
         feat_unlimited_title: "შეზღუდვების გარეშე",
         feat_unlimited_desc: "დაამატეთ უსასრულო რაოდენობის პიროვნება. მშობლები, შვილები, მეუღლეები, დედმამიშვილები — ხე იზრდება თქვენთან ერთად.",
@@ -324,6 +302,11 @@ export const translations = {
         feat_import_desc: "ავტომატური ბექაპები ღრუბელში, მონაცემების იმპორტი/ექსპორტი და ფაილების მართვა.",
         feat_mobile_title: "მობილურზე მორგებული",
         feat_mobile_desc: "სრულად ადაპტირებული ინტერფეისი. მართეთ თქვენი ხე ნებისმიერი ადგილიდან, ნებისმიერი მოწყობილობით.",
+        // NEW FEATURES
+        feat_timeline_title: "დროის ხაზი (Timeline)",
+        feat_timeline_desc: "იმოგზაურეთ დროში. ნახეთ თქვენი წინაპრების ისტორია ისტორიული მოვლენების პარალელურად.",
+        feat_map_title: "გეოგრაფიული რუკა",
+        feat_map_desc: "აღმოაჩინეთ ფესვები რუკაზე. ნახეთ სად დაიბადნენ და ცხოვრობდნენ თქვენი წინაპრები.",
 
         // Pricing Plans
         pricing_title: "აირჩიეთ თქვენი გეგმა",
@@ -341,6 +324,9 @@ export const translations = {
         feat_export_pdf: "PDF ექსპორტი",
         feat_share: "გაზიარება",
         feat_import_export: "ექსპორტი/იმპორტი",
+        // NEW PREMIUM FEATURES
+        feat_premium_timeline: "ისტორიული თაიმლაინი",
+        feat_premium_map: "ინტერაქტიული რუკა",
         btn_start: "დაწყება",
         btn_activate: "გააქტიურება",
 
@@ -376,9 +362,30 @@ export const translations = {
         auth_login_link: "გაიარეთ ავტორიზაცია",
         auth_or: "ან გააგრძელეთ",
         auth_success: "წარმატება! გადამისამართება...",
+        
+        // Quick Start
+        quick_start_placeholder: "ჩაწერეთ თქვენი სახელი და გვარი",
+        quick_start_btn: "დაწყება",
+        
+        // How it Works
+        how_title: "როგორ მუშაობს?",
+        step_1_title: "შექმენი პროფილი",
+        step_1_desc: "დაიწყე საკუთარი თავით. შეიყვანე სახელი და გვარი სისტემაში.",
+        step_2_title: "დაამატე ნათესავები",
+        step_2_desc: "მიუთითე მშობლები, მეუღლე და შვილები. ხე ავტომატურად გაიზრდება.",
+        step_3_title: "გააზიარე & შეინახე",
+        step_3_desc: "დააგენერირე დაცული ბმული ან შეინახე მონაცემები PDF ფორმატში.",
+
+        // FAQ
+        faq_title: "ხშირად დასმული კითხვები",
+        faq_1_q: "არის თუ არა ჩემი მონაცემები დაცული?",
+        faq_1_a: "დიახ. მონაცემები ინახება ლოკალურად თქვენს ბრაუზერში. სერვერზე იგზავნება მხოლოდ მაშინ, როცა თავად ირჩევთ გაზიარებას ან ბექაპის შექმნას.",
+        faq_2_q: "შემიძლია თუ არა PDF-ის ბეჭდვა?",
+        faq_2_a: "დიახ, პრემიუმ პაკეტით შეგიძლიათ გადმოწეროთ ხე მაღალი ხარისხის PDF ფორმატში, რომელიც გამოსადეგია დასაბეჭდად.",
+        faq_3_q: "როგორ მუშაობს გაზიარება?",
+        faq_3_a: "თქვენ ქმნით დაშიფრულ ბმულს და პაროლს. ბმული არის ერთჯერადი და გახსნის შემდეგ ავტომატურად იშლება სერვერიდან უსაფრთხოებისთვის.",
     },
     es: {
-        // ... existing es translations ...
         // Common
         save: "Guardar",
         cancel: "Cancelar",
@@ -650,7 +657,7 @@ export const translations = {
         btn_open_tree: "Abrir árbol",
 
         // Landing Page
-        landing_badge: "Sin análogos",
+        landing_badge: "Versión 3.7",
         landing_title_1: "Tu historia,",
         landing_title_2: "infinita",
         landing_title_3: " y segura.",
@@ -665,28 +672,6 @@ export const translations = {
         landing_created_by: "Creado por",
         landing_by: "",
         
-        // Quick Start
-        quick_start_placeholder: "Introduce tu nombre completo",
-        quick_start_btn: "Empezar",
-        
-        // How it Works
-        how_title: "¿Cómo funciona?",
-        step_1_title: "Crear perfil",
-        step_1_desc: "Empieza por ti mismo. Introduce tu nombre y apellidos en el sistema.",
-        step_2_title: "Añadir parientes",
-        step_2_desc: "Añade padres, cónyuge e hijos. El árbol crecerá automáticamente.",
-        step_3_title: "Compartir y Guardar",
-        step_3_desc: "Genera un enlace seguro o guarda los datos en formato PDF.",
-        
-        // FAQ
-        faq_title: "Preguntas frecuentes",
-        faq_1_q: "¿Están seguros mis datos?",
-        faq_1_a: "Sí. Los datos se almacenan localmente en su navegador por defecto. Solo se envían al servidor cuando eliges compartir o crear una copia de seguridad.",
-        faq_2_q: "¿Puedo imprimir el árbol?",
-        faq_2_a: "Sí, el plan Premium permite exportar el árbol en formato PDF de alta calidad, útil para imprimir.",
-        faq_3_q: "¿Cómo funciona compartir?",
-        faq_3_a: "Creas un enlace encriptado y una contraseña. El enlace es de un solo uso y se elimina automáticamente del servidor tras abrirse por seguridad.",
-
         // Features
         feat_unlimited_title: "Sin límites",
         feat_unlimited_desc: "Añade un número infinito de personas. Padres, hijos, cónyuges, hermanos: el árbol crece contigo.",
@@ -700,6 +685,11 @@ export const translations = {
         feat_import_desc: "Copias de seguridad automáticas en la nube, importación/exportación de datos y gestión de archivos.",
         feat_mobile_title: "Adaptado a móviles",
         feat_mobile_desc: "Interfaz totalmente adaptativa. Gestiona tu árbol desde cualquier lugar, con cualquier dispositivo.",
+        // NEW FEATURES
+        feat_timeline_title: "Línea de Tiempo",
+        feat_timeline_desc: "Viaja en el tiempo. Visualiza la historia de tus antepasados junto con eventos históricos.",
+        feat_map_title: "Mapa Geográfico",
+        feat_map_desc: "Descubre tus raíces en el mapa. Vea dónde nacieron y vivieron sus antepasados.",
 
         // Pricing Plans
         pricing_title: "Elige tu plan",
@@ -717,6 +707,9 @@ export const translations = {
         feat_export_pdf: "Exportar PDF",
         feat_share: "Compartir",
         feat_import_export: "Exportar/Importar",
+        // NEW PREMIUM FEATURES
+        feat_premium_timeline: "Línea de tiempo histórica",
+        feat_premium_map: "Mapa interactivo",
         btn_start: "Empezar",
         btn_activate: "Activar",
 
@@ -752,5 +745,27 @@ export const translations = {
         auth_login_link: "Inicia sesión",
         auth_or: "O continúa con",
         auth_success: "¡Éxito! Redirigiendo...",
+        
+        // Quick Start
+        quick_start_placeholder: "Escribe tu nombre y apellido",
+        quick_start_btn: "Empezar",
+        
+        // How it Works
+        how_title: "¿Cómo funciona?",
+        step_1_title: "Crea un perfil",
+        step_1_desc: "Empieza por ti mismo. Introduce tu nombre y apellido en el sistema.",
+        step_2_title: "Añade parientes",
+        step_2_desc: "Indica padres, cónyuge e hijos. El árbol crecerá automáticamente.",
+        step_3_title: "Comparte y Guarda",
+        step_3_desc: "Genera un enlace seguro o guarda los datos en formato PDF.",
+
+        // FAQ
+        faq_title: "Preguntas frecuentes",
+        faq_1_q: "¿Están seguros mis datos?",
+        faq_1_a: "Sí. Los datos se almacenan localmente en tu navegador. Solo se envían al servidor cuando eliges compartirlos o crear una copia de seguridad.",
+        faq_2_q: "¿Puedo imprimir el PDF?",
+        faq_2_a: "Sí, con el paquete premium puedes descargar el árbol en formato PDF de alta calidad, útil para imprimir.",
+        faq_3_q: "¿Cómo funciona compartir?",
+        faq_3_a: "Creas un enlace encriptado y una contraseña. El enlace es de un solo uso y se elimina automáticamente del servidor tras abrirse por seguridad.",
     }
 };

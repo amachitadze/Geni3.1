@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { 
     CloseIcon, UserCircleIcon, CogIcon, DatabaseIcon, InfoIcon, 
@@ -58,6 +59,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   const [cloudFiles, setCloudFiles] = useState<any[]>([]);
   const [supabaseConfig, setSupabaseConfig] = useState({ url: '', key: '' });
 
+  // Metadata State
+  const [appMetadata, setAppMetadata] = useState<{version: string, build: string} | null>(null);
+
   useEffect(() => {
       if (isOpen) {
           setActiveTab(initialTab);
@@ -65,6 +69,12 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
           setOpStatus(null);
           const config = getStoredSupabaseConfig();
           setSupabaseConfig(config);
+
+          // Fetch metadata dynamically
+          fetch('/metadata.json')
+            .then(res => res.json())
+            .then(data => setAppMetadata(data))
+            .catch(err => console.error('Failed to load metadata:', err));
       }
   }, [isOpen, initialTab]);
 
@@ -583,7 +593,11 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                     </div>
                     
                     <div className="text-center pt-4">
-                        <p className="text-xs text-gray-400">App Version 3.2.0 (Unified Settings)</p>
+                        {appMetadata ? (
+                            <p className="text-xs text-gray-400">App Version {appMetadata.version} ({appMetadata.build})</p>
+                        ) : (
+                            <p className="text-xs text-gray-400">Loading version info...</p>
+                        )}
                     </div>
                 </div>
             )}
