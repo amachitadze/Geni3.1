@@ -15,7 +15,7 @@ import GoogleSearchPanel from './components/GoogleSearchPanel';
 import LandingPage from './components/LandingPage';
 import InitialView from './components/InitialView';
 import NotificationSenderModal from './components/NotificationSenderModal';
-import NotificationBanner from './components/NotificationBanner';
+import NotificationBanner, { NotificationData } from './components/NotificationBanner';
 import SettingsModal from './components/SettingsModal';
 import RelationshipFinderModal from './components/RelationshipFinderModal';
 import AuthModal from './components/AuthModal';
@@ -29,7 +29,7 @@ import {
     CenterIcon, StatsIcon, CloseIcon, ShareIcon, 
     ViewCompactIcon, ViewNormalIcon, 
     ListBulletIcon, GlobeIcon, MessageIcon, CogIcon, CalculatorIcon, ClockIcon, MapIcon,
-    PlusIcon, MinusIcon, CakeIcon, GoogleIcon, CloudDownloadIcon
+    PlusIcon, MinusIcon, CakeIcon, GoogleIcon, CloudDownloadIcon, BellIcon
 } from './components/Icons';
 
 // Hooks
@@ -101,6 +101,10 @@ function App() {
 
   // User State
   const [currentUser, setCurrentUser] = useState<string | null>(null);
+  
+  // Notification State (Centralized)
+  const [notifications, setNotifications] = useState<NotificationData[]>([]);
+  const [activeNotification, setActiveNotification] = useState<NotificationData | null>(null);
   
   const [isDecrypting, setIsDecrypting] = useState(false);
   const [installPrompt, setInstallPrompt] = useState<any>(null);
@@ -307,6 +311,41 @@ function App() {
   }, []);
 
   // --- Handlers ---
+
+  const handleNotificationsLoaded = (data: NotificationData[]) => {
+      const now = new Date();
+      // Filter valid notifications
+      const valid = data
+        .filter(n => new Date(n.expiresAt) > now)
+        .sort((a, b) => b.id - a.id);
+      
+      setNotifications(valid);
+
+      // Check for NEW notification to show the Pop-up banner
+      if (valid.length > 0) {
+          const latest = valid[0];
+          const storedSeen = localStorage.getItem('seenNotificationIds');
+          const seenIds = storedSeen ? JSON.parse(storedSeen) : [];
+          
+          if (!seenIds.includes(latest.id)) {
+              setActiveNotification(latest);
+              // Update local storage seen list
+              const updatedSeen = [...seenIds, latest.id];
+              localStorage.setItem('seenNotificationIds', JSON.stringify(updatedSeen));
+              
+              // Native Push Notification if tab hidden
+              if (document.hidden || !document.hasFocus()) {
+                  if (Notification.permission === 'granted') {
+                      new Notification(latest.isPoll ? t.banner_new_poll : t.banner_new_msg, {
+                          body: latest.text,
+                          icon: 'https://i.postimg.cc/XNfDXTjn/Geni-Icon.png',
+                          tag: 'geni-msg-' + latest.id
+                      });
+                  }
+              }
+          }
+      }
+  };
 
   const handleLandingPageEnter = (startName?: string) => {
     if (startName && startName.trim()) {
@@ -650,6 +689,7 @@ function App() {
                                 <ul className="py-2 max-h-[80vh] overflow-y-auto">
                                     <li><div className={MENU_HEADER_CLASS}>{t.menu_navigation}</div></li>
                                     <li><button onClick={() => { setIsViewingTree(false); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}><HomeIcon className="w-5 h-5"/><span>{t.menu_home}</span></button></li>
+                                    <li><button onClick={() => { setIsBirthdayModalOpen(true); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}><BellIcon className="w-5 h-5"/><span>{t.menu_notifications}</span></button></li>
                                     {!isReadOnly && <li><button onClick={() => { setIsNotificationSenderOpen(true); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}><MessageIcon className="w-5 h-5"/><span>{t.menu_message}</span></button></li>}
                                     {!isReadOnly && <li><button onClick={() => { setIsShareModalOpen(true); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}><ShareIcon className="w-5 h-5"/><span>{t.menu_share}</span></button></li>}
                                     
@@ -673,7 +713,6 @@ function App() {
                                     
                                     <li><div className={MENU_HEADER_CLASS}>{t.menu_analysis}</div></li>
                                     <li><button onClick={() => { setIsStatisticsModalOpen(true); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}><StatsIcon className="w-5 h-5"/><span>{t.menu_stats}</span></button></li>
-                                    <li><button onClick={() => { setIsBirthdayModalOpen(true); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}><CakeIcon className="w-5 h-5"/><span>{t.menu_birthdays}</span></button></li>
                                     <li><button onClick={() => { setIsRelationshipModalOpen(true); setIsMenuOpen(false); }} className={MENU_ITEM_CLASS}><CalculatorIcon className="w-5 h-5"/><span>{t.menu_find_rel}</span></button></li>
                                     {!isReadOnly && <li><button onClick={handleExportPdf} className={MENU_ITEM_CLASS}><ExportIcon className="w-5 h-5"/><span>{t.menu_export_pdf}</span></button></li>}
                                     
@@ -762,13 +801,22 @@ function App() {
       </main>
 
       {/* Floating Elements */}
-      <NotificationBanner language={language} />
+      <NotificationBanner 
+        language={language}
+        notification={activeNotification}
+        onClose={() => setActiveNotification(null)}
+        onDataLoaded={handleNotificationsLoaded}
+      />
+      
       <BirthdayNotifier 
         peopleWithBirthdays={peopleWithBirthdays} 
+        notifications={notifications}
         onNavigate={navigateTo} 
+        onSelectMessage={(msg) => setActiveNotification(msg)}
         isOpen={isBirthdayModalOpen}
         onClose={() => setIsBirthdayModalOpen(false)}
         isFloatingButtonVisible={viewMode !== 'map'}
+        language={language}
       />
 
       {/* Modals */}
