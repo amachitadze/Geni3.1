@@ -23,6 +23,7 @@ import { decryptData, base64ToBuffer } from './utils/crypto';
 import { formatTimestamp, calculateAge } from './utils/dateUtils';
 import { validatePeopleData, getFamilyUnitFromConnection } from './utils/treeUtils';
 import { translations, Language } from './utils/translations';
+import { getStoredSupabaseConfig } from './utils/supabaseClient';
 import { 
     SearchIcon, BackIcon, HomeIcon, MenuIcon, ExportIcon, 
     CenterIcon, StatsIcon, CloseIcon, ShareIcon, 
@@ -262,6 +263,47 @@ function App() {
     };
     window.addEventListener('beforeinstallprompt', handler);
     return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  // --- Background Sync Registration (PWA) ---
+  useEffect(() => {
+      const registerPeriodicSync = async () => {
+          if ('serviceWorker' in navigator) {
+              const registration = await navigator.serviceWorker.ready;
+              
+              // 1. Send Config to SW so it can fetch notifications when app is closed
+              const config = getStoredSupabaseConfig();
+              if (config.url && config.key && registration.active) {
+                  registration.active.postMessage({ 
+                      type: 'SET_CONFIG', 
+                      payload: { url: config.url, key: config.key } 
+                  });
+              }
+
+              // 2. Register Periodic Sync (Chrome/Android Only)
+              // @ts-ignore
+              if ('periodicSync' in registration) {
+                  try {
+                      const status = await navigator.permissions.query({
+                          // @ts-ignore
+                          name: 'periodic-background-sync',
+                      });
+
+                      if (status.state === 'granted') {
+                          // @ts-ignore
+                          await registration.periodicSync.register('check-messages', {
+                              minInterval: 60 * 60 * 1000, // 1 Hour (Browser decides actual interval)
+                          });
+                          console.log('Periodic sync registered');
+                      }
+                  } catch (error) {
+                      console.log('Periodic sync could not be registered', error);
+                  }
+              }
+          }
+      };
+      
+      registerPeriodicSync();
   }, []);
 
   // --- Handlers ---

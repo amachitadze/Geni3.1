@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect } from 'react';
-import { getStoredSupabaseConfig, getSupabaseClient } from '../utils/supabaseClient';
+import React, { useState, useEffect, useRef } from 'react';
+import { getStoredSupabaseConfig } from '../utils/supabaseClient';
 import { CloseIcon, MessageIcon, PollIcon, ArrowRightIcon, BackIcon, BellIcon } from './Icons';
 import { translations, Language } from '../utils/translations';
 
@@ -19,16 +19,49 @@ interface NotificationBannerProps {
 
 const NOTIFICATION_FILE_PATH = 'notifications/notifications.json';
 
+// --- WEB WORKER CODE (Inline String) ---
+// This runs in a separate thread, unaffected by UI freezing or background tab throttling.
+const workerCode = `
+self.onmessage = (e) => {
+    const { config, filePath } = e.data;
+    if (!config || !config.url || !config.key) return;
+
+    const check = async () => {
+        try {
+            // Direct fetch to bypass Supabase JS client overhead in worker
+            const response = await fetch(\`\${config.url}/storage/v1/object/public/shares/\${filePath}?t=\${Date.now()}\`, {
+                headers: { 'Authorization': \`Bearer \${config.key}\` }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                self.postMessage({ type: 'DATA', payload: data });
+            }
+        } catch (err) {
+            // Silent fail in worker
+        }
+    };
+
+    check(); // Initial check
+    setInterval(check, 30000); // Check every 30 seconds
+};
+`;
+
 const NotificationBanner: React.FC<NotificationBannerProps> = ({ language }) => {
     const t = translations[language];
     const [notifications, setNotifications] = useState<NotificationData[]>([]);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isVisible, setIsVisible] = useState(false);
     const [lastSeenIds, setLastSeenIds] = useState<number[]>([]);
-    const [permission, setPermission] = useState<NotificationPermission>(Notification.permission);
+    const [permission, setPermission] = useState<NotificationPermission>('default');
+    
+    const workerRef = useRef<Worker | null>(null);
 
-    // Load last seen IDs from local storage on mount
     useEffect(() => {
+        if ('Notification' in window) {
+            setPermission(Notification.permission);
+        }
+        
         const storedSeen = localStorage.getItem('seenNotificationIds');
         if (storedSeen) {
             try {
@@ -44,105 +77,107 @@ const NotificationBanner: React.FC<NotificationBannerProps> = ({ language }) => 
 
     const requestNotificationPermission = async () => {
         if (!('Notification' in window)) {
-            alert("თქვენს ბრაუზერს არ აქვს შეტყობინებების მხარდაჭერა.");
+            alert("This browser does not support desktop notification");
             return;
         }
         const result = await Notification.requestPermission();
         setPermission(result);
         if (result === 'granted') {
-            // Test notification
-            sendSystemNotification("შეტყობინებები ჩართულია", "ახლა თქვენ მიიღებთ სიახლეებს.");
+            new Notification("შეტყობინებები ჩაირთო", {
+                body: "ახლა თქვენ მიიღებთ სიახლეებს მაშინაც კი, თუ სხვა ტაბზე ხართ.",
+                icon: 'https://i.postimg.cc/XNfDXTjn/Geni-Icon.png'
+            });
         }
     };
 
     const sendSystemNotification = (title: string, body: string) => {
         if (Notification.permission === 'granted') {
-            // Try to use Service Worker for better mobile support
-            if ('serviceWorker' in navigator && navigator.serviceWorker.ready) {
-                navigator.serviceWorker.ready.then(registration => {
-                    registration.showNotification(title, {
-                        body: body,
-                        icon: 'https://i.postimg.cc/XNfDXTjn/Geni-Icon.png',
-                        vibrate: [200, 100, 200],
-                        tag: 'geni-notification'
-                    } as any);
-                });
-            } else {
-                // Fallback to basic Notification API
-                new Notification(title, {
-                    body: body,
-                    icon: 'https://i.postimg.cc/XNfDXTjn/Geni-Icon.png'
-                });
-            }
+            // Standard Notification API
+            const notif = new Notification(title, {
+                body: body,
+                icon: 'https://i.postimg.cc/XNfDXTjn/Geni-Icon.png',
+                tag: 'geni-notification', // Replace existing to avoid spam
+                requireInteraction: true // Keeps it visible until user clicks
+            });
+            
+            notif.onclick = function() {
+                window.focus();
+                this.close();
+            };
         }
     };
 
-    const checkForNotifications = async () => {
+    // --- WORKER SETUP ---
+    useEffect(() => {
         const config = getStoredSupabaseConfig();
         if (!config.url || !config.key) return;
 
-        try {
-            const supabase = getSupabaseClient(config.url, config.key);
-            
-            const { data, error } = await supabase
-                .storage
-                .from('shares')
-                .download(`${NOTIFICATION_FILE_PATH}?t=${Date.now()}`);
+        // Create Worker from Blob
+        const blob = new Blob([workerCode], { type: "application/javascript" });
+        workerRef.current = new Worker(URL.createObjectURL(blob));
 
-            if (error) return;
+        // Start Worker
+        workerRef.current.postMessage({ 
+            config, 
+            filePath: NOTIFICATION_FILE_PATH 
+        });
 
-            if (data) {
-                const text = await data.text();
-                let json: NotificationData | NotificationData[] = JSON.parse(text);
-                
-                const now = new Date();
-                let activeList: NotificationData[] = [];
-
-                if (Array.isArray(json)) {
-                    activeList = json
-                        .filter(n => new Date(n.expiresAt) > now)
-                        .sort((a, b) => b.id - a.id);
-                } else {
-                    if (new Date(json.expiresAt) > now) {
-                        activeList = [json];
-                    }
-                }
-
-                if (activeList.length > 0) {
-                    setNotifications(activeList);
-                    
-                    const newIds = activeList.map(n => n.id);
-                    // Find genuinely new notifications that user hasn't closed/seen
-                    const latestNotification = activeList[0];
-                    const isNew = !lastSeenIds.includes(latestNotification.id);
-                    
-                    if (isNew) {
-                        setIsVisible(true);
-                        setLastSeenIds(prev => {
-                            const updated = Array.from(new Set([...prev, latestNotification.id]));
-                            return updated.slice(-50); // Keep only last 50 IDs to prevent storage bloat
-                        });
-                        
-                        // Trigger System Notification
-                        if (document.hidden || !document.hasFocus()) {
-                            const title = latestNotification.isPoll ? t.banner_new_poll : t.banner_new_msg;
-                            sendSystemNotification(title, latestNotification.text);
-                        }
-                    }
-                } else {
-                    setIsVisible(false);
-                }
+        // Listen to Worker
+        workerRef.current.onmessage = (e) => {
+            if (e.data.type === 'DATA') {
+                handleNewData(e.data.payload);
             }
-        } catch (err) {
-            console.error("Error polling notifications:", err);
+        };
+
+        return () => {
+            workerRef.current?.terminate();
+        };
+    }, []);
+
+    const handleNewData = (json: any) => {
+        const now = new Date();
+        let activeList: NotificationData[] = [];
+
+        if (Array.isArray(json)) {
+            activeList = json
+                .filter(n => new Date(n.expiresAt) > now)
+                .sort((a, b) => b.id - a.id);
+        } else if (json && json.expiresAt) {
+            if (new Date(json.expiresAt) > now) {
+                activeList = [json];
+            }
+        }
+
+        if (activeList.length > 0) {
+            setNotifications(activeList);
+            
+            // Check for NEW notifications
+            const latest = activeList[0];
+            
+            // Using functional state update to ensure we have the latest 'lastSeenIds'
+            setLastSeenIds(prevIds => {
+                if (!prevIds.includes(latest.id)) {
+                    // It's new!
+                    setIsVisible(true);
+                    
+                    // Show System Notification if tab is hidden/inactive
+                    if (document.hidden || !document.hasFocus()) {
+                        const title = latest.isPoll ? t.banner_new_poll : t.banner_new_msg;
+                        sendSystemNotification(title, latest.text);
+                    }
+
+                    const updated = Array.from(new Set([...prevIds, latest.id]));
+                    return updated.slice(-50);
+                }
+                return prevIds;
+            });
+        } else {
+            // No active notifications
+            if (activeList.length === 0 && isVisible) {
+                setIsVisible(false);
+            }
         }
     };
-
-    useEffect(() => {
-        checkForNotifications(); 
-        const interval = setInterval(checkForNotifications, 5 * 60 * 1000); // 5 Minutes
-        return () => clearInterval(interval);
-    }, []);
 
     const handleNext = () => {
         setCurrentIndex((prev) => (prev + 1) % notifications.length);
@@ -156,9 +191,6 @@ const NotificationBanner: React.FC<NotificationBannerProps> = ({ language }) => 
         setIsVisible(false);
     };
 
-    // Render "Enable Notifications" button if permitted is default (not asked yet) or denied, 
-    // but only show it discreetly or if there are actual notifications but permission is missing.
-    
     if (notifications.length === 0 || !isVisible) return null;
 
     const safeIndex = currentIndex >= notifications.length ? 0 : currentIndex;
