@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { getStoredSupabaseConfig, getSupabaseClient } from '../utils/supabaseClient';
-import { CloseIcon, MessageIcon, PollIcon, ArrowRightIcon, ChevronRightIcon, BackIcon } from './Icons';
+import { CloseIcon, MessageIcon, PollIcon, ArrowRightIcon, BackIcon, BellIcon } from './Icons';
 import { translations, Language } from '../utils/translations';
 
 interface NotificationData {
@@ -25,13 +25,57 @@ const NotificationBanner: React.FC<NotificationBannerProps> = ({ language }) => 
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isVisible, setIsVisible] = useState(false);
     const [lastSeenIds, setLastSeenIds] = useState<number[]>([]);
+    const [permission, setPermission] = useState<NotificationPermission>(Notification.permission);
 
-    // Request Notification Permission on Mount
+    // Load last seen IDs from local storage on mount
     useEffect(() => {
-        if ('Notification' in window && Notification.permission !== 'granted') {
-            Notification.requestPermission();
+        const storedSeen = localStorage.getItem('seenNotificationIds');
+        if (storedSeen) {
+            try {
+                setLastSeenIds(JSON.parse(storedSeen));
+            } catch (e) { console.error(e); }
         }
     }, []);
+
+    // Save seen IDs when updated
+    useEffect(() => {
+        localStorage.setItem('seenNotificationIds', JSON.stringify(lastSeenIds));
+    }, [lastSeenIds]);
+
+    const requestNotificationPermission = async () => {
+        if (!('Notification' in window)) {
+            alert("თქვენს ბრაუზერს არ აქვს შეტყობინებების მხარდაჭერა.");
+            return;
+        }
+        const result = await Notification.requestPermission();
+        setPermission(result);
+        if (result === 'granted') {
+            // Test notification
+            sendSystemNotification("შეტყობინებები ჩართულია", "ახლა თქვენ მიიღებთ სიახლეებს.");
+        }
+    };
+
+    const sendSystemNotification = (title: string, body: string) => {
+        if (Notification.permission === 'granted') {
+            // Try to use Service Worker for better mobile support
+            if ('serviceWorker' in navigator && navigator.serviceWorker.ready) {
+                navigator.serviceWorker.ready.then(registration => {
+                    registration.showNotification(title, {
+                        body: body,
+                        icon: 'https://i.postimg.cc/XNfDXTjn/Geni-Icon.png',
+                        vibrate: [200, 100, 200],
+                        tag: 'geni-notification'
+                    } as any);
+                });
+            } else {
+                // Fallback to basic Notification API
+                new Notification(title, {
+                    body: body,
+                    icon: 'https://i.postimg.cc/XNfDXTjn/Geni-Icon.png'
+                });
+            }
+        }
+    };
 
     const checkForNotifications = async () => {
         const config = getStoredSupabaseConfig();
@@ -40,7 +84,6 @@ const NotificationBanner: React.FC<NotificationBannerProps> = ({ language }) => 
         try {
             const supabase = getSupabaseClient(config.url, config.key);
             
-            // Fetch notifications
             const { data, error } = await supabase
                 .storage
                 .from('shares')
@@ -56,12 +99,10 @@ const NotificationBanner: React.FC<NotificationBannerProps> = ({ language }) => 
                 let activeList: NotificationData[] = [];
 
                 if (Array.isArray(json)) {
-                    // Filter active notifications and sort new first
                     activeList = json
                         .filter(n => new Date(n.expiresAt) > now)
                         .sort((a, b) => b.id - a.id);
                 } else {
-                    // Legacy support
                     if (new Date(json.expiresAt) > now) {
                         activeList = [json];
                     }
@@ -70,26 +111,25 @@ const NotificationBanner: React.FC<NotificationBannerProps> = ({ language }) => 
                 if (activeList.length > 0) {
                     setNotifications(activeList);
                     
-                    // Check if there are ANY new messages we haven't seen in this session
                     const newIds = activeList.map(n => n.id);
-                    const hasNew = newIds.some(id => !lastSeenIds.includes(id));
+                    // Find genuinely new notifications that user hasn't closed/seen
+                    const latestNotification = activeList[0];
+                    const isNew = !lastSeenIds.includes(latestNotification.id);
                     
-                    if (hasNew) {
+                    if (isNew) {
                         setIsVisible(true);
-                        setLastSeenIds(prev => Array.from(new Set([...prev, ...newIds])));
+                        setLastSeenIds(prev => {
+                            const updated = Array.from(new Set([...prev, latestNotification.id]));
+                            return updated.slice(-50); // Keep only last 50 IDs to prevent storage bloat
+                        });
                         
-                        // Notify Browser System
-                        if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
-                            const latest = activeList[0];
-                            const title = latest.isPoll ? t.banner_new_poll : t.banner_new_msg;
-                            new Notification(title, {
-                                body: latest.text,
-                                icon: '/favicon.ico'
-                            });
+                        // Trigger System Notification
+                        if (document.hidden || !document.hasFocus()) {
+                            const title = latestNotification.isPoll ? t.banner_new_poll : t.banner_new_msg;
+                            sendSystemNotification(title, latestNotification.text);
                         }
                     }
                 } else {
-                    // No active messages
                     setIsVisible(false);
                 }
             }
@@ -98,29 +138,10 @@ const NotificationBanner: React.FC<NotificationBannerProps> = ({ language }) => 
         }
     };
 
-    // Polling Logic:
-    // 1. Every 5 minutes (reduced from 1 min to save resources)
-    // 2. Specific checks at 9:00 and 18:00
     useEffect(() => {
-        checkForNotifications(); // Initial check
-
+        checkForNotifications(); 
         const interval = setInterval(checkForNotifications, 5 * 60 * 1000); // 5 Minutes
-
-        // Specific time checker (runs every minute to check if it's 9:00 or 18:00)
-        const timeChecker = setInterval(() => {
-            const now = new Date();
-            const hour = now.getHours();
-            const minute = now.getMinutes();
-            // Check at 09:00 and 18:00
-            if ((hour === 9 || hour === 18) && minute === 0) {
-                checkForNotifications();
-            }
-        }, 60000);
-
-        return () => {
-            clearInterval(interval);
-            clearInterval(timeChecker);
-        };
+        return () => clearInterval(interval);
     }, []);
 
     const handleNext = () => {
@@ -135,9 +156,11 @@ const NotificationBanner: React.FC<NotificationBannerProps> = ({ language }) => 
         setIsVisible(false);
     };
 
+    // Render "Enable Notifications" button if permitted is default (not asked yet) or denied, 
+    // but only show it discreetly or if there are actual notifications but permission is missing.
+    
     if (notifications.length === 0 || !isVisible) return null;
 
-    // Ensure index is valid
     const safeIndex = currentIndex >= notifications.length ? 0 : currentIndex;
     const currentNotif = notifications[safeIndex];
     const isPoll = currentNotif.isPoll;
@@ -146,18 +169,18 @@ const NotificationBanner: React.FC<NotificationBannerProps> = ({ language }) => 
         <div className="fixed z-50 animate-fade-in-up 
                         bottom-4 left-4 right-4 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 
                         sm:bottom-8 w-auto sm:max-w-lg">
+            
+            {/* Main Banner */}
             <div className={`rounded-xl shadow-2xl border p-4 flex flex-col gap-3 ring-1 backdrop-blur-sm bg-opacity-95 dark:bg-opacity-95 transition-colors
                              ${isPoll 
                                 ? 'bg-blue-50 dark:bg-gray-800 border-blue-500/30 ring-blue-500/20' 
                                 : 'bg-white dark:bg-gray-800 border-purple-500/30 ring-purple-500/20'}`}>
                 
                 <div className="flex items-start gap-4">
-                    {/* Icon */}
                     <div className={`p-3 rounded-full flex-shrink-0 ${isPoll ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400' : 'bg-purple-100 text-purple-600 dark:bg-purple-900/50 dark:text-purple-400'}`}>
                         {isPoll ? <PollIcon className="w-6 h-6" /> : <MessageIcon className="w-6 h-6" />}
                     </div>
 
-                    {/* Content */}
                     <div className="flex-grow min-w-0">
                         <h4 className="font-bold text-gray-900 dark:text-white mb-1 flex items-center justify-between">
                             <span>{isPoll ? t.banner_poll : t.banner_msg}</span>
@@ -171,23 +194,35 @@ const NotificationBanner: React.FC<NotificationBannerProps> = ({ language }) => 
                             {currentNotif.text}
                         </p>
                         
-                        {currentNotif.link && (
-                            <a 
-                                href={currentNotif.link} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className={`inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wide px-4 py-2 rounded-lg transition-colors
-                                            ${isPoll 
-                                                ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                                                : 'bg-purple-600 hover:bg-purple-700 text-white'}`}
-                            >
-                                {isPoll ? t.btn_vote : t.btn_view}
-                                <ArrowRightIcon className="w-4 h-4" />
-                            </a>
-                        )}
+                        <div className="flex flex-wrap gap-2">
+                            {currentNotif.link && (
+                                <a 
+                                    href={currentNotif.link} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className={`inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wide px-4 py-2 rounded-lg transition-colors
+                                                ${isPoll 
+                                                    ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                                                    : 'bg-purple-600 hover:bg-purple-700 text-white'}`}
+                                >
+                                    {isPoll ? t.btn_vote : t.btn_view}
+                                    <ArrowRightIcon className="w-4 h-4" />
+                                </a>
+                            )}
+                            
+                            {/* Permission Button inside the card if needed */}
+                            {permission === 'default' && (
+                                <button 
+                                    onClick={requestNotificationPermission}
+                                    className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wide px-4 py-2 rounded-lg transition-colors border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"
+                                >
+                                    <BellIcon className="w-4 h-4" />
+                                    Enable Push
+                                </button>
+                            )}
+                        </div>
                     </div>
 
-                    {/* Close Button */}
                     <button 
                         onClick={handleClose} 
                         className="p-1 -mt-1 -mr-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
@@ -197,7 +232,6 @@ const NotificationBanner: React.FC<NotificationBannerProps> = ({ language }) => 
                     </button>
                 </div>
 
-                {/* Navigation (Only if multiple) */}
                 {notifications.length > 1 && (
                     <div className="flex justify-between items-center border-t border-gray-200 dark:border-gray-700 pt-2 mt-1">
                         <button 

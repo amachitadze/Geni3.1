@@ -28,7 +28,7 @@ import {
     CenterIcon, StatsIcon, CloseIcon, ShareIcon, 
     ViewCompactIcon, ViewNormalIcon, 
     ListBulletIcon, GlobeIcon, MessageIcon, CogIcon, CalculatorIcon, ClockIcon, MapIcon,
-    PlusIcon, MinusIcon, CakeIcon, GoogleIcon
+    PlusIcon, MinusIcon, CakeIcon, GoogleIcon, CloudDownloadIcon
 } from './components/Icons';
 
 // Hooks
@@ -445,6 +445,15 @@ function App() {
       googleAI.handleSearch(googleAI.query);
   };
 
+  const handleInstallClick = async () => {
+      if (!installPrompt) return;
+      installPrompt.prompt();
+      const { outcome } = await installPrompt.userChoice;
+      if (outcome === 'accepted') {
+          setInstallPrompt(null);
+      }
+  };
+
   // --- Render Props ---
   const peopleWithBirthdays = useMemo(() => {
     const currentMonth = new Date().getMonth();
@@ -533,6 +542,34 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 flex flex-col">
+      {/* Install App Banner (Top Right Fixed) */}
+      {installPrompt && (
+          <div className="fixed top-20 right-4 z-50 animate-fade-in-up">
+              <div className="bg-white dark:bg-gray-800 p-3 rounded-xl shadow-2xl border border-purple-500/30 flex flex-col gap-3 w-64 backdrop-blur-md">
+                  <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                          <div className="p-2 bg-purple-100 dark:bg-purple-900/50 rounded-lg text-purple-600 dark:text-purple-400">
+                              <CloudDownloadIcon className="w-6 h-6" />
+                          </div>
+                          <div>
+                              <h4 className="font-bold text-gray-900 dark:text-white text-sm">Install App</h4>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">Add to Home Screen</p>
+                          </div>
+                      </div>
+                      <button onClick={() => setInstallPrompt(null)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                          <CloseIcon className="w-4 h-4" />
+                      </button>
+                  </div>
+                  <button 
+                      onClick={handleInstallClick}
+                      className="w-full py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold uppercase tracking-wide rounded-lg transition-colors"
+                  >
+                      Install Now
+                  </button>
+              </div>
+          </div>
+      )}
+
       {/* Header */}
       <header className={`p-4 z-20 bg-white/80 dark:bg-gray-900/80 sticky top-0 transition-all duration-300 ${isZoomingViaWheel ? '' : 'backdrop-blur-sm'} ${isHeaderCollapsed ? 'py-2' : 'sm:py-6'}`}>
         
