@@ -5,7 +5,7 @@ import {
     SunIcon, MoonIcon, LanguageIcon, CloudDownloadIcon, CloudUploadIcon,
     DocumentIcon, JsonExportIcon, JsonImportIcon, LogoutIcon, CreditCardIcon,
     BackIcon, LockClosedIcon, CheckIcon, DocumentPlusIcon, DeleteIcon,
-    UserGroupIcon, ImageIcon, EditIcon
+    UserGroupIcon, ImageIcon, EditIcon, BellIcon
 } from './Icons';
 import { translations, Language } from '../utils/translations';
 import { formatTimestamp } from '../utils/dateUtils';
@@ -32,12 +32,14 @@ interface SettingsModalProps {
   onExportJson: () => void;
   currentData: { people: any; rootIdStack: string[] };
   appMetadata?: { name: string; version: string; build: string } | null;
+  installPrompt?: any;
+  onInstall?: () => void;
 }
 
 const SettingsModal: React.FC<SettingsModalProps> = ({ 
     isOpen, onClose, language, onLanguageChange, theme, toggleTheme,
     currentUser, onLogout, onLogin, treeStats, initialTab = 'general',
-    onRestore, onExportJson, currentData, appMetadata
+    onRestore, onExportJson, currentData, appMetadata, installPrompt, onInstall
 }) => {
   const t = translations[language];
   const [activeTab, setActiveTab] = useState<'general' | 'account' | 'data' | 'about'>(initialTab);
@@ -60,6 +62,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   const [cloudFiles, setCloudFiles] = useState<any[]>([]);
   const [supabaseConfig, setSupabaseConfig] = useState({ url: '', key: '' });
 
+  // Notifications State
+  const [notifPermission, setNotifPermission] = useState<NotificationPermission>('default');
+
   useEffect(() => {
       if (isOpen) {
           setActiveTab(initialTab);
@@ -67,6 +72,10 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
           setOpStatus(null);
           const config = getStoredSupabaseConfig();
           setSupabaseConfig(config);
+          
+          if ('Notification' in window) {
+              setNotifPermission(Notification.permission);
+          }
       }
   }, [isOpen, initialTab]);
 
@@ -212,6 +221,24 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
       } catch(err: any) { alert(err.message); }
   };
 
+  // --- Notifications Logic ---
+  const requestNotifPermission = async () => {
+      if (!('Notification' in window)) return;
+      const result = await Notification.requestPermission();
+      setNotifPermission(result);
+      if (result === 'granted') {
+          // Trigger a test notification via Service Worker
+          if ('serviceWorker' in navigator && navigator.serviceWorker.ready) {
+              navigator.serviceWorker.ready.then(registration => {
+                  registration.showNotification("Notifications Enabled", {
+                      body: "You will now receive updates.",
+                      icon: 'https://i.postimg.cc/XNfDXTjn/Geni-Icon.png'
+                  });
+              });
+          }
+      }
+  };
+
   // Effect to load data when switching views if auth is ready
   useEffect(() => {
       if (activeTab === 'data' && isAdminAuthenticated) {
@@ -314,6 +341,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
             {/* GENERAL TAB */}
             {activeTab === 'general' && (
                 <div className="space-y-6">
+                    {/* Theme */}
                     <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg border border-gray-200 dark:border-gray-700">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full text-blue-600 dark:text-blue-400">
@@ -329,6 +357,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                         </button>
                     </div>
 
+                    {/* Language */}
                     <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg border border-gray-200 dark:border-gray-700">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-full text-green-600 dark:text-green-400">
@@ -343,6 +372,51 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                             <button onClick={() => onLanguageChange('ka')} className={`px-3 py-1.5 text-xs font-bold rounded border ${language === 'ka' ? 'bg-purple-100 border-purple-300 text-purple-700' : 'bg-white dark:bg-gray-600 border-gray-300 dark:border-gray-500'}`}>KA</button>
                             <button onClick={() => onLanguageChange('es')} className={`px-3 py-1.5 text-xs font-bold rounded border ${language === 'es' ? 'bg-purple-100 border-purple-300 text-purple-700' : 'bg-white dark:bg-gray-600 border-gray-300 dark:border-gray-500'}`}>ES</button>
                         </div>
+                    </div>
+
+                    {/* Install App - Only if available */}
+                    {installPrompt && (
+                        <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-lg border border-purple-200 dark:border-purple-800/50">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-purple-100 dark:bg-purple-900/50 rounded-full text-purple-600 dark:text-purple-400">
+                                    <CloudDownloadIcon className="w-5 h-5"/>
+                                </div>
+                                <div>
+                                    <p className="font-semibold text-gray-800 dark:text-gray-100">{t.install_title}</p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">{t.install_desc}</p>
+                                </div>
+                            </div>
+                            <button onClick={onInstall} className="px-4 py-2 bg-purple-600 text-white rounded-md text-sm font-medium hover:bg-purple-700 transition-colors shadow-sm">
+                                {t.install_btn}
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Notifications */}
+                    <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg border border-gray-200 dark:border-gray-700">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-full text-purple-600 dark:text-purple-400">
+                                <BellIcon className="w-5 h-5"/>
+                            </div>
+                            <div>
+                                <p className="font-semibold text-gray-800 dark:text-gray-100">{t.set_notifications}</p>
+                                <p className="text-xs text-gray-500">
+                                    {notifPermission === 'granted' ? t.set_notif_active : 
+                                     notifPermission === 'denied' ? t.set_notif_denied : t.set_enable_notif}
+                                </p>
+                            </div>
+                        </div>
+                        {notifPermission === 'default' ? (
+                            <button onClick={requestNotifPermission} className="px-4 py-2 bg-purple-600 text-white rounded-md text-sm font-medium hover:bg-purple-700 transition-colors">
+                                Subscribe
+                            </button>
+                        ) : notifPermission === 'granted' ? (
+                            <span className="text-green-600 dark:text-green-400 font-bold text-sm flex items-center gap-1">
+                                <CheckIcon className="w-4 h-4"/> Active
+                            </span>
+                        ) : (
+                            <span className="text-red-500 text-xs font-medium">Blocked</span>
+                        )}
                     </div>
                 </div>
             )}

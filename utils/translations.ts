@@ -68,6 +68,10 @@ export const translations = {
         set_theme_light: "ნათელი",
         set_theme_dark: "მუქი",
         set_language: "ენა",
+        set_notifications: "შეტყობინებები",
+        set_enable_notif: "დაუშვი სიახლეების მიღება",
+        set_notif_active: "აქტიურია",
+        set_notif_denied: "დაბლოკილია (შეცვალეთ ბრაუზერში)",
         set_user_name: "მომხმარებელი",
         set_plan: "მიმდინარე გეგმა",
         set_plan_free: "უფასო",
@@ -78,6 +82,11 @@ export const translations = {
         set_stat_updated: "ბოლო განახლება",
         set_stat_root: "საწყისი პიროვნება",
         set_logout: "გასვლა",
+
+        // Install App
+        install_title: "აპლიკაციის ინსტალაცია",
+        install_desc: "დაამატე მთავარ ეკრანზე",
+        install_btn: "ინსტალაცია",
 
         // Header
         header_back: "უკან",
@@ -451,6 +460,10 @@ export const translations = {
         set_theme_light: "Claro",
         set_theme_dark: "Oscuro",
         set_language: "Idioma",
+        set_notifications: "Notificaciones",
+        set_enable_notif: "Permitir notificaciones",
+        set_notif_active: "Activo",
+        set_notif_denied: "Bloqueado (Cambiar en navegador)",
         set_user_name: "Usuario",
         set_plan: "Plan actual",
         set_plan_free: "Gratis",
@@ -461,6 +474,11 @@ export const translations = {
         set_stat_updated: "Última actualización",
         set_stat_root: "Persona raíz",
         set_logout: "Cerrar sesión",
+
+        // Install App
+        install_title: "Instalar App",
+        install_desc: "Añadir a pantalla de inicio",
+        install_btn: "Instalar",
         
         // Header
         header_back: "Atrás",

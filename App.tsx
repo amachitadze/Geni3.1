@@ -542,29 +542,29 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 flex flex-col">
-      {/* Install App Banner (Top Right Fixed) */}
+      {/* Install App Banner (Bottom Center) */}
       {installPrompt && (
-          <div className="fixed top-20 right-4 z-50 animate-fade-in-up">
-              <div className="bg-white dark:bg-gray-800 p-3 rounded-xl shadow-2xl border border-purple-500/30 flex flex-col gap-3 w-64 backdrop-blur-md">
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-fade-in-up w-[90%] max-w-sm">
+              <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-2xl border border-purple-500/30 flex flex-col gap-3 backdrop-blur-md">
                   <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
                           <div className="p-2 bg-purple-100 dark:bg-purple-900/50 rounded-lg text-purple-600 dark:text-purple-400">
                               <CloudDownloadIcon className="w-6 h-6" />
                           </div>
                           <div>
-                              <h4 className="font-bold text-gray-900 dark:text-white text-sm">Install App</h4>
-                              <p className="text-xs text-gray-500 dark:text-gray-400">Add to Home Screen</p>
+                              <h4 className="font-bold text-gray-900 dark:text-white text-sm">{t.install_title}</h4>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">{t.install_desc}</p>
                           </div>
                       </div>
                       <button onClick={() => setInstallPrompt(null)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
-                          <CloseIcon className="w-4 h-4" />
+                          <CloseIcon className="w-5 h-5" />
                       </button>
                   </div>
                   <button 
                       onClick={handleInstallClick}
-                      className="w-full py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold uppercase tracking-wide rounded-lg transition-colors"
+                      className="w-full py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white text-sm font-bold uppercase tracking-wide rounded-xl shadow-lg transition-all active:scale-95"
                   >
-                      Install Now
+                      {t.install_btn}
                   </button>
               </div>
           </div>
@@ -818,6 +818,8 @@ function App() {
         onExportJson={handleExportJson}
         currentData={{ people, rootIdStack }}
         appMetadata={appMetadata}
+        installPrompt={installPrompt}
+        onInstall={handleInstallClick}
       />
 
       <RelationshipFinderModal 
